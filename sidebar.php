@@ -4,9 +4,10 @@
             依尺寸選擇
         </button>
         <ul class="dropdown-menu">
-            <li><a class="dropdown-item" href="#">小尺寸</a></li>
-            <li><a class="dropdown-item" href="#">中尺寸</a></li>
-            <li><a class="dropdown-item" href="#">大尺寸</a></li>
+            <li><a class="dropdown-item" href="#">20吋以下登機箱</a></li>
+            <li><a class="dropdown-item" href="#">21~24吋行李箱</a></li>
+            <li><a class="dropdown-item" href="#">25~28吋行李箱</a></li>
+            <li><a class="dropdown-item" href="#">28吋以上行李箱</a></li>
         </ul>
     </div>
     <div class="btn-group">

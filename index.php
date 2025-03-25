@@ -14,7 +14,7 @@
     <?php include 'nav.php'; ?>
 
     <!-- 小於 md 時顯示 offcanvas 版 sidebar -->
-    <div class="container ">
+    <div class="container sticky-top">
         <a class="btn d-md-none" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button"
             aria-controls="offcanvasExample">
             <svg xmlns="http://www.w3.org/20absolute00/svg" width="32" height="32" fill="currentColor"
@@ -37,8 +37,8 @@
         </div>
     </div>
 
-    <div class="container">
-        <div class="row">
+    <div class="container w-100">
+        <div class="row w-100">
             <!-- Sidebar for md and above -->
             <div class="d-none d-md-block col-md-3 mt-4">
                 <?php include 'sidebar.php'; ?>
