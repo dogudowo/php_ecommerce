@@ -20,7 +20,7 @@
     <div class="container">
         <div class="row">
             <div class="col-md-7 col-12">
-                <img src="imgs/T6927S06210615.jpg" alt="T6927" class="img-fluid">
+                <img src="imgs/T6927/T6927S06210615.jpg" alt="T6927" class="img-fluid">
                 <p class="text-left text-danger w-75 mx-auto">
                     Haugas All-in 箱 #歐印箱 #全能箱，只有你沒想到的沒有我們做不到的！所有功能齊備一箱
                     1️⃣秤重⋯ 2️⃣煞車⋯
@@ -75,11 +75,11 @@
         <div class="container mt-4">
             <div class="row justify-content-center">
                 <div class="col-md-9 col-12 text-center">
-                    <img src="imgs/692784892.jpg" alt="" class="img-fluid">
-                    <img src="imgs/692720003.jpg" alt="" class="img-fluid">
-                    <img src="imgs/692796544.jpg" alt="" class="img-fluid">
-                    <img src="imgs/692758251.jpg" alt="" class="img-fluid">
-                    <img src="imgs/692727622.jpg" alt="" class="img-fluid">
+                    <img src="imgs/T6927/692784892.jpg" alt="" class="img-fluid">
+                    <img src="imgs/T6927/692720003.jpg" alt="" class="img-fluid">
+                    <img src="imgs/T6927/692796544.jpg" alt="" class="img-fluid">
+                    <img src="imgs/T6927/692758251.jpg" alt="" class="img-fluid">
+                    <img src="imgs/T6927/692727622.jpg" alt="" class="img-fluid">
                 </div>
             </div>
         </div>
