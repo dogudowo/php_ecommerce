@@ -29,7 +29,7 @@
     <div class="container text-center my-3 w-100">
         <h5>以下為歐印代理之品牌</h5>
         <div class="container">
-            <ul class="nav nav-pills justify-content-center" id="brandTab" role="tablist">
+            <ul class="nav nav-pills justify-content-center gap-3" id="brandTab" role="tablist">
                 <li class="nav-item" role="presentation">
                     <button class="nav-link active" id="legendwalker-tab" data-bs-toggle="pill"
                         data-bs-target="#legendwalkerContent" type="button" role="tab"

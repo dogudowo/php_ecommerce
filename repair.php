@@ -20,34 +20,52 @@
         </div>
 
         <div class="container my-3 d-flex justify-content-center gap-4">
-            <button type="button" class="btn btn-info">Info</button>
-            <button type="button" class="btn btn-info">Info</button>
-            <button type="button" class="btn btn-info">Info</button>
+            <a href="#" class="text-decoration-none btn btn-primary">維修單查詢</a>
+            <a href="imgs/AllenRepairPrice0609.jpg" target="_blank"
+                class="text-decoration-none btn btn-primary">維修價格表</a>
+            <a href="src/KeyReport.doc" class="text-decoration-none btn btn-primary">鑰匙申請表</a>
+
         </div>
 
+
         <div class="container">
-            <div class="container d-flex mx-3 ">
-                <h4>Language: </h4>
-                <button type="button" class="btn btn-primary">English</button>
-            </div>
-            <div class="container">
-                <div class="container my-3 d-flex justify-content-center">
-                    <img src="imgs/repairContext.jpg" alt="" class="img-fluid">
+            <ul class="nav nav-pills justify-content-end" id="brandTab" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="TW-tab" data-bs-toggle="pill" data-bs-target="#TWContent"
+                        type="button" role="tab" aria-controls="TWContent" aria-selected="true">中文</button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="Eng-tab" data-bs-toggle="pill" data-bs-target="#EngContent"
+                        type="button" role="tab" aria-controls="EngContent" aria-selected="false">English</button>
+                </li>
+            </ul>
+            <div class="tab-content my-3">
+                <div class="tab-pane fade show active" id="TWContent" role="tabpanel" aria-labelledby="TW-tab">
+                    <!-- 中文內容 -->
+                    <div class="container w-100">
+                        <div class="container my-3 d-flex justify-content-center">
+                            <img src="imgs/repairContext.jpg" alt="" class="img-fluid">
+                        </div>
+
+                        <h3 class="text-decoration-underline">維修流程</h3>
+                        <div class="container my-3 d-flex justify-content-center">
+                            <img src="imgs/repairRundown.jpg" alt="" class="img-fluid">
+                        </div>
+                    </div>
                 </div>
 
-                <h3 class="text-decoration-underline">維修流程</h3>
-                <div class="container my-3 d-flex justify-content-center">
-                    <img src="imgs/repairRundown.jpg" alt="" class="img-fluid">
-                </div>
-            </div>
-            <div class="container visually-hidden">
-                <div class="container my-3 d-flex justify-content-center">
-                    <img src="imgs/repairContextUS.jpg" alt="" class="img-fluid">
-                </div>
+                <div class="tab-pane fade" id="EngContent" role="tabpanel" aria-labelledby="Eng-tab">
+                    <!-- 英文內容 -->
+                    <div class="container">
+                        <div class="container my-3 d-flex justify-content-center">
+                            <img src="imgs/repairContextUS.jpg" alt="" class="img-fluid">
+                        </div>
 
-                <h3 class="text-decoration-underline">Repair Rundown</h3>
-                <div class="container my-3 d-flex justify-content-center">
-                    <img src="imgs/repairRundownEN.jpg" alt="" class="img-fluid">
+                        <h3 class="text-decoration-underline">Repair Rundown</h3>
+                        <div class="container my-3 d-flex justify-content-center">
+                            <img src="imgs/repairRundownEN.jpg" alt="" class="img-fluid">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>

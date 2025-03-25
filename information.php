@@ -19,9 +19,10 @@
     </div>
 
     <div class="container my-3 d-flex justify-content-center gap-4">
-        <button type="button" class="btn btn-info">Info</button>
-        <button type="button" class="btn btn-info">Info</button>
-        <button type="button" class="btn btn-info">Info</button>
+        <a href="QandA.php" class="text-decoration-none text-white btn btn-primary">購物Q &
+            A</a>
+        <a href="imgs/order.jpg" class="text-decoration-none text-white btn btn-primary">購物流程</a>
+        <a href="orderInformation.php" class="text-decoration-none text-white btn btn-primary">購物訂單查詢</a>
     </div>
 
     <div class="container my-3 d-flex justify-content-center">
@@ -29,8 +30,6 @@
     </div>
 
     <?php include 'footer.php'; ?>
-
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
         integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
         crossorigin="anonymous"></script>

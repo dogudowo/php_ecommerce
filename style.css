@@ -3261,7 +3261,7 @@ fieldset:disabled .btn {
 @media (prefers-reduced-motion: reduce) {
     .collapsing {
         transition: none;
-    }
+    }underline
 }
 .collapsing.collapse-horizontal {
     width: 0;
@@ -7558,7 +7558,7 @@ fieldset:disabled .btn {
 .align-content-end {
     align-content: flex-end !important;
 }
-.enteralign-content-c {
+.align-content-center {
     align-content: center !important;
 }
 .align-content-between {
