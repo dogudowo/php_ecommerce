@@ -15,7 +15,7 @@
             <span class="navbar-toggler-icon"></span>
         </button>
 
-        <div class="offcanvas offcanvas-end" tabindex="-1" id="offcanvas" aria-labelledby="offcanvasLabel">
+        <div class="offcanvas offcanvas-end w-75" tabindex="-1" id="offcanvas" aria-labelledby="offcanvasLabel">
             <div class="offcanvas-header">
                 <!-- 這裡的圖片是 Offcanvas 裡的標題圖片 -->
                 <img src="./imgs/title.png" alt="歐印精品" class="offcanvas-title" id="offcanvasLabel" height="70px">

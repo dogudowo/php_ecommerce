@@ -18,11 +18,12 @@
         <h1 class=" h1">購物說明</h1>
     </div>
 
-    <div class="container my-3 d-flex justify-content-center gap-4">
-        <a href="QandA.php" class="text-decoration-none text-white btn btn-primary">購物Q &
+    <div class="container my-3 d-flex justify-content-center gap-4 flex-wrap">
+        <a href="QandA.php" class="text-decoration-none text-white btn btn-success text-nowrap small">購物Q &
             A</a>
-        <a href="imgs/order.jpg" class="text-decoration-none text-white btn btn-primary">購物流程</a>
-        <a href="orderInformation.php" class="text-decoration-none text-white btn btn-primary">購物訂單查詢</a>
+        <a href="imgs/order.jpg" class="text-decoration-none text-white btn btn-success text-nowrap small">購物流程</a>
+        <a href="orderInformation.php"
+            class="text-decoration-none text-white btn btn-success text-nowrap small">購物訂單查詢</a>
     </div>
 
     <div class="container my-3 d-flex justify-content-center">

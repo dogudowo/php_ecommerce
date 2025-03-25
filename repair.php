@@ -19,11 +19,11 @@
             <h1 class="h1">維修保固</h1>
         </div>
 
-        <div class="container my-3 d-flex justify-content-center gap-4">
-            <a href="#" class="text-decoration-none btn btn-primary">維修單查詢</a>
+        <div class="container my-3 d-flex justify-content-center gap-4 flex-wrap">
+            <a href="#" class="text-decoration-none btn btn-success text-nowrap small">維修單查詢</a>
             <a href="imgs/AllenRepairPrice0609.jpg" target="_blank"
-                class="text-decoration-none btn btn-primary">維修價格表</a>
-            <a href="src/KeyReport.doc" class="text-decoration-none btn btn-primary">鑰匙申請表</a>
+                class="text-decoration-none btn btn-success text-nowrap small">維修價格表</a>
+            <a href="src/KeyReport.doc" class=" small text-nowrap text-decoration-none btn btn-success">鑰匙申請表</a>
 
         </div>
 
@@ -31,15 +31,15 @@
         <div class="container">
             <ul class="nav nav-pills justify-content-end" id="brandTab" role="tablist">
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link active" id="TW-tab" data-bs-toggle="pill" data-bs-target="#TWContent"
+                    <button class="nav-link active small" id="TW-tab" data-bs-toggle="pill" data-bs-target="#TWContent"
                         type="button" role="tab" aria-controls="TWContent" aria-selected="true">中文</button>
                 </li>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link" id="Eng-tab" data-bs-toggle="pill" data-bs-target="#EngContent"
+                    <button class="nav-link small" id="Eng-tab" data-bs-toggle="pill" data-bs-target="#EngContent"
                         type="button" role="tab" aria-controls="EngContent" aria-selected="false">English</button>
                 </li>
             </ul>
-            <div class="tab-content my-3">
+            <div class="tab-content">
                 <div class="tab-pane fade show active" id="TWContent" role="tabpanel" aria-labelledby="TW-tab">
                     <!-- 中文內容 -->
                     <div class="container w-100">
