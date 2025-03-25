@@ -28,7 +28,7 @@
                     5️⃣細鋁框⋯ 6️⃣日乃本飛機輪⋯
                     7️⃣乾濕分離收納⋯⋯⋯⋯ 8️⃣還有最重要的保固 #我知道你缺一個全能萬用箱</p>
             </div>
-            <div class="col-md-5 col-12">
+            <div class="col-md-5 col-12 mt-4">
                 <form>
                     <div class="row mb-3">
                         <label for="colFormLabel" class="col-sm-2 col-form-label">型號：</label>
@@ -48,7 +48,7 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <label for="colFormLabel" class="col-sm-2 col-form-label">顏色：</label>
+                        <label for="colFormLabel" class="col-sm-2 col-form-label">數量：</label>
                         <div class="col-sm-10">
                             <select class="form-select col-sm-10" required aria-label="Default select example">
                                 <option value="1">1</option>
