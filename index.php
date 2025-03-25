@@ -8,60 +8,53 @@
         integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous" />
     <link rel="icon" href="./imgs/webimg.ico" />
     <title>歐印精品-首頁</title>
-
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-md bg-white sticky-top border-bottom" data-bs-theme="light">
+    <?php include 'nav.php'; ?>
+
+    <!-- 小於 md 時顯示 offcanvas 版 sidebar -->
+    <div class="container ">
+        <a class="btn d-md-none" data-bs-toggle="offcanvas" href="#offcanvasExample" role="button"
+            aria-controls="offcanvasExample">
+            <svg xmlns="http://www.w3.org/20absolute00/svg" width="32" height="32" fill="currentColor"
+                class="bi bi-funnel" viewBox="0 0 16 16">
+                <path
+                    d="M1.5 1.5A.5.5 0 0 1 2 1h12a.5.5 0 0 1 .5.5v2a.5.5 0 0 1-.128.334L10 8.692V13.5a.5.5 0 0 1-.342.474l-3 1A.5.5 0 0 1 6 14.5V8.692L1.628 3.834A.5.5 0 0 1 1.5 3.5zm1 .5v1.308l4.372 4.858A.5.5 0 0 1 7 8.5v5.306l2-.666V8.5a.5.5 0 0 1 .128-.334L13.5 3.308V2z" />
+            </svg>
+            篩選
+        </a>
+    </div>
+
+
+    <div class="offcanvas offcanvas-start d-md-none w-50" tabindex="-1" id="offcanvasExample"
+        aria-labelledby="offcanvasExampleLabel">
         <div class="container">
-            <!-- 只在 md 以上顯示的品牌圖片 -->
-            <a class="navbar-brand d-none d-md-block" href="index.php">
-                <img src="./imgs/title.png" alt="Title" height="40px">
-            </a>
+            <div class="offcanvas-title my-4">
+                <img src="./imgs/title.png" alt="歐印精品" height="70px">
+            </div>
+            <?php include 'sidebar.php'; ?>
+        </div>
+    </div>
 
-            <!-- 只在 md 以下顯示的品牌圖片（選擇性，如果不需要可移除） -->
-            <a class="navbar-brand d-md-none" href="index.php">
-                <img src="./imgs/title.png" alt="Title" height="40px">
-            </a>
-
-            <button class="navbar-toggler" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvas"
-                aria-controls="offcanvas" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-
-            <div class="offcanvas offcanvas-end w-75" tabindex="-1" id="offcanvas" aria-labelledby="offcanvasLabel">
-                <div class="offcanvas-header">
-                    <!-- 這裡的圖片是 Offcanvas 裡的標題圖片 -->
-                    <img src="./imgs/title.png" alt="歐印精品" class="offcanvas-title" id="offcanvasLabel" height="70px">
-                    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-                </div>
-                <div class="offcanvas-body">
-                    <ul class="navbar-nav flex-grow-1 justify-content-evenly">
-                        <li class="nav-item h5">
-                            <a class="nav-link" href="index.php">歐印精品</a>
-                        </li>
-                        <li class="nav-item h5">
-                            <a class="nav-link" href="introduce.php">品牌介紹</a>
-                        </li>
-                        <li class="nav-item h5">
-                            <a class="nav-link" href="information.php">購物說明</a>
-                        </li>
-                        <li class="nav-item h5">
-                            <a class="nav-link" href="repair.php">保固維修</a>
-                        </li>
-                        <li class="nav-item h5">
-                            <a class="nav-link" href="contentUs.php">聯絡我們</a>
-                        </li>
-                    </ul>
-                </div>
+    <div class="container">
+        <div class="row">
+            <!-- Sidebar for md and above -->
+            <div class="d-none d-md-block col-md-3 mt-4">
+                <?php include 'sidebar.php'; ?>
+            </div>
+            <!-- Suitcases always visible -->
+            <div class="col-12 col-md-9 d-flex flex-wrap">
+                <?php include 'suitcases.php'; ?>
             </div>
         </div>
-    </nav>
+    </div>
 
     <?php include 'footer.php'; ?>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz"
-        crossorigin="anonymous"></script>
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+        </script>
 </body>
 
 </html>

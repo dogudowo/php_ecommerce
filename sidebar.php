@@ -1,52 +1,25 @@
-<div class="d-flex flex-column flex-shrink-0 p-3 bg-body-tertiary" style="width: 250px">
-    <a href="/" class="d-flex align-items-center mb-3 mb-md-0 me-md-auto link-body-emphasis text-decoration-none">
-        <svg class="bi pe-none me-2" width="40" height="32">
-            <use xlink:href="#bootstrap" />
-        </svg>
-        <span class="fs-4">Sidebar</span>
-    </a>
-    <hr />
-    <ul class="nav nav-pills flex-column mb-auto">
-        <li class="nav-item">
-            <a href="#" class="nav-link active" aria-current="page">
-                <svg class="bi pe-none me-2" width="16" height="16">
-                    <use xlink:href="#home" />
-                </svg>
-                Home
-            </a>
-        </li>
-        <li>
-            <a href="#" class="nav-link link-body-emphasis">
-                <svg class="bi pe-none me-2" width="16" height="16">
-                    <use xlink:href="#speedometer2" />
-                </svg>
-                Dashboard
-            </a>
-        </li>
-        <li>
-            <a href="#" class="nav-link link-body-emphasis">
-                <svg class="bi pe-none me-2" width="16" height="16">
-                    <use xlink:href="#table" />
-                </svg>
-                Orders
-            </a>
-        </li>
-        <li>
-            <a href="#" class="nav-link link-body-emphasis">
-                <svg class="bi pe-none me-2" width="16" height="16">
-                    <use xlink:href="#grid" />
-                </svg>
-                Products
-            </a>
-        </li>
-        <li>
-            <a href="#" class="nav-link link-body-emphasis">
-                <svg class="bi pe-none me-2" width="16" height="16">
-                    <use xlink:href="#people-circle" />
-                </svg>
-                Customers
-            </a>
-        </li>
-    </ul>
+<div class="d-flex flex-column align-items-start position-fixed mt-4">
+    <div class="btn-group">
+        <button type="button" class="btn btn-lg dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            依尺寸選擇
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#">小尺寸</a></li>
+            <li><a class="dropdown-item" href="#">中尺寸</a></li>
+            <li><a class="dropdown-item" href="#">大尺寸</a></li>
+        </ul>
+    </div>
+    <div class="btn-group">
+        <button type="button" class="btn btn-lg dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+            依類型選擇
+        </button>
+        <ul class="dropdown-menu">
+            <li><a class="dropdown-item" href="#">鋁框款</a></li>
+            <li><a class="dropdown-item" href="#">拉鍊款</a></li>
+        </ul>
+    </div>
+    <a href="#" class="btn btn-lg">行李箱配件</a>
+    <a href="#" class="btn btn-lg">旅遊周邊</a>
+    <a href="#" class="btn btn-lg">歐印嚴選</a>
 
 </div>
