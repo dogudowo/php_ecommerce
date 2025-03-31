@@ -28,10 +28,10 @@
                     5️⃣細鋁框⋯ 6️⃣日乃本飛機輪⋯
                     7️⃣乾濕分離收納⋯⋯⋯⋯ 8️⃣還有最重要的保固 #我知道你缺一個全能萬用箱</p>
             </div>
-            <div class="col-md-5 col-12">
+            <div class="col-md-5 col-12 mt-4">
                 <form>
                     <div class="row mb-3">
-                        <label for="colFormLabel" class="col-sm-2 col-form-label">型號：</label>
+                        <label for="colFormLabel" class="col-sm-2 col-form-label text-nowrap">型號：</label>
                         <div class="col-sm-10">
                             <select class="form-select col-sm-10" required aria-label="Default select example">
                                 <option value="1">T6927-69/29吋</option>
@@ -39,7 +39,7 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <label for="colFormLabel" class="col-sm-2 col-form-label">顏色：</label>
+                        <label for="colFormLabel" class="col-sm-2 col-form-label text-nowrap">顏色：</label>
                         <div class="col-sm-10">
                             <select class="form-select col-sm-10" required aria-label="Default select example">
                                 <option value="1">雪貂白(WH)</option>
@@ -48,7 +48,7 @@
                         </div>
                     </div>
                     <div class="row mb-3">
-                        <label for="colFormLabel" class="col-sm-2 col-form-label">顏色：</label>
+                        <label for="colFormLabel" class="col-sm-2 col-form-label text-nowrap">數量：</label>
                         <div class="col-sm-10">
                             <select class="form-select col-sm-10" required aria-label="Default select example">
                                 <option value="1">1</option>
@@ -64,7 +64,12 @@
                             </select>
                         </div>
                     </div>
-
+                    <div class="text-center">
+                        <p>
+                            <span class="text-decoration-line-through text-danger"> 價格:12,800 </span>
+                            <strong class="h4">$7,680</strong>
+                        </p>
+                    </div>
                     <div class="text-center">
                         <button type="submit" class="btn btn-primary">加入購物車</button>
                     </div>

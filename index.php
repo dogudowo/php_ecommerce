@@ -10,8 +10,9 @@
     <title>歐印精品-首頁</title>
 </head>
 
-<body>
+<body width="98vw" class="align-content-center">
     <?php include 'nav.php'; ?>
+
 
     <!-- 小於 md 時顯示 offcanvas 版 sidebar -->
     <div class="container">
