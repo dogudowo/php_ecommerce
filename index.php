@@ -31,9 +31,9 @@
     <div class="offcanvas offcanvas-start d-md-none w-50" tabindex="-1" id="offcanvasExample"
         aria-labelledby="offcanvasExampleLabel">
         <div class="container">
-            <div class="offcanvas-title mt-3">
+            <!-- <div class="offcanvas-title mt-3">
                 <img src="./imgs/title.png" alt="歐印精品" height="70px">
-            </div>
+            </div> -->
             <?php include 'sidebar.php'; ?>
         </div>
     </div>
@@ -42,11 +42,11 @@
         <div class="container w-100 p-1">
             <div class="row">
                 <!-- Sidebar for md and above -->
-                <div class="d-none d-md-block col-md-3 mt-4">
+                <div class="d-none d-md-block col-md-2 mt-4">
                     <?php include 'sidebar.php'; ?>
                 </div>
                 <!-- Suitcases always visible -->
-                <div class="col-12 col-md-9 my-4">
+                <div class="col-12 col-md-10 my-4">
                     <?php include 'suitcases.php'; ?>
                 </div>
             </div>
