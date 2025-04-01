@@ -1,48 +1,39 @@
 <nav class="navbar navbar-expand-md bg-white sticky-top border-bottom" data-bs-theme="light">
     <div class="container">
+        <?php
+        $navItems = [
+            ['name' => '歐印精品', 'link' => 'index.php'],
+            ['name' => '品牌介紹', 'link' => 'introduce.php'],
+            ['name' => '購物說明', 'link' => 'information.php'],
+            ['name' => '保固維修', 'link' => 'repair.php'],
+            ['name' => '聯絡我們', 'link' => 'contentUs.php']
+        ];
+        ?>
 
         <button class="navbar-toggler" tabindex="2" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvas"
             aria-controls="offcanvas" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
-
-        <!-- 中間的品牌圖片 -->
+        <!-- 品牌圖片 -->
         <a class="navbar-brand mx-auto p-0 m-0" tabindex="1" href="index.php">
             <img src="./imgs/title.png" alt="Title" height="50">
         </a>
 
-        <!-- 將 offcanvas 移到左邊 -->
+        <!-- Offcanvas 導航菜單 -->
         <div class="offcanvas offcanvas-start w-50" tabindex="-1" id="offcanvas" aria-labelledby="offcanvasLabel">
-            <div class="offcanvas-header align-content-center">
-                <!-- Offcanvas 裡的標題圖片 -->
-                <!-- <img src="./imgs/title.png" alt="歐印精品" class="offcanvas-title img-fluid" id="offcanvasLabel"
-                    height="40"> -->
-                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
-            </div>
-            <div class="offcanvas-body">
+            <div class="offcanvas-body mt-4">
                 <ul class="navbar-nav flex-grow-1 justify-content-evenly">
-                    <li class="nav-item h5">
-                        <a class="nav-link" href="index.php">歐印精品</a>
-                    </li>
-                    <li class="nav-item h5">
-                        <a class="nav-link" href="introduce.php">品牌介紹</a>
-                    </li>
-                    <li class="nav-item h5">
-                        <a class="nav-link" href="information.php">購物說明</a>
-                    </li>
-                    <li class="nav-item h5">
-                        <a class="nav-link" href="repair.php">保固維修</a>
-                    </li>
-                    <li class="nav-item h5">
-                        <a class="nav-link" href="contentUs.php">聯絡我們</a>
-                    </li>
+                    <?php foreach ($navItems as $item): ?>
+                        <li class="nav-item h5">
+                            <a class="nav-link" href="<?= $item['link'] ?>"><?= $item['name'] ?></a>
+                        </li>
+                    <?php endforeach; ?>
                 </ul>
             </div>
         </div>
 
-
-        <!-- 新增的購物車按鈕 -->
+        <!-- 購物車按鈕 -->
         <a href="Shopping-cart.php" class="btn me-2 btn-outline-secondary m-0" type="button">
             <svg xmlns="http://www.w3.org/2000/svg" width="1.5rem" height="1.5rem" fill="currentColor"
                 class="bi bi-cart" viewBox="0 0 16 16">
