@@ -4,6 +4,7 @@
 
 ## 📁 資料夾結構
 
+```
 public_html/
 ├── index.php          # 網站首頁
 ├── nav.php            # 導覽列 (Navbar)
@@ -19,6 +20,7 @@ public_html/
 │ ├── webimg.ico       # 網站favicon
 │ └── ...              # 其他圖片資源
 └── README.md          # 專案說明文件
+```
 
 ## 🛠 技術架構
 
