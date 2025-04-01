@@ -6,7 +6,8 @@
             ['name' => '品牌介紹', 'link' => 'introduce.php'],
             ['name' => '購物說明', 'link' => 'information.php'],
             ['name' => '保固維修', 'link' => 'repair.php'],
-            ['name' => '聯絡我們', 'link' => 'contentUs.php']
+            ['name' => '聯絡我們', 'link' => 'contentUs.php'],
+            ['name' => '會員登入', 'link' => 'login.php']
         ];
         ?>
 
@@ -17,12 +18,12 @@
 
         <!-- 品牌圖片 -->
         <a class="navbar-brand mx-auto p-0 m-0" tabindex="1" href="index.php">
-            <img src="./imgs/title.png" alt="Title" height="50">
+            <img src="./imgs/title.png" alt="Title" height="50" class="p-0 m-0">
         </a>
 
         <!-- Offcanvas 導航菜單 -->
         <div class="offcanvas offcanvas-start w-50" tabindex="-1" id="offcanvas" aria-labelledby="offcanvasLabel">
-            <div class="offcanvas-body mt-4">
+            <div class="offcanvas-body pt-md-2 pt-4">
                 <ul class="navbar-nav flex-grow-1 justify-content-evenly">
                     <?php foreach ($navItems as $item): ?>
                         <li class="nav-item h5">
