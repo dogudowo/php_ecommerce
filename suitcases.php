@@ -93,13 +93,13 @@
             <div class="col-6 col-md-3">
                 <a href="product.php" class="text-decoration-none text-black">
                     <div class="card">
-                        <img src="'.$product['image'].'" class="card-img-top" alt="'.$product['name'].'">
+                        <img src="' . $product['image'] . '" class="card-img-top" alt="' . $product['name'] . '">
                         <div class="card-body">
-                            <h5>'.$product['name'].'</h5>
-                            <p>'.$product['size'].'</p>
+                            <h5>' . $product['name'] . '</h5>
+                            <p>' . $product['size'] . '</p>
                             <p>
-                                <span class="text-decoration-line-through text-danger">價格:'.$product['original_price'].'</span>
-                                <strong class="h4">'.$product['discount_price'].'</strong>
+                                <span class="text-decoration-line-through text-danger">價格:' . $product['original_price'] . '</span>
+                                <strong class="h4">' . $product['discount_price'] . '</strong>
                             </p>
                         </div>
                         <a href="product.php" class="card-footer text-muted btn w-100 text-decoration-none border-0 bg-transparent shadow-none">了解更多</a>
