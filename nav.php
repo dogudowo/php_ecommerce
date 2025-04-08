@@ -10,19 +10,25 @@
         ];
         ?>
 
-        <button class="navbar-toggler" tabindex="2" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvas"
-            aria-controls="offcanvas" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+        <a class="navbar-toggler border-0" tabindex="2" data-bs-toggle="offcanvas" data-bs-target="#offcanvas"
+            aria-controls="offcanvas" aria-label="Toggle navigation" role="button"
+            style="outline: none !important; box-shadow: none !important;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="30" height="30" fill="currentColor" class="bi bi-list"
+                viewBox="0 0 16 16">
+                <path fill-rule="evenodd"
+                    d="M2.5 12a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5m0-4a.5.5 0 0 1 .5-.5h10a.5.5 0 0 1 0 1H3a.5.5 0 0 1-.5-.5" />
+            </svg>
+        </a>
+
 
         <!-- 品牌圖片 -->
         <a class="navbar-brand mx-auto p-0 m-0" tabindex="1" href="index.php">
-            <img src="./imgs/title.png" alt="Title" height="50">
+            <img src="./imgs/title.png" alt="Title" height="50" class="p-0 m-0">
         </a>
 
         <!-- Offcanvas 導航菜單 -->
         <div class="offcanvas offcanvas-start w-50" tabindex="-1" id="offcanvas" aria-labelledby="offcanvasLabel">
-            <div class="offcanvas-body mt-4">
+            <div class="offcanvas-body pt-md-2 pt-4">
                 <ul class="navbar-nav flex-grow-1 justify-content-evenly">
                     <?php foreach ($navItems as $item): ?>
                         <li class="nav-item h5">
@@ -34,7 +40,7 @@
         </div>
 
         <!-- 購物車按鈕 -->
-        <a href="Shopping-cart.php" class="btn me-2 btn-outline-secondary m-0" type="button">
+        <a href="Shopping-cart.php" class="btn me-2 m-0" type="button">
             <svg xmlns="http://www.w3.org/2000/svg" width="1.5rem" height="1.5rem" fill="currentColor"
                 class="bi bi-cart" viewBox="0 0 16 16">
                 <path
