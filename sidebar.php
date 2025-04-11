@@ -1,4 +1,4 @@
-<ul class="nav nav-pills flex-column position-fixed mt-4" style="font-size: 1.2rem;">
+<ul class="nav nav-pills flex-column position-fixed mt-4" style="font-size: 1.1rem; width: 90%;">
     <li class="nav-item">
         <a class="nav-link " href="#">全部行李箱</a>
     </li>
