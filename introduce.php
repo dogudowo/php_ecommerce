@@ -9,7 +9,7 @@
     <link rel="icon" href="./imgs/webimg.ico" />
     <style>
         p {
-            text-indent: 1em;
+            text-indent: 2em;
         }
     </style>
     <title>歐印精品-品牌介紹</title>

@@ -80,7 +80,7 @@
                     <div class="tab-pane fade show active" id="v-pills-products" role="tabpanel"
                         aria-labelledby="v-pills-products-tab">
                         <!-- 全部行李箱內容 -->
-                        <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="d-flex gap-3 mb-3">
                             <div>
                                 <label for="filter-size" class="form-label me-2">篩選尺寸:</label>
                                 <select id="filter-size" class="form-select d-inline-block w-auto">
@@ -146,36 +146,33 @@
             filterStyle.addEventListener('change', filterProducts);
 
             function filterProducts() {
+                // 找出目前活躍的 tab-pane（顯示中的 tab）
+                const activeTab = document.querySelector('.tab-pane.active');
+                // 僅選取該 tab 內的商品
+                const productForms = activeTab.querySelectorAll('.col-6.col-md-3');
+
                 const sizeFilter = filterSize.value;
                 const styleFilter = filterStyle.value;
 
-                // Get all product cards
-                const productCards = document.querySelectorAll('.card');
-                const productForms = document.querySelectorAll('.col-6.col-md-3');
-
                 productForms.forEach(form => {
                     const card = form.querySelector('.card');
-                    const productType = card.getAttribute('data-type'); // 使用data-type屬性
+                    const productType = card.getAttribute('data-type');
                     const variantName = card.querySelector('p').textContent.toLowerCase();
 
-                    // Size filtering logic
                     let showBySize = true;
                     if (sizeFilter) {
                         const size = extractSize(variantName);
-
                         if (sizeFilter === 'below-20' && size > 20) showBySize = false;
                         else if (sizeFilter === '21-24' && (size < 21 || size > 24)) showBySize = false;
                         else if (sizeFilter === '25-28' && (size < 25 || size > 28)) showBySize = false;
                         else if (sizeFilter === 'above-28' && size <= 28) showBySize = false;
                     }
 
-                    // Style filtering logic
                     let showByStyle = true;
                     if (styleFilter && styleFilter !== '') {
                         if (styleFilter !== productType) showByStyle = false;
                     }
 
-                    // Show/hide based on combined filters
                     if (showBySize && showByStyle) {
                         form.style.display = '';
                     } else {

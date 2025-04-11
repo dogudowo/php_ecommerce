@@ -23,10 +23,10 @@ $productData = json_decode($jsonData, true);
                             <img src="' . $product['image'] . '" class="card-img-top" alt="' . $product['name'] . '">
                             <div class="card-body pb-0">
                                 <h5 style="min-height: calc(2 * 1.2em);">' . $product['name'] . '</h5>
-                                <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' . $product['variants'][0]['name'] . '</p>
+                                <p style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' . $product['choice'][0]['name'] . '</p>
                                 <p>
-                                    <span class="text-decoration-line-through text-danger" style="font-size: 0.8rem;">價格:$' . number_format($product['variants'][0]['price'] * 1.2) . '</span><br>
-                                    <strong class="h4">$' . number_format($product['variants'][0]['price']) . '</strong>
+                                    <span class="text-decoration-line-through text-danger" style="font-size: 0.8rem;">價格:$' . number_format($product['choice'][0]['price'] * 1.2) . '</span><br>
+                                    <strong class="h4">$' . number_format($product['choice'][0]['price']) . '</strong>
                                 </p>
                             </div>
                             <div class="pt-0 card-footer text-muted btn w-100 text-decoration-none border-0 bg-transparent shadow-none">

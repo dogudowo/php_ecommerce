@@ -55,10 +55,10 @@ if (!$product) {
                         <div class="col-sm-10">
                             <select id="variantSelect" class="form-select col-sm-10" required
                                 aria-label="Default select example">
-                                <?php foreach ($product['variants'] as $variant): ?>
+                                <?php foreach ($product['choice'] as $variant): ?>
                                     <option value="<?php echo $variant['id']; ?>"
-                                        data-price="<?php echo $variant['price']; ?>"
-                                        data-discountedprice="<?php echo $variant['price'] * 0.8; ?>">
+                                        data-price="<?php echo $variant['price'] * 1.2; ?>"
+                                        data-discountedprice="<?php echo $variant['price']; ?>">
                                         <?php echo $variant['name']; ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -96,9 +96,9 @@ if (!$product) {
                     <div class="text-center">
                         <p>
                             <span id="price" class="text-decoration-line-through text-danger"> 價格:
-                                <?php echo number_format($product['variants'][0]['price']); ?> </span>
+                                <?php echo number_format($product['choice'][0]['price'] * 1.2); ?> </span>
                             <strong id="discountedPrice"
-                                class="h4">$<?php echo number_format($product['variants'][0]['price'] * 0.8); ?></strong>
+                                class="h4">$<?php echo number_format($product['choice'][0]['price']); ?></strong>
                         </p>
                     </div>
                     <div class="text-center">

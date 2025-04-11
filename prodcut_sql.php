@@ -22,10 +22,10 @@ while ($row = $result->fetch_assoc()) {
     $productId = $row['id'];
 
     // 獲取 variants
-    $variants = [];
-    $variantResult = $conn->query("SELECT * FROM variants WHERE product_id = $productId");
+    $choice = [];
+    $variantResult = $conn->query("SELECT * FROM choice WHERE product_id = $productId");
     while ($variantRow = $variantResult->fetch_assoc()) {
-        $variants[] = $variantRow;
+        $choice[] = $variantRow;
     }
 
     // 獲取 colors
@@ -49,7 +49,7 @@ while ($row = $result->fetch_assoc()) {
             'name' => $row['name'],
             'image' => $row['image'],
             'description' => $row['description'],
-            'variants' => $variants,
+            'choice' => $choice,
             'colors' => $colors,
             'galleryImages' => $galleryImages
         ]
