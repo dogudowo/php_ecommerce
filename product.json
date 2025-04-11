@@ -1,0 +1,81 @@
+[
+    {
+        "id": "1",
+        "category": "luggage",
+        "title": "歐印精品-T6927",
+        "titleImage": "imgs/title.png",
+        "titleAlt": "歐印精品-T6927",
+        "product": {
+            "id": "T6927",
+            "series": "series",
+            "image": "imgs/T6927/T6927S06210615.jpg",
+            "description": "Haugas All-in 箱 #歐印箱 #全能箱，只有你沒想到的沒有我們做不到的！所有功能齊備一箱 1️⃣秤重⋯ 2️⃣煞車⋯ 3️⃣杯架⋯ 4️⃣密碼鎖⋯ 5️⃣細鋁框⋯ 6️⃣日乃本飛機輪⋯ 7️⃣乾濕分離收納⋯⋯⋯⋯ 8️⃣還有最重要的保固 #我知道你缺一個全能萬用箱",
+            "variants": [
+                {
+                    "id": "1",
+                    "name": "T6927-69/29吋",
+                    "oldPrice": 12800,
+                    "price": 7680
+                }
+            ],
+            "colors": [
+                {
+                    "id": "1",
+                    "name": "雪貂白(WH)"
+                },
+                {
+                    "id": "2",
+                    "name": "獵鷹灰(GREY)"
+                }
+            ],
+            "galleryImages": [
+                "imgs/T6927/692784892.jpg",
+                "imgs/T6927/692720003.jpg",
+                "imgs/T6927/692796544.jpg",
+                "imgs/T6927/692758251.jpg",
+                "imgs/T6927/692727622.jpg"
+            ]
+        }
+    },
+    {
+        "id": "2",
+        "category": "luggage",
+        "title": "歐印精品-6021",
+        "titleImage": "imgs/title.png",
+        "titleAlt": "歐印精品-6021",
+        "product": {
+            "id": "6021",
+            "series": "series",
+            "image": "imgs/6021/6021S03140602.jpg",
+            "description": "獨角獸秤重箱~口碑商品~2025台北旅展明星商品~ 喜氣洋洋~新人婚嫁首選!秤重箱~ 輕鬆擁有獨角獸功能箱;經典秤重箱重現~~ PC材質;霧面防刮;升級飛機輪;三段式拉桿;",
+            "oldPrice": 11500,
+            "price": 4388,
+            "variants": [
+                {
+                    "id": "1",
+                    "name": "6021-64/26吋升級快閃",
+                    "oldPrice": 11500,
+                    "price": 4388
+                },
+                {
+                    "id": "2",
+                    "name": "6021-70/29吋升級快閃",
+                    "oldPrice": 12000,
+                    "price": 4588
+                }
+            ],
+            "colors": [
+                {
+                    "id": "1",
+                    "name": "經典銀紅(WR)"
+                }
+            ],
+            "galleryImages": [
+                "imgs/6021/02161771.jpg",
+                "imgs/6021/02190902.jpg",
+                "imgs/6021/021741918.jpg",
+                "imgs/6021/02188993.jpg"
+            ]
+        }
+    }
+]
