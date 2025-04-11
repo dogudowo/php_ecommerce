@@ -11,16 +11,14 @@ $product = null;
 foreach ($productData as $item) {
     if ($item['id'] === $productId) {
         $product = $item['product'];
-        $title = $item['title'];
-        $titleImage = $item['titleImage'];
-        $titleAlt = $item['titleAlt'];
+        $title = '歐印精品-' . $product['name']; // 修改 title
         break;
     }
 }
-
-// If no product is found, show an error message
+// If no product is found, show an error page
 if (!$product) {
-    die('產品未找到');
+    header('Location: 404.php');
+    exit();
 }
 ?>
 <!DOCTYPE html>
@@ -39,8 +37,8 @@ if (!$product) {
     <?php include 'nav.php'; ?>
 
     <div class="container text-center border-bottom border-black my-3">
-        <img src="<?php echo $titleImage; ?>" alt="<?php echo $titleAlt; ?>" class="img-fluid">
-        <h1 class="h1"><?php echo $product['id']; ?> <span class="h3"><?php echo $product['series']; ?></span></h1>
+        <img src="imgs/title.png" alt="歐印精品" class="img-fluid">
+        <h1 class="h1"><?php echo $product['name']; ?></h1>
     </div>
     <div class="container">
         <div class="row">
@@ -59,8 +57,8 @@ if (!$product) {
                                 aria-label="Default select example">
                                 <?php foreach ($product['variants'] as $variant): ?>
                                     <option value="<?php echo $variant['id']; ?>"
-                                        data-oldprice="<?php echo $variant['oldPrice']; ?>"
-                                        data-price="<?php echo $variant['price']; ?>">
+                                        data-price="<?php echo $variant['price']; ?>"
+                                        data-discountedprice="<?php echo $variant['price'] * 0.8; ?>">
                                         <?php echo $variant['name']; ?>
                                     </option>
                                 <?php endforeach; ?>
@@ -94,16 +92,17 @@ if (!$product) {
                             </select>
                         </div>
                     </div>
+                    <br>
                     <div class="text-center">
                         <p>
-                            <span id="oldPrice" class="text-decoration-line-through text-danger"> 價格:
-                                <?php echo number_format($product['variants'][0]['oldPrice']); ?> </span>
-                            <strong id="price"
-                                class="h4">$<?php echo number_format($product['variants'][0]['price']); ?></strong>
+                            <span id="price" class="text-decoration-line-through text-danger"> 價格:
+                                <?php echo number_format($product['variants'][0]['price']); ?> </span>
+                            <strong id="discountedPrice"
+                                class="h4">$<?php echo number_format($product['variants'][0]['price'] * 0.8); ?></strong>
                         </p>
                     </div>
                     <div class="text-center">
-                        <button type="submit" class="btn btn-primary">加入購物車</button>
+                        <button type="submit" class="btn btn-success">加入購物車</button>
                     </div>
                 </form>
             </div>
@@ -124,18 +123,17 @@ if (!$product) {
     <?php include 'footer.php'; ?>
 
     <script>
-        // Update price dynamically based on selected variant
         const variantSelect = document.getElementById('variantSelect');
-        const oldPriceElement = document.getElementById('oldPrice');
         const priceElement = document.getElementById('price');
+        const discountedPriceElement = document.getElementById('discountedPrice');
 
         variantSelect.addEventListener('change', function () {
             const selectedOption = variantSelect.options[variantSelect.selectedIndex];
-            const oldPrice = selectedOption.getAttribute('data-oldprice');
             const price = selectedOption.getAttribute('data-price');
+            const discountedPrice = selectedOption.getAttribute('data-discountedprice');
 
-            oldPriceElement.textContent = `價格: ${Number(oldPrice).toLocaleString()}`;
-            priceElement.textContent = `$${Number(price).toLocaleString()}`;
+            priceElement.textContent = `價格: ${Number(price).toLocaleString()}`;
+            discountedPriceElement.textContent = `$${Number(discountedPrice).toLocaleString()}`;
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"

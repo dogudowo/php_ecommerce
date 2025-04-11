@@ -6,7 +6,8 @@
             ['name' => '品牌介紹', 'link' => 'introduce.php'],
             ['name' => '購物說明', 'link' => 'information.php'],
             ['name' => '保固維修', 'link' => 'repair.php'],
-            ['name' => '聯絡我們', 'link' => 'contentUs.php']
+            ['name' => '聯絡我們', 'link' => 'contentUs.php'],
+            ['name' => '會員登入', 'link' => 'backend/login.php']
         ];
         ?>
 
