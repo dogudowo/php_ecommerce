@@ -14,7 +14,7 @@
 <body>
     <?php include "header.php"; ?>
     <!-- 輪播照片 -->
-    <div class="container w-100 w-lg-75">
+    <div class="container">
         <div id="homeCarsousel" class="carousel slide" data-bs-ride="carousel">
             <div class="carousel-indicators w-75 justify-content-center mx-auto align-items-center">
                 <button type="button" data-bs-target="#homeCarsousel" data-bs-slide-to="0" class="active"
@@ -130,7 +130,23 @@
                         aria-labelledby="v-pills-products-tab">
                         <!-- 全部行李箱內容 -->
                         <h4>全部行李箱</h4>
-                        <p>這裡是全部行李箱的內容。</p>
+
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                            <!-- 產品卡片 1 -->
+                            <div class="col">
+                                <a href="productDetail.php?product_id=T6927" class="text-decoration-none">
+                                    <div class="card h-100" style="cursor: pointer;">
+                                        <img src="imgs/T6927/main.jpg" class="card-img-top" alt="T6927 行李箱">
+                                        <div class="card-body text-black">
+                                            <h5 class="card-title">T6927 Haugas All-in 箱</h5>
+                                            <p class="card-text">26吋/29吋</p>
+                                        </div>
+
+                                        <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
                     </div>
                     <div class="tab-pane fade" id="v-pills-accessories" role="tabpanel"
                         aria-labelledby="v-pills-accessories-tab">
