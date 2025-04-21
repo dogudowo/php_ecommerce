@@ -84,15 +84,15 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
                         </p>
                         <div class="nav flex-column nav-pills gap-2 mt-4" id="v-pills-tab" role="tablist"
                             aria-orientation="vertical">
-                            <button class="nav-link active" id="v-pills-orders-tab" data-bs-toggle="pill"
-                                data-bs-target="#orders" type="button" role="tab" aria-controls="orders"
-                                aria-selected="true">
-                                <i class="bi bi-cart-check me-2"></i> 訂單管理
-                            </button>
-                            <button class="nav-link" id="v-pills-products-tab" data-bs-toggle="pill"
+                            <button class="nav-link active" id="v-pills-products-tab" data-bs-toggle="pill"
                                 data-bs-target="#products" type="button" role="tab" aria-controls="products"
                                 aria-selected="false">
                                 <i class="bi bi-box-seam me-2"></i> 商品管理
+                            </button>
+                            <button class="nav-link " id="v-pills-orders-tab" data-bs-toggle="pill"
+                                data-bs-target="#orders" type="button" role="tab" aria-controls="orders"
+                                aria-selected="true">
+                                <i class="bi bi-cart-check me-2"></i> 訂單管理
                             </button>
                             <button class="nav-link" id="v-pills-members-tab" data-bs-toggle="pill"
                                 data-bs-target="#members" type="button" role="tab" aria-controls="members"
@@ -107,192 +107,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
             <!-- 主要內容區 -->
             <div class="col-lg-9">
                 <div class="tab-content" id="v-pills-tabContent">
-                    <!-- 訂單管理 -->
-                    <div class="tab-pane fade show active" id="orders" role="tabpanel"
-                        aria-labelledby="v-pills-orders-tab">
-                        <h3 class="mb-3">訂單管理</h3>
-                        <div class="card">
-                            <div class="card-header bg-light d-flex justify-content-between align-items-center">
-                                <h5 class="mb-0">所有訂單</h5>
-                                <div class="input-group w-50">
-                                    <input type="text" class="form-control" placeholder="搜尋訂單...">
-                                    <button class="btn btn-outline-secondary" type="button">搜尋</button>
-                                </div>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table table-hover">
-                                        <thead>
-                                            <tr>
-                                                <th>訂單編號</th>
-                                                <th>客戶</th>
-                                                <th>金額</th>
-                                                <th>狀態</th>
-                                                <th>日期</th>
-                                                <th>操作</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>ORD-20230001</td>
-                                                <td>李小明</td>
-                                                <td>NT$5,800</td>
-                                                <td><span class="badge bg-success">已完成</span></td>
-                                                <td>2023/12/15</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-info">查看</button>
-                                                    <button class="btn btn-sm btn-outline-warning">編輯</button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>ORD-20230002</td>
-                                                <td>張美美</td>
-                                                <td>NT$3,200</td>
-                                                <td><span class="badge bg-warning text-dark">處理中</span></td>
-                                                <td>2023/12/20</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-info">查看</button>
-                                                    <button class="btn btn-sm btn-outline-warning">編輯</button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>ORD-20230003</td>
-                                                <td>王大明</td>
-                                                <td>NT$7,600</td>
-                                                <td><span class="badge bg-danger">已取消</span></td>
-                                                <td>2023/12/22</td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-info">查看</button>
-                                                    <button class="btn btn-sm btn-outline-warning">編輯</button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <span>顯示 1 到 3 筆，共 3 筆</span>
-                                    <nav>
-                                        <ul class="pagination mb-0">
-                                            <li class="page-item disabled"><a class="page-link" href="#">上一頁</a>
-                                            </li>
-                                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                                            <li class="page-item disabled"><a class="page-link" href="#">下一頁</a>
-                                            </li>
-                                        </ul>
-                                    </nav>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
                     <!-- 商品管理 -->
-                    <div class="tab-pane fade" id="products" role="tabpanel" aria-labelledby="v-pills-products-tab">
-                        <h3 class="mb-3">商品管理</h3>
-                        <div class="mb-3">
-                            <button class="btn btn-primary">新增商品</button>
-                        </div>
-                        <div class="card">
-                            <div class="card-header bg-light">
-                                <h5 class="mb-0">商品列表</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>商品圖片</th>
-                                                <th>商品名稱</th>
-                                                <th>價格</th>
-                                                <th>庫存</th>
-                                                <th>狀態</th>
-                                                <th>操作</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>1</td>
-                                                <td><img src="https://via.placeholder.com/50" alt="產品圖片"></td>
-                                                <td>Legend Walker 5109-48 行李箱</td>
-                                                <td>NT$5,800</td>
-                                                <td>15</td>
-                                                <td><span class="badge bg-success">上架中</span></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-warning">編輯</button>
-                                                    <button class="btn btn-sm btn-outline-danger">下架</button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>2</td>
-                                                <td><img src="https://via.placeholder.com/50" alt="產品圖片"></td>
-                                                <td>RIMOWA Classic Cabin S 行李箱</td>
-                                                <td>NT$74,500</td>
-                                                <td>5</td>
-                                                <td><span class="badge bg-success">上架中</span></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-warning">編輯</button>
-                                                    <button class="btn btn-sm btn-outline-danger">下架</button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
+                    <?php include "backend/productManager.php"; ?>
+                    <!-- 訂單管理 -->
+                    <?php include "backend/orderManager.php"; ?>
                     <!-- 會員管理 -->
-                    <div class="tab-pane fade" id="members" role="tabpanel" aria-labelledby="v-pills-members-tab">
-                        <h3 class="mb-3">會員管理</h3>
-                        <div class="card">
-                            <div class="card-header bg-light">
-                                <h5 class="mb-0">會員列表</h5>
-                            </div>
-                            <div class="card-body">
-                                <div class="table-responsive">
-                                    <table class="table">
-                                        <thead>
-                                            <tr>
-                                                <th>ID</th>
-                                                <th>姓名</th>
-                                                <th>電話</th>
-                                                <th>註冊日期</th>
-                                                <th>訂單數</th>
-                                                <th>狀態</th>
-                                                <th>操作</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            <tr>
-                                                <td>1</td>
-                                                <td>李小明</td>
-                                                <td>0912345678</td>
-                                                <td>2023/10/15</td>
-                                                <td>1</td>
-                                                <td><span class="badge bg-success">正常</span></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-info">查看</button>
-                                                    <button class="btn btn-sm btn-outline-warning">編輯</button>
-                                                </td>
-                                            </tr>
-                                            <tr>
-                                                <td>2</td>
-                                                <td>張美美</td>
-                                                <td>0923456789</td>
-                                                <td>2023/11/20</td>
-                                                <td>1</td>
-                                                <td><span class="badge bg-success">正常</span></td>
-                                                <td>
-                                                    <button class="btn btn-sm btn-outline-info">查看</button>
-                                                    <button class="btn btn-sm btn-outline-warning">編輯</button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <?php include "backend/memberManager.php"; ?>
                 </div>
             </div>
         </div>
