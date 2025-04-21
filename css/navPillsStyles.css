@@ -1,0 +1,23 @@
+.nav-pills .nav-link {
+    color: rgb(25, 135, 84);
+    background-color: white;
+    transition: background-color 0.3s, color 0.3s;
+}
+
+/* 活動（active）狀態 */
+.nav-pills .nav-link.active {
+    color: #fff;
+    background-color: rgb(25, 135, 84);
+    /* 自訂的 active 背景色 */
+}
+
+.nav-pills .nav-link img {
+    vertical-align: middle;
+}
+
+html,
+body {
+    overflow-x: hidden;
+    overflow-y: scroll;
+    /* 防止橫向滾動條 */
+}

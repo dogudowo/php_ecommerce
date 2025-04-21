@@ -1,2 +1,0 @@
-<!-- content to dataBase -->
-<?php
