@@ -50,25 +50,20 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
                     <p class="text-muted mb-4">管理員: <?php echo htmlspecialchars($_SESSION['user_name']); ?></p>
                     <div class="nav flex-column nav-pills gap-2" id="v-pills-tab-offcanvas" role="tablist"
                         aria-orientation="vertical">
-                        <button class="nav-link active" id="v-pills-orders-tab-offcanvas" data-bs-toggle="pill"
-                            data-bs-target="#orders" type="button" role="tab" aria-controls="orders"
-                            aria-selected="true" data-bs-dismiss="offcanvas">
-                            <i class="bi bi-cart-check me-2"></i> 訂單管理
-                        </button>
-                        <button class="nav-link" id="v-pills-products-tab-offcanvas" data-bs-toggle="pill"
+                        <button class="nav-link active" id="v-pills-products-tab-offcanvas" data-bs-toggle="pill"
                             data-bs-target="#products" type="button" role="tab" aria-controls="products"
                             aria-selected="false" data-bs-dismiss="offcanvas">
                             <i class="bi bi-box-seam me-2"></i> 商品管理
+                        </button>
+                        <button class="nav-link " id="v-pills-orders-tab-offcanvas" data-bs-toggle="pill"
+                            data-bs-target="#orders" type="button" role="tab" aria-controls="orders"
+                            aria-selected="true" data-bs-dismiss="offcanvas">
+                            <i class="bi bi-cart-check me-2"></i> 訂單管理
                         </button>
                         <button class="nav-link" id="v-pills-members-tab-offcanvas" data-bs-toggle="pill"
                             data-bs-target="#members" type="button" role="tab" aria-controls="members"
                             aria-selected="false" data-bs-dismiss="offcanvas">
                             <i class="bi bi-people me-2"></i> 會員管理
-                        </button>
-                        <button class="nav-link" id="v-pills-coupons-tab-offcanvas" data-bs-toggle="pill"
-                            data-bs-target="#coupons" type="button" role="tab" aria-controls="coupons"
-                            aria-selected="false" data-bs-dismiss="offcanvas">
-                            <i class="bi bi-ticket-perforated me-2"></i> 優惠券管理
                         </button>
                     </div>
                 </div>

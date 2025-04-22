@@ -136,7 +136,7 @@
                             <div class="col">
                                 <a href="productDetail.php?product_id=T6927" class="text-decoration-none">
                                     <div class="card h-100" style="cursor: pointer;">
-                                        <img src="imgs/T6927/main.jpg" class="card-img-top" alt="T6927 行李箱">
+                                        <img src="imgs/products/T6927/main.jpg" class="card-img-top" alt="T6927 行李箱">
                                         <div class="card-body text-black">
                                             <h5 class="card-title">T6927 Haugas All-in 箱</h5>
                                             <p class="card-text">26吋/29吋</p>

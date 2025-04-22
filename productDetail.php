@@ -9,13 +9,13 @@ $products = [
         'description' => 'Haugas All-in 箱 #歐印箱 #全能箱，只有你沒想到的沒有我們做不到的！所有功能齊備一箱 1️⃣秤重⋯ 2️⃣煞車⋯ 3️⃣杯架⋯ 4️⃣密碼鎖⋯ 5️⃣細鋁框⋯ 6️⃣日乃本飛機輪⋯ 7️⃣乾濕分離收納⋯⋯⋯⋯ 8️⃣還有最重要的保固 #我知道你缺一個全能萬用箱',
         'sizes' => ['20吋', '24吋', '28吋'],
         'colors' => ['黑色', '銀色', '金色', '玫瑰金'],
-        'main_img' => 'imgs/T6927/main.jpg',
+        'main_img' => 'imgs/products/T6927/main.jpg',
         'gallery' => [
-            'imgs/T6927/T6927-1.jpg',
-            'imgs/T6927/T6927-2.jpg',
-            'imgs/T6927/T6927-3.jpg',
-            'imgs/T6927/T6927-4.jpg',
-            'imgs/T6927/T6927-5.jpg'
+            'imgs/products/T6927/T6927-1.jpg',
+            'imgs/products/T6927/T6927-2.jpg',
+            'imgs/products/T6927/T6927-3.jpg',
+            'imgs/products/T6927/T6927-4.jpg',
+            'imgs/products/T6927/T6927-5.jpg'
         ]
     ]
 ];
