@@ -1,4 +1,4 @@
-<div class="tab-pane fade show active" id="orders" role="tabpanel" aria-labelledby="v-pills-orders-tab">
+<div class="tab-pane fade " id="orders" role="tabpanel" aria-labelledby="v-pills-orders-tab">
     <h3 class="mb-3">訂單管理</h3>
     <div class="card">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">

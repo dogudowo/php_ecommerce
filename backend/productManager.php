@@ -1,4 +1,4 @@
-<div class="tab-pane fade" id="products" role="tabpanel" aria-labelledby="v-pills-products-tab">
+<div class="tab-pane fade show active" id="products" role="tabpanel" aria-labelledby="v-pills-products-tab">
     <h3 class="mb-3">商品管理</h3>
     <div class="mb-3">
         <button class="btn btn-primary">新增商品</button>
