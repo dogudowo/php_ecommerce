@@ -6,31 +6,43 @@
         </div>
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table">
-                    <thead>
+                <table class="table table-striped table-hover">
+                    <thead class="thead-light">
                         <tr>
                             <th>ID</th>
                             <th>姓名</th>
                             <th>電話</th>
-                            <th>註冊日期</th>
+                            <th>電子郵件</th>
                             <th>訂單數</th>
-                            <th>狀態</th>
-                            <th>操作</th>
+                            <th>身份</th>
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>李小明</td>
-                            <td>0912345678</td>
-                            <td>2023/10/15</td>
-                            <td>1</td>
-                            <td><span class="badge bg-success">正常</span></td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-info">查看</button>
-                                <button class="btn btn-sm btn-outline-warning">編輯</button>
-                            </td>
-                        </tr>
+                        <?php
+                        // 使用小寫路徑
+                        include_once '/Applications/XAMPP/xamppfiles/htdocs/public_html/php/APIs.php';
+
+                        // 添加錯誤處理
+                        try {
+                            $members = getMembers();
+                            if (!empty($members)) {
+                                foreach ($members as $member) {
+                                    echo "<tr>
+                                            <td>" . htmlspecialchars($member['MemberID']) . "</td>
+                                            <td>" . htmlspecialchars($member['membername']) . "</td>
+                                            <td>" . htmlspecialchars($member['phonenum']) . "</td>
+                                            <td>" . htmlspecialchars($member['memberemail']) . "</td>
+                                            <td>" . htmlspecialchars($member['order_count']) . "</td>
+                                            <td>" . htmlspecialchars($member['role']) . "</td>
+                                        </tr>";
+                                }
+                            } else {
+                                echo "<tr><td colspan='6' class='text-center'>無會員資料可顯示</td></tr>";
+                            }
+                        } catch (Exception $e) {
+                            echo "<tr><td colspan='6' class='text-center text-danger'>錯誤: " . htmlspecialchars($e->getMessage()) . "</td></tr>";
+                        }
+                        ?>
                     </tbody>
                 </table>
             </div>
