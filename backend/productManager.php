@@ -21,16 +21,31 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td><img src="https://via.placeholder.com/50" alt="產品圖片"></td>
-                            <td>Legend Walker 5109-48 行李箱</td>
-                            <td>NT$5,800</td>
-                            <td>15</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-warning">編輯</button>
-                            </td>
-                        </tr>
+                        <?php
+                        require_once __DIR__ . '/../php/APIs.php';
+                        $products = getProducts();
+                        foreach ($products as $product) {
+                            $priceDisplay = $product['MinPrice'] == $product['MaxPrice']
+                                ? "NT$" . number_format($product['MinPrice'])
+                                : "NT$" . number_format($product['MinPrice']) . " ~ " . number_format($product['MaxPrice']);
+
+                            $productDir = "/public_html/imgs/products/" . $product['ProductName'];
+                            $imgSrc = file_exists($_SERVER['DOCUMENT_ROOT'] . $productDir . "/main.jpg")
+                                ? $productDir . "/main.jpg"
+                                : "https://via.placeholder.com/50";
+
+                            echo "<tr>
+                                <td>{$product['ProductID']}</td>
+                                <td><img src='$imgSrc' alt='產品圖片' style='max-width: 50px; max-height: 50px;'></td>
+                                <td>{$product['ProductName']}</td>
+                                <td>{$priceDisplay}</td>
+                                <td>{$product['TotalStock']}</td>
+                                <td>
+                                    <button class='btn btn-sm btn-outline-warning edit-product' data-product-id='{$product['ProductID']}'>編輯</button>
+                                </td>
+                            </tr>";
+                        }
+                        ?>
                     </tbody>
                 </table>
             </div>
@@ -120,6 +135,66 @@
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                 <button type="submit" class="btn btn-primary" form="addProductForm">儲存</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 編輯商品 Modal -->
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-labelledby="editProductModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editProductModalLabel">編輯商品</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProductForm" enctype="multipart/form-data" method="POST">
+                    <input type="hidden" name="productId" id="edit-productId">
+                    <div class="mb-3">
+                        <label for="edit-productName" class="form-label">商品名稱</label>
+                        <input type="text" class="form-control" id="edit-productName" name="productName" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-productType" class="form-label">商品類型</label>
+                        <select class="form-select" id="edit-productType" name="productType" required>
+                            <option value="" disabled>請選擇商品類型</option>
+                            <option value="aluminum">鋁框款</option>
+                            <option value="zipper">拉鍊款</option>
+                            <option value="accessories">行李箱配件</option>
+                            <option value="travel">旅遊周邊</option>
+                            <option value="featured">精選商品</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="edit-productDescription" class="form-label">商品敘述</label>
+                        <textarea class="form-control" id="edit-productDescription" name="productDescription"
+                            rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">目前主要圖片</label>
+                        <div id="edit-currentMainImage" class="mb-2"></div>
+                        <label for="edit-mainImage" class="form-label">更新主要圖片 (不上傳則保持原圖)</label>
+                        <input type="file" class="form-control" id="edit-mainImage" name="mainImage" accept="image/*">
+                        <div id="edit-mainImagePreview" class="mt-2"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">目前相簿圖片</label>
+                        <div id="edit-currentGalleryImages" class="d-flex flex-wrap mb-2"></div>
+                        <label for="edit-galleryImages" class="form-label">更新相簿圖片 (不上傳則保持原圖)</label>
+                        <input type="file" class="form-control" id="edit-galleryImages" name="galleryImages[]"
+                            accept="image/*" multiple>
+                        <div id="edit-galleryImagesPreview" class="mt-2 d-flex flex-wrap"></div>
+                    </div>
+                    <div id="edit-sizeContainer">
+                        <!-- 動態生成的尺寸與顏色區塊 -->
+                    </div>
+                    <button type="button" class="btn btn-primary" id="edit-addSize">新增尺寸</button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="submit" class="btn btn-primary" form="editProductForm">儲存</button>
             </div>
         </div>
     </div>
@@ -241,6 +316,258 @@
                 location.reload();
             } else {
                 alert('商品新增失敗：' + (data.message || '未知錯誤'));
+                console.error('伺服器回傳錯誤：', data);
+            }
+        } catch (error) {
+            console.error('發生例外錯誤：', error);
+            alert('發生錯誤：' + error.message);
+        }
+    });
+
+    document.querySelectorAll('.edit-product').forEach(button => {
+        button.addEventListener('click', async function () {
+            const productId = this.getAttribute('data-product-id');
+            await loadProductData(productId);
+            const editProductModal = new bootstrap.Modal(document.getElementById('editProductModal'));
+            editProductModal.show();
+        });
+    });
+
+    document.getElementById('edit-mainImage').addEventListener('change', function (event) {
+        const file = event.target.files[0];
+        const preview = document.getElementById('edit-mainImagePreview');
+        preview.innerHTML = '';
+        if (file) {
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.style.maxWidth = '100px';
+            img.style.maxHeight = '100px';
+            preview.appendChild(img);
+        }
+    });
+
+    document.getElementById('edit-galleryImages').addEventListener('change', function (event) {
+        const files = event.target.files;
+        const preview = document.getElementById('edit-galleryImagesPreview');
+        preview.innerHTML = '';
+        Array.from(files).forEach(file => {
+            const img = document.createElement('img');
+            img.src = URL.createObjectURL(file);
+            img.style.maxWidth = '100px';
+            img.style.maxHeight = '100px';
+            img.style.marginRight = '5px';
+            preview.appendChild(img);
+        });
+    });
+
+    async function loadProductData(productId) {
+        try {
+            const response = await fetch(`/public_html/php/getProductData.php?id=${productId}`);
+            if (!response.ok) {
+                throw new Error(`網路錯誤，狀態碼：${response.status}`);
+            }
+
+            const product = await response.json();
+
+            // 填入基本資訊
+            document.getElementById('edit-productId').value = product.ProductID;
+            document.getElementById('edit-productName').value = product.ProductName;
+            document.getElementById('edit-productType').value = product.Type;
+            document.getElementById('edit-productDescription').value = product.Description;
+
+            // 顯示當前主要圖片
+            const currentMainImage = document.getElementById('edit-currentMainImage');
+            currentMainImage.innerHTML = '';
+            const mainImg = document.createElement('img');
+            mainImg.src = product.mainImage;
+            mainImg.alt = '主要圖片';
+            mainImg.style.maxWidth = '100px';
+            mainImg.style.maxHeight = '100px';
+            currentMainImage.appendChild(mainImg);
+
+            // 顯示當前相簿圖片
+            const currentGalleryImages = document.getElementById('edit-currentGalleryImages');
+            currentGalleryImages.innerHTML = '';
+            if (product.galleryImages.length > 0) {
+                product.galleryImages.forEach(imgSrc => {
+                    const galleryImg = document.createElement('img');
+                    galleryImg.src = imgSrc;
+                    galleryImg.alt = '相簿圖片';
+                    galleryImg.style.maxWidth = '100px';
+                    galleryImg.style.maxHeight = '100px';
+                    galleryImg.style.marginRight = '5px';
+                    currentGalleryImages.appendChild(galleryImg);
+                });
+            } else {
+                currentGalleryImages.innerHTML = '<p>無相簿圖片</p>';
+            }
+
+            // 填入尺寸和顏色資訊
+            const sizeContainer = document.getElementById('edit-sizeContainer');
+            sizeContainer.innerHTML = '';
+
+            product.sizeOptions.forEach((sizeOption, sizeIndex) => {
+                const sizeSection = document.createElement('div');
+                sizeSection.className = 'size-section mb-3';
+                sizeSection.innerHTML = `
+                    <label class="form-label">尺寸與價格</label>
+                    <div class="row g-2 mb-2">
+                        <div class="col">
+                            <input type="text" class="form-control" name="edit_sizes[]" placeholder="尺寸" value="${sizeOption.size}" required>
+                        </div>
+                        <div class="col">
+                            <input type="number" class="form-control" name="edit_prices[]" placeholder="價格" value="${sizeOption.price}" required>
+                        </div>
+                        <div class="col-auto">
+                            <button type="button" class="btn btn-danger edit-remove-size">移除尺寸</button>
+                        </div>
+                    </div>
+                    <div class="color-stock-container mt-2">
+                    </div>
+                `;
+
+                const colorStockContainer = sizeSection.querySelector('.color-stock-container');
+
+                sizeOption.colors.forEach((colorOption, colorIndex) => {
+                    const colorStock = document.createElement('div');
+                    colorStock.className = 'color-stock mb-2';
+                    colorStock.innerHTML = `
+                        <div class="row g-2">
+                            <input type="hidden" name="edit_optionIds[${sizeIndex}][]" value="${colorOption.optionId}">
+                            <div class="col">
+                                <input type="text" class="form-control" name="edit_colors[${sizeIndex}][]" placeholder="顏色" value="${colorOption.color}" required>
+                            </div>
+                            <div class="col">
+                                <input type="number" class="form-control" name="edit_stocks[${sizeIndex}][]" placeholder="庫存" value="${colorOption.stock}" required>
+                            </div>
+                            <div class="col-auto">
+                                <button type="button" class="btn btn-primary edit-add-color-stock">新增顏色</button>
+                                <button type="button" class="btn btn-danger edit-remove-color-stock">移除</button>
+                            </div>
+                        </div>
+                    `;
+
+                    colorStockContainer.appendChild(colorStock);
+                });
+
+                sizeContainer.appendChild(sizeSection);
+            });
+        } catch (error) {
+            console.error('載入產品資料失敗：', error);
+            alert('載入產品資料失敗：' + error.message);
+        }
+    }
+
+    let editSizeIndex = 0;
+
+    document.getElementById('edit-addSize').addEventListener('click', function () {
+        editSizeIndex = document.querySelectorAll('.size-section').length;
+
+        const sizeContainer = document.getElementById('edit-sizeContainer');
+        const newSizeSection = document.createElement('div');
+        newSizeSection.className = 'size-section mb-3';
+        newSizeSection.innerHTML = `
+            <label class="form-label">尺寸與價格</label>
+            <div class="row g-2 mb-2">
+                <div class="col">
+                    <input type="text" class="form-control" name="edit_sizes[]" placeholder="尺寸" required>
+                </div>
+                <div class="col">
+                    <input type="number" class="form-control" name="edit_prices[]" placeholder="價格" required>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-danger edit-remove-size">移除尺寸</button>
+                </div>
+            </div>
+            <div class="color-stock-container mt-2">
+                <div class="color-stock mb-2">
+                    <div class="row g-2">
+                        <input type="hidden" name="edit_optionIds[${editSizeIndex}][]" value="new">
+                        <div class="col">
+                            <input type="text" class="form-control" name="edit_colors[${editSizeIndex}][]" placeholder="顏色" required>
+                        </div>
+                        <div class="col">
+                            <input type="number" class="form-control" name="edit_stocks[${editSizeIndex}][]" placeholder="庫存" required>
+                        </div>
+                        <div class="col-auto">
+                            <button type="button" class="btn btn-primary edit-add-color-stock">新增顏色</button>
+                            <button type="button" class="btn btn-danger edit-remove-color-stock">移除</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        sizeContainer.appendChild(newSizeSection);
+    });
+
+    // 編輯商品的尺寸和顏色事件處理
+    document.addEventListener('click', function (event) {
+        if (event.target.classList.contains('edit-add-color-stock')) {
+            const sizeSection = event.target.closest('.size-section');
+            const colorStockContainer = sizeSection.querySelector('.color-stock-container');
+            const sizeIndex = Array.from(document.querySelectorAll('.size-section')).indexOf(sizeSection);
+
+            const newColorStock = document.createElement('div');
+            newColorStock.className = 'color-stock mb-2';
+            newColorStock.innerHTML = `
+                <div class="row g-2">
+                    <input type="hidden" name="edit_optionIds[${sizeIndex}][]" value="new">
+                    <div class="col">
+                        <input type="text" class="form-control" name="edit_colors[${sizeIndex}][]" placeholder="顏色" required>
+                    </div>
+                    <div class="col">
+                        <input type="number" class="form-control" name="edit_stocks[${sizeIndex}][]" placeholder="庫存" required>
+                    </div>
+                    <div class="col-auto">
+                        <button type="button" class="btn btn-primary edit-add-color-stock">新增顏色</button>
+                        <button type="button" class="btn btn-danger edit-remove-color-stock">移除</button>
+                    </div>
+                </div>
+            `;
+
+            colorStockContainer.appendChild(newColorStock);
+        } else if (event.target.classList.contains('edit-remove-color-stock')) {
+            const currentSection = event.target.closest('.size-section');
+            const colorStocks = currentSection.querySelectorAll('.color-stock');
+
+            if (colorStocks.length > 1) {
+                event.target.closest('.color-stock').remove();
+            } else {
+                alert('每個尺寸至少需要一個顏色選項');
+            }
+        } else if (event.target.classList.contains('edit-remove-size')) {
+            const sizeSections = document.querySelectorAll('.size-section');
+            if (sizeSections.length > 1) {
+                event.target.closest('.size-section').remove();
+            } else {
+                alert('至少需要一個尺寸');
+            }
+        }
+    });
+
+    document.getElementById('editProductForm').addEventListener('submit', async function (event) {
+        event.preventDefault();
+        const form = this;
+        const formData = new FormData(form);
+
+        try {
+            const response = await fetch('/public_html/php/updateProductHandler.php', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                throw new Error(`網路錯誤，狀態碼：${response.status}`);
+            }
+
+            const data = await response.json();
+            if (data.success) {
+                alert('商品更新成功');
+                bootstrap.Modal.getInstance(document.getElementById('editProductModal')).hide();
+                location.reload(); // 重新載入頁面顯示更新後的資料
+            } else {
+                alert('商品更新失敗：' + (data.message || '未知錯誤'));
                 console.error('伺服器回傳錯誤：', data);
             }
         } catch (error) {

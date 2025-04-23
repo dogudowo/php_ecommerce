@@ -113,4 +113,102 @@ function addProduct($productName, $productType, $mainImage, $galleryImages, $siz
     }
 }
 
+function getProducts()
+{
+    $conn = db_connect();
+
+    $sql = "SELECT 
+                p.ProductID,
+                p.ProductName,
+                p.Type,
+                p.Introdution as Description,
+                MIN(o.Price) as MinPrice,
+                MAX(o.Price) as MaxPrice,
+                SUM(o.Stock) as TotalStock
+            FROM Product p
+            LEFT JOIN Options o ON p.ProductID = o.ProductID
+            GROUP BY p.ProductID, p.ProductName, p.Type, p.Introdution
+            ORDER BY p.ProductID";
+
+    $result = $conn->query($sql);
+
+    if (!$result) {
+        error_log("資料庫查詢失敗：" . $conn->error);
+        $conn->close();
+        return [];
+    }
+
+    $products = [];
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $products[] = $row;
+        }
+    }
+
+    $conn->close();
+    return $products;
+}
+
+function getProductById($productId)
+{
+    $conn = db_connect();
+
+    // 獲取產品基本信息
+    $stmt = $conn->prepare("SELECT ProductID, ProductName, Type, Introdution as Description FROM Product WHERE ProductID = ?");
+    $stmt->bind_param("i", $productId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 0) {
+        $conn->close();
+        return null;
+    }
+
+    $product = $result->fetch_assoc();
+
+    // 獲取該產品的所有選項
+    $stmt = $conn->prepare("SELECT OptionID, Color, Size, Price, Stock FROM Options WHERE ProductID = ?");
+    $stmt->bind_param("i", $productId);
+    $stmt->execute();
+    $optionsResult = $stmt->get_result();
+
+    $product['options'] = [];
+    $sizeOptions = [];
+
+    while ($option = $optionsResult->fetch_assoc()) {
+        $size = $option['Size'];
+
+        if (!isset($sizeOptions[$size])) {
+            $sizeOptions[$size] = [
+                'size' => $size,
+                'price' => $option['Price'],
+                'colors' => []
+            ];
+        }
+
+        $sizeOptions[$size]['colors'][] = [
+            'color' => $option['Color'],
+            'stock' => $option['Stock'],
+            'optionId' => $option['OptionID']
+        ];
+    }
+
+    $product['sizeOptions'] = array_values($sizeOptions);
+
+    // 檢查產品圖片是否存在
+    $productDir = "/Applications/XAMPP/xamppfiles/htdocs/public_html/imgs/products/" . $product['ProductName'];
+    $webPath = "/public_html/imgs/products/" . $product['ProductName'];
+
+    $product['mainImage'] = file_exists($productDir . "/main.jpg") ? $webPath . "/main.jpg" : "https://via.placeholder.com/150";
+
+    $product['galleryImages'] = [];
+    $i = 1;
+    while (file_exists($productDir . "/gallery-" . $i . ".jpg")) {
+        $product['galleryImages'][] = $webPath . "/gallery-" . $i . ".jpg";
+        $i++;
+    }
+
+    $conn->close();
+    return $product;
+}
 ?>
