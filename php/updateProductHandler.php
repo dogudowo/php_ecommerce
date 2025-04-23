@@ -21,6 +21,7 @@ $prices = $_POST['edit_prices'] ?? [];
 $optionIds = $_POST['edit_optionIds'] ?? [];
 $colors = $_POST['edit_colors'] ?? [];
 $stocks = $_POST['edit_stocks'] ?? [];
+$sizeDescriptions = $_POST['edit_sizeDescriptions'] ?? [];
 
 // 建立資料庫連線
 $conn = db_connect();
@@ -46,13 +47,15 @@ try {
                 $row = $result->fetch_assoc();
                 $newOptionId = $row['max_id'] + 1;
 
-                $stmt = $conn->prepare("INSERT INTO Options (OptionID, ProductID, Color, Size, Price, Stock) VALUES (?, ?, ?, ?, ?, ?)");
-                $stmt->bind_param("iissii", $newOptionId, $productId, $color, $size, $price, $stock);
+                $stmt = $conn->prepare("INSERT INTO Options (OptionID, ProductID, Color, Size, SizeDescription, Price, Stock) VALUES (?, ?, ?, ?, ?, ?, ?)");
+                $sizeDesc = $sizeDescriptions[$sizeIndex] ?? null;
+                $stmt->bind_param("iisssii", $newOptionId, $productId, $color, $size, $sizeDesc, $price, $stock);
                 $stmt->execute();
             } else {
                 // 更新既有選項
-                $stmt = $conn->prepare("UPDATE Options SET Color = ?, Size = ?, Price = ?, Stock = ? WHERE OptionID = ?");
-                $stmt->bind_param("ssiis", $color, $size, $price, $stock, $optionId);
+                $stmt = $conn->prepare("UPDATE Options SET Color = ?, Size = ?, SizeDescription = ?, Price = ?, Stock = ? WHERE OptionID = ?");
+                $sizeDesc = $sizeDescriptions[$sizeIndex] ?? null;
+                $stmt->bind_param("ssssii", $color, $size, $sizeDesc, $price, $stock, $optionId);
                 $stmt->execute();
             }
         }

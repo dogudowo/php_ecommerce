@@ -1,11 +1,11 @@
 -- phpMyAdmin SQL Dump
--- version 5.2.1deb3
+-- version 5.2.1
 -- https://www.phpmyadmin.net/
 --
--- 主機： localhost:3306
--- 產生時間： 2025 年 04 月 22 日 08:31
--- 伺服器版本： 10.11.11-MariaDB-0ubuntu0.24.04.2
--- PHP 版本： 8.3.6
+-- 主機： localhost
+-- 產生時間： 2025 年 04 月 23 日 11:37
+-- 伺服器版本： 10.4.28-MariaDB
+-- PHP 版本： 8.2.4
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -60,6 +60,14 @@ CREATE TABLE `Member` (
   `IsAdmin` tinyint(1) DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+--
+-- 傾印資料表的資料 `Member`
+--
+
+INSERT INTO `Member` (`MemberID`, `Email`, `Password`, `Name`, `City`, `Address`, `Phone`, `IsAdmin`) VALUES
+(1, 'admin@example.com', 'admin1234', '王大明', '台北市', '信義路五段7號', '0912345678', 1),
+(2, 'user@example.com', 'user5678', '林小美', '高雄市', '中山二路88號', '0987654321', 0);
+
 -- --------------------------------------------------------
 
 --
@@ -71,9 +79,20 @@ CREATE TABLE `Options` (
   `ProductID` int(11) DEFAULT NULL,
   `Color` varchar(100) DEFAULT NULL,
   `Size` int(11) DEFAULT NULL,
+  `SizeDescription` varchar(50) DEFAULT NULL,
   `Price` int(11) DEFAULT NULL,
   `Stock` int(11) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- 傾印資料表的資料 `Options`
+--
+
+INSERT INTO `Options` (`OptionID`, `ProductID`, `Color`, `Size`, `SizeDescription`, `Price`, `Stock`) VALUES
+(1, 1, '雪貂白(WH)', 29, NULL, 7680, 10),
+(2, 1, '獵鷹灰(GREY)', 29, NULL, 7680, 10),
+(3, 2, '黑', 9503, NULL, 1125, 100),
+(4, 2, '棕', 9503, NULL, 1125, 100);
 
 -- --------------------------------------------------------
 
@@ -112,6 +131,14 @@ CREATE TABLE `Product` (
   `ProductName` varchar(100) DEFAULT NULL,
   `Introdution` text DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- 傾印資料表的資料 `Product`
+--
+
+INSERT INTO `Product` (`ProductID`, `Type`, `ProductName`, `Introdution`) VALUES
+(1, 'aluminum', 'T6927', 'Haugas All-in 箱 #歐印箱 #全能箱，只有你沒想到的 沒有我們做不到的！所有功能齊備一箱 1️⃣秤重⋯ 2️⃣煞車⋯ 3️⃣杯架⋯ 4️⃣密碼鎖⋯ 5️⃣細鋁框⋯ 6️⃣日乃本飛機輪⋯ 7️⃣乾濕分離收納⋯⋯⋯⋯ 8️⃣還有最重要的保固 #我知道你缺一個全能萬用箱'),
+(2, 'travel', '9503 防潑水手拿信封包(小)', '');
 
 -- --------------------------------------------------------
 

@@ -48,7 +48,7 @@ function getMembers($conn = null)
     return $members;
 }
 
-function addProduct($productName, $productType, $mainImage, $galleryImages, $sizes, $colors, $stocks, $prices, $productDescription = '')
+function addProduct($productName, $productType, $mainImage, $galleryImages, $sizes, $sizeDescriptions, $colors, $stocks, $prices, $productDescription = '')
 {
     $conn = db_connect();
     $conn->begin_transaction();
@@ -87,9 +87,10 @@ function addProduct($productName, $productType, $mainImage, $galleryImages, $siz
         }
 
         // 新增尺寸、顏色、庫存
-        $stmt = $conn->prepare("INSERT INTO Options (OptionID, ProductID, Color, Size, Price, Stock) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt = $conn->prepare("INSERT INTO Options (OptionID, ProductID, Color, Size, SizeDescription, Price, Stock) VALUES (?, ?, ?, ?, ?, ?, ?)");
         foreach ($sizes as $sizeIndex => $size) {
-            $sizePrice = $prices[$sizeIndex]; // 每個尺寸對應一個價格
+            $sizePrice = $prices[$sizeIndex];
+            $sizeDesc = $sizeDescriptions[$sizeIndex] ?? null;
 
             foreach ($colors[$sizeIndex] as $colorIndex => $color) {
                 $result = $conn->query("SELECT MAX(OptionID) AS max_id FROM Options");
@@ -97,7 +98,7 @@ function addProduct($productName, $productType, $mainImage, $galleryImages, $siz
                 $optionId = $row['max_id'] + 1;
 
                 $stock = $stocks[$sizeIndex][$colorIndex];
-                $stmt->bind_param("iissii", $optionId, $productId, $color, $size, $sizePrice, $stock);
+                $stmt->bind_param("iisssii", $optionId, $productId, $color, $size, $sizeDesc, $sizePrice, $stock);
                 $stmt->execute();
             }
         }
@@ -167,7 +168,7 @@ function getProductById($productId)
     $product = $result->fetch_assoc();
 
     // 獲取該產品的所有選項
-    $stmt = $conn->prepare("SELECT OptionID, Color, Size, Price, Stock FROM Options WHERE ProductID = ?");
+    $stmt = $conn->prepare("SELECT OptionID, Color, Size, SizeDescription, Price, Stock FROM Options WHERE ProductID = ?");
     $stmt->bind_param("i", $productId);
     $stmt->execute();
     $optionsResult = $stmt->get_result();
@@ -182,6 +183,7 @@ function getProductById($productId)
             $sizeOptions[$size] = [
                 'size' => $size,
                 'price' => $option['Price'],
+                'sizeDescription' => $option['SizeDescription'],
                 'colors' => []
             ];
         }

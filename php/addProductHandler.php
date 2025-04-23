@@ -25,6 +25,7 @@ try {
         $_FILES['mainImage'],
         isset($_FILES['galleryImages']) ? $_FILES['galleryImages'] : [],
         $_POST['sizes'],
+        $_POST['sizeDescriptions'] ?? [],
         $_POST['colors'],
         $_POST['stocks'],
         $_POST['prices'],
