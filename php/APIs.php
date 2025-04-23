@@ -65,26 +65,7 @@ function addProduct($productName, $productType, $mainImage, $galleryImages, $siz
         $stmt->execute();
 
         // 儲存圖片
-        $productDir = "/Applications/XAMPP/xamppfiles/htdocs/public_html/imgs/products/" . $productName;
-        if (!file_exists($productDir)) {
-            if (!mkdir($productDir, 0777, true)) {
-                throw new Exception("無法建立目錄：$productDir ，請檢查目錄權限。");
-            }
-        }
-        if (!empty($mainImage['tmp_name'])) {
-            if (!move_uploaded_file($mainImage['tmp_name'], "$productDir/main.jpg")) {
-                throw new Exception("無法儲存主要圖片到目錄：$productDir");
-            }
-        }
-        if (!empty($galleryImages['tmp_name'])) {
-            foreach ($galleryImages['tmp_name'] as $index => $tmpName) {
-                if (!empty($tmpName)) {
-                    if (!move_uploaded_file($tmpName, "$productDir/gallery-" . ($index + 1) . ".jpg")) {
-                        throw new Exception("無法儲存相簿圖片到目錄：$productDir");
-                    }
-                }
-            }
-        }
+        handleProductImages($productName, $mainImage, $galleryImages);
 
         // 新增尺寸、顏色、庫存
         $stmt = $conn->prepare("INSERT INTO Options (OptionID, ProductID, Color, Size, SizeDescription, Price, Stock) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -212,5 +193,41 @@ function getProductById($productId)
 
     $conn->close();
     return $product;
+}
+
+function handleProductImages($productName, $mainImage, $galleryImages) {
+    $productDir = "/Applications/XAMPP/xamppfiles/htdocs/public_html/imgs/products/" . $productName;
+    
+    if (!file_exists($productDir)) {
+        if (!mkdir($productDir, 0777, true)) {
+            throw new Exception("無法建立目錄：$productDir");
+        }
+    }
+
+    if (!empty($mainImage['tmp_name'])) {
+        if (!move_uploaded_file($mainImage['tmp_name'], "$productDir/main.jpg")) {
+            throw new Exception("無法儲存主要圖片");
+        }
+    }
+
+    if (!empty($galleryImages['tmp_name'])) {
+        foreach ($galleryImages['tmp_name'] as $index => $tmpName) {
+            if (!empty($tmpName)) {
+                if (!move_uploaded_file($tmpName, "$productDir/gallery-" . ($index + 1) . ".jpg")) {
+                    throw new Exception("無法儲存相簿圖片");
+                }
+            }
+        }
+    }
+}
+
+function validateProductInput($input) {
+    if (empty($input['productName']) || empty($input['productType'])) {
+        throw new Exception('缺少必要欄位');
+    }
+    
+    if (empty($input['colors']) || empty($input['stocks']) || empty($input['prices'])) {
+        throw new Exception('缺少商品規格資訊');
+    }
 }
 ?>
