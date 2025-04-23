@@ -11,25 +11,27 @@ try {
         throw new Exception('缺少必要欄位');
     }
 
-    if (empty($_POST['sizes']) || empty($_POST['colors']) || empty($_POST['stocks']) || empty($_POST['prices'])) {
+    // 修改：不再強制要求sizes欄位
+    if (empty($_POST['colors']) || empty($_POST['stocks']) || empty($_POST['prices'])) {
         throw new Exception('缺少商品規格資訊');
     }
 
-    // 取得商品敘述（如果存在）
-    $productDescription = isset($_POST['productDescription']) ? $_POST['productDescription'] : '';
+    // 處理空尺寸值
+    $sizes = $_POST['sizes'] ?? [];
+    $sizeDescriptions = $_POST['sizeDescriptions'] ?? [];
 
-    // 呼叫 addProduct 函數，並加入商品敘述參數
+    // 呼叫 addProduct 函數
     $success = addProduct(
         $_POST['productName'],
         $_POST['productType'],
         $_FILES['mainImage'],
         isset($_FILES['galleryImages']) ? $_FILES['galleryImages'] : [],
-        $_POST['sizes'],
-        $_POST['sizeDescriptions'] ?? [],
+        $sizes,
+        $sizeDescriptions,
         $_POST['colors'],
         $_POST['stocks'],
         $_POST['prices'],
-        $productDescription  // 增加這個參數
+        $_POST['productDescription'] ?? ''
     );
 
     if ($success) {

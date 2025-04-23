@@ -36,17 +36,20 @@ try {
     // 處理產品選項
     foreach ($sizes as $sizeIndex => $size) {
         $price = $prices[$sizeIndex];
-
+    
+        // 處理空尺寸值，設為-1
+        $size = empty($size) ? "-1" : $size;
+    
         foreach ($colors[$sizeIndex] as $colorIndex => $color) {
             $stock = $stocks[$sizeIndex][$colorIndex];
             $optionId = $optionIds[$sizeIndex][$colorIndex];
-
+    
             if ($optionId === 'new') {
                 // 新增選項
                 $result = $conn->query("SELECT MAX(OptionID) AS max_id FROM Options");
                 $row = $result->fetch_assoc();
                 $newOptionId = $row['max_id'] + 1;
-
+    
                 $stmt = $conn->prepare("INSERT INTO Options (OptionID, ProductID, Color, Size, SizeDescription, Price, Stock) VALUES (?, ?, ?, ?, ?, ?, ?)");
                 $sizeDesc = $sizeDescriptions[$sizeIndex] ?? null;
                 $stmt->bind_param("iisssii", $newOptionId, $productId, $color, $size, $sizeDesc, $price, $stock);

@@ -100,7 +100,7 @@
                             <label class="form-label">尺寸與價格</label>
                             <div class="row g-2 mb-2">
                                 <div class="col">
-                                    <input type="text" class="form-control" name="sizes[]" placeholder="尺寸" required>
+                                    <input type="text" class="form-control" name="sizes[]" placeholder="尺寸">
                                 </div>
                                 <div class="col">
                                     <input type="text" class="form-control" name="sizeDescriptions[]"
@@ -196,8 +196,7 @@
                             <label class="form-label">尺寸與價格</label>
                             <div class="row g-2 mb-2">
                                 <div class="col">
-                                    <input type="text" class="form-control" name="edit_sizes[]" placeholder="尺寸"
-                                        required>
+                                    <input type="text" class="form-control" name="edit_sizes[]" placeholder="尺寸">
                                 </div>
                                 <div class="col">
                                     <input type="text" class="form-control" name="edit_sizeDescriptions[]"
@@ -326,7 +325,7 @@
                 });
 
                 colorStockContainer.appendChild(newColorStock);
-            } else if (event.target.classList.contains("remove-color-stock")) {
+            } else if (event.target.classList.contains("edit-remove-color-stock")) {
                 // 檢查當前尺寸區塊中的顏色項目數量
                 const currentSection = event.target.closest(".size-section");
                 const colorStocks = currentSection.querySelectorAll(".color-stock");
@@ -336,7 +335,7 @@
                 } else {
                     alert("每個尺寸至少需要一個顏色選項");
                 }
-            } else if (event.target.classList.contains("remove-size")) {
+            } else if (event.target.classList.contains("edit-remove-size")) {
                 const sizeSections = document.querySelectorAll(".size-section");
                 if (sizeSections.length > 1) {
                     event.target.closest(".size-section").remove();
@@ -479,7 +478,7 @@
                     <div class="row g-2 mb-2">
                         <div class="col">
                             <input type="text" class="form-control" name="edit_sizes[]" placeholder="尺寸" value="${sizeOption.size
-                    }" required>
+                    }" >
                         </div>
                         <div class="col">
                             <input type="text" class="form-control" name="edit_sizeDescriptions[]" placeholder="尺寸描述" value="${sizeOption.sizeDescription || ""
@@ -545,7 +544,7 @@
                 <label class="form-label">尺寸與價格</label>
                 <div class="row g-2 mb-2">
                     <div class="col">
-                        <input type="text" class="form-control" name="edit_sizes[]" placeholder="尺寸" required>
+                        <input type="text" class="form-control" name="edit_sizes[]" placeholder="尺寸" >
                     </div>
                     <div class="col">
                         <input type="text" class="form-control" name="edit_sizeDescriptions[]" placeholder="尺寸描述">
@@ -687,7 +686,7 @@
             <label class="form-label">尺寸與價格</label>
             <div class="row g-2 mb-2">
                 <div class="col">
-                    <input type="text" class="form-control" name="edit_sizes[]" placeholder="尺寸" required>
+                    <input type="text" class="form-control" name="edit_sizes[]" placeholder="尺寸">
                 </div>
                 <div class="col">
                     <input type="text" class="form-control" name="edit_sizeDescriptions[]" placeholder="尺寸描述">
