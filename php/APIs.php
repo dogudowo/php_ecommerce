@@ -280,4 +280,60 @@ function getOrders($conn = null)
     }
     return $orders;
 }
+
+function getCart($memberId, $conn = null)
+{
+    $closeConn = false;
+    if ($conn === null) {
+        $conn = db_connect();
+        $closeConn = true;
+    }
+
+    $sql = "SELECT * FROM Cart WHERE MemberID = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $memberId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $cart = null;
+    if ($result->num_rows > 0) {
+        $cart = $result->fetch_assoc();
+    }
+
+    if ($closeConn) {
+        $conn->close();
+    }
+    return $cart;
+}
+
+function getCartItems($memberId, $conn = null)
+{
+    $closeConn = false;
+    if ($conn === null) {
+        $conn = db_connect();
+        $closeConn = true;
+    }
+
+    $sql = "SELECT ci.*, p.ProductName, p.Type, o.Color, o.Size, o.SizeDescription, o.Price 
+            FROM CartItem ci
+            JOIN Options o ON ci.OptionID = o.OptionID
+            JOIN Product p ON o.ProductID = p.ProductID
+            WHERE ci.MemberID = ?";
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $memberId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $items = [];
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $items[] = $row;
+        }
+    }
+
+    if ($closeConn) {
+        $conn->close();
+    }
+    return $items;
+}
 ?>

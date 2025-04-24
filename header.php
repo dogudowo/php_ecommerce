@@ -58,14 +58,15 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true && $_SESSIO
             </ul>
 
             <div class=" text-center d-none d-lg-flex gap-2 flex-end">
-                <button type="button" class="btn text-dark p-0 me-2 d-inline-flex align-items-center" aria-label="Cart">
+                <a href="shoppingCart.php" class="btn text-dark p-0 me-2 d-inline-flex align-items-center"
+                    aria-label="Cart">
                     <!-- SVG cart icon -->
                     <svg xmlns="http://www.w3.org/2000/svg" width="1.5rem" height="1.5rem" fill="currentColor"
                         class="bi bi-cart3" viewBox="0 0 16 16">
                         <path
                             d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .49.598l-1 5a.5.5 0 0 1-.465.401l-9.397.472L4.415 11H13a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l.84 4.479 9.144-.459L13.89 4zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
                     </svg>
-                </button>
+                </a>
                 <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true): ?>
                     <a href="logout.php" class="btn btn-danger me-2">登出</a>
                 <?php else: ?>
@@ -105,14 +106,15 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true && $_SESSIO
                 </ul>
             </div>
             <div class="d-grid gap-2 px-3 mb-3 mt-3">
-                <button type="button" class="btn btn-primary d-flex align-items-center justify-content-center gap-2">
+                <a href="shoppingCart.php"
+                    class="btn btn-primary d-flex align-items-center justify-content-center gap-2">
                     <svg xmlns="http://www.w3.org/2000/svg" width="1.3rem" height="1.3rem" fill="currentColor"
                         class="bi bi-cart3" viewBox="0 0 16 16">
                         <path
                             d="M0 1.5A.5.5 0 0 1 .5 1H2a.5.5 0 0 1 .485.379L2.89 3H14.5a.5.5 0 0 1 .49.598l-1 5a.5.5 0 0 1-.465.401l-9.397.472L4.415 11H13a.5.5 0 0 1 0 1H4a.5.5 0 0 1-.491-.408L2.01 3.607 1.61 2H.5a.5.5 0 0 1-.5-.5M3.102 4l.84 4.479 9.144-.459L13.89 4zM5 12a2 2 0 1 0 0 4 2 2 0 0 0 0-4m7 0a2 2 0 1 0 0 4 2 2 0 0 0 0-4m-7 1a1 1 0 1 1 0 2 1 1 0 0 1 0-2m7 0a1 1 0 1 1 0 2 1 1 0 0 1 0-2" />
                     </svg>
                     購物車
-                </button>
+                </a>
                 <?php if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true): ?>
                     <a href="logout.php" class="btn btn-danger me-2 w-100">登出</a>
                 <?php else: ?>
