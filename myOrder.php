@@ -1,62 +1,9 @@
 <?php
 session_start();
 
-// 檢查用戶是否已登入，如果沒有則顯示Bootstrap Modal提示並重定向到登入頁面
+// 檢查用戶是否已登入，如果沒有則直接重定向到登入頁面
 if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
-    // 保存當前頁面作為登入後重定向的目標
-    $_SESSION['redirect_to'] = 'myOrder.php';
-    // 輸出完整的HTML頁面，包含Bootstrap Modal
-    ?>
-    <!DOCTYPE html>
-    <html lang="zh-TW">
-
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet"
-            integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
-        <link rel="icon" href="imgs/webimg.ico" type="image/x-icon">
-        <title>歐印精品-需要登入</title>
-    </head>
-
-    <body>
-        <!-- 登入提示的 Modal -->
-        <div class="modal fade" id="loginModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
-            aria-labelledby="loginModalLabel" aria-hidden="true">
-            <div class="modal-dialog modal-dialog-centered">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="loginModalLabel">需要登入</h5>
-                    </div>
-                    <div class="modal-body">
-                        <p>請先登入以查看您的訂單！</p>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-primary" id="goToLoginBtn">前往登入</button>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"
-            integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
-            crossorigin="anonymous"></script>
-        <script>
-            // 頁面加載後顯示Modal
-            document.addEventListener('DOMContentLoaded', function () {
-                var loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
-                loginModal.show();
-
-                // 點擊前往登入按鈕時跳轉
-                document.getElementById('goToLoginBtn').addEventListener('click', function () {
-                    window.location.href = 'login.php';
-                });
-            });
-        </script>
-    </body>
-
-    </html>
-    <?php
+    header('Location: login.php');
     exit;
 }
 
