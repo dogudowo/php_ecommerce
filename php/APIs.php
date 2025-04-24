@@ -336,4 +336,91 @@ function getCartItems($memberId, $conn = null)
     }
     return $items;
 }
+
+function registerUser($name, $phone, $email, $password, $city = null, $address = null)
+{
+    $conn = db_connect();
+    $conn->begin_transaction();
+
+    try {
+        // 哈希處理密碼
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+        // 检查手机号是否已存在
+        $stmt = $conn->prepare("SELECT MemberID FROM Member WHERE Phone = ?");
+        $stmt->bind_param("s", $phone);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            return ['success' => false, 'message' => '該手機號碼已被使用'];
+        }
+
+        // 检查邮箱是否已存在
+        $stmt = $conn->prepare("SELECT MemberID FROM Member WHERE Email = ?");
+        $stmt->bind_param("s", $email);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            return ['success' => false, 'message' => '電子郵件已被使用'];
+        }
+
+        // 获取新会员ID
+        $result = $conn->query("SELECT MAX(MemberID) AS max_id FROM Member");
+        $row = $result->fetch_assoc();
+        $memberId = $row['max_id'] + 1;
+
+        // 插入会员数据
+        // 修改插入語句使用哈希後的密碼
+        $stmt = $conn->prepare("INSERT INTO Member (MemberID, Name, Phone, Email, Password, City, Address, IsAdmin) VALUES (?, ?, ?, ?, ?, ?, ?, 0)");
+        $stmt->bind_param("issssss", $memberId, $name, $phone, $email, $hashedPassword, $city, $address);
+        $stmt->execute();
+
+        // 创建购物车
+        $stmt = $conn->prepare("INSERT INTO Cart (MemberID) VALUES (?)");
+        $stmt->bind_param("i", $memberId);
+        $stmt->execute();
+
+        $conn->commit();
+        return ['success' => true];
+    } catch (Exception $e) {
+        $conn->rollback();
+        error_log("註冊失敗：" . $e->getMessage());
+        return ['success' => false, 'message' => '註冊失敗，請稍後再試'];
+    } finally {
+        $conn->close();
+    }
+}
+
+function authenticateUser($phone, $password)
+{
+    $conn = db_connect();
+
+    $stmt = $conn->prepare("SELECT MemberID, Name, Phone, Email, Password, IsAdmin FROM Member WHERE Phone = ?");
+    $stmt->bind_param("s", $phone);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 1) {
+        $user = $result->fetch_assoc();
+        // 驗證密碼哈希
+        if (password_verify($password, $user['Password'])) {
+            $conn->close();
+            return [
+                'success' => true,
+                'user' => [
+                    'id' => $user['MemberID'],
+                    'name' => $user['Name'],
+                    'phone' => $user['Phone'],
+                    'email' => $user['Email'],
+                    'role' => $user['IsAdmin'] ? 'admin' : 'member'
+                ]
+            ];
+        }
+    }
+
+    $conn->close();
+    return ['success' => false];
+}
 ?>
