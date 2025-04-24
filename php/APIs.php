@@ -544,4 +544,129 @@ function updateCartQuantity($memberId, $optionId, $quantity, $conn = null)
         }
     }
 }
+
+function createOrder($memberId, $conn = null)
+{
+    $closeConn = false;
+    if ($conn === null) {
+        $conn = db_connect();
+        $closeConn = true;
+    }
+
+    $conn->begin_transaction();
+    try {
+        // 获取新订单ID
+        $result = $conn->query("SELECT MAX(OrderID) AS max_id FROM Orders");
+        $row = $result->fetch_assoc();
+        $orderId = $row['max_id'] + 1;
+
+        // 创建订单
+        $stmt = $conn->prepare("INSERT INTO Orders (OrderID, MembersID, OrderDate, Status) VALUES (?, ?, CURDATE(), 'Pending')");
+        $stmt->bind_param("ii", $orderId, $memberId);
+        $stmt->execute();
+
+        $conn->commit();
+        return $orderId;
+    } catch (Exception $e) {
+        $conn->rollback();
+        error_log("创建订单失败: " . $e->getMessage());
+        return false;
+    } finally {
+        if ($closeConn) {
+            $conn->close();
+        }
+    }
+}
+
+function addOrderItem($orderId, $optionId, $quantity, $conn = null)
+{
+    $closeConn = false;
+    if ($conn === null) {
+        $conn = db_connect();
+        $closeConn = true;
+    }
+
+    try {
+        $stmt = $conn->prepare("INSERT INTO OrderItem (OrderID, OptionID, Quantity) VALUES (?, ?, ?)");
+        $stmt->bind_param("iii", $orderId, $optionId, $quantity);
+        $stmt->execute();
+        return true;
+    } catch (Exception $e) {
+        error_log("添加订单项失败: " . $e->getMessage());
+        return false;
+    } finally {
+        if ($closeConn) {
+            $conn->close();
+        }
+    }
+}
+
+function checkout($memberId)
+{
+    $conn = db_connect();
+    $conn->begin_transaction();
+
+    try {
+        // 获取购物车商品
+        $cartItems = getCartItems($memberId);
+        if (empty($cartItems)) {
+            return ['success' => false, 'message' => '购物车为空'];
+        }
+
+        // 创建订单
+        $orderId = createOrder($memberId, $conn);
+        if (!$orderId) {
+            throw new Exception("无法创建订单");
+        }
+
+        // 添加订单项
+        foreach ($cartItems as $item) {
+            if (!addOrderItem($orderId, $item['OptionID'], $item['Quantity'], $conn)) {
+                throw new Exception("添加订单项失败");
+            }
+        }
+
+        // 清空购物车
+        $stmt = $conn->prepare("DELETE FROM CartItem WHERE MemberID = ?");
+        $stmt->bind_param("i", $memberId);
+        $stmt->execute();
+
+        $conn->commit();
+        return ['success' => true, 'orderId' => $orderId];
+    } catch (Exception $e) {
+        $conn->rollback();
+        error_log("结账失败: " . $e->getMessage());
+        return ['success' => false, 'message' => '结账失败: ' . $e->getMessage()];
+    } finally {
+        $conn->close();
+    }
+}
+
+// 处理AJAX请求部分添加结账处理
+if (isset($_GET['action'])) {
+    header('Content-Type: application/json');
+    session_start();
+
+    switch ($_GET['action']) {
+        case 'addToCart':
+            $data = json_decode(file_get_contents('php://input'), true);
+            echo json_encode(addToCart($data['memberId'], $data['optionId'], $data['quantity']));
+            break;
+        case 'removeFromCart':
+            $data = json_decode(file_get_contents('php://input'), true);
+            echo json_encode(removeFromCart($data['memberId'], $data['optionId']));
+            break;
+        case 'updateCartQuantity':
+            $data = json_decode(file_get_contents('php://input'), true);
+            echo json_encode(updateCartQuantity($data['memberId'], $data['optionId'], $data['quantity']));
+            break;
+        case 'checkout':
+            $data = json_decode(file_get_contents('php://input'), true);
+            echo json_encode(checkout($data['memberId']));
+            break;
+        default:
+            echo json_encode(['success' => false, 'message' => '无有效操作']);
+    }
+    exit;
+}
 ?>
