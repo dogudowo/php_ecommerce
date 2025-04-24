@@ -669,4 +669,157 @@ if (isset($_GET['action'])) {
     }
     exit;
 }
+function getMemberOrders($memberId, $conn = null)
+{
+    $closeConn = false;
+    if ($conn === null) {
+        $conn = db_connect();
+        $closeConn = true;
+    }
+
+    $sql = "SELECT 
+                o.OrderID,
+                o.OrderDate,
+                o.Status,
+                SUM(oi.Quantity * opt.Price) as TotalAmount
+            FROM Orders o
+            JOIN OrderItem oi ON o.OrderID = oi.OrderID
+            JOIN Options opt ON oi.OptionID = opt.OptionID
+            WHERE o.MembersID = ?
+            GROUP BY o.OrderID, o.OrderDate, o.Status
+            ORDER BY o.OrderDate DESC";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $memberId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $orders = [];
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $orders[] = $row;
+        }
+    }
+
+    if ($closeConn) {
+        $conn->close();
+    }
+    return $orders;
+}
+
+function getOrderDetails($orderId, $conn = null)
+{
+    $closeConn = false;
+    if ($conn === null) {
+        $conn = db_connect();
+        $closeConn = true;
+    }
+
+    $sql = "SELECT 
+                p.ProductName,
+                p.ProductID,
+                opt.Color,
+                opt.Size,
+                opt.SizeDescription,
+                opt.Price,
+                oi.Quantity,
+                (opt.Price * oi.Quantity) as Subtotal
+            FROM OrderItem oi
+            JOIN Options opt ON oi.OptionID = opt.OptionID
+            JOIN Product p ON opt.ProductID = p.ProductID
+            WHERE oi.OrderID = ?";
+
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param("i", $orderId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    $items = [];
+    while ($row = $result->fetch_assoc()) {
+        // 獲取商品圖片
+        $productDir = "/public_html/imgs/products/" . $row['ProductName'];
+        $row['image'] = file_exists($_SERVER['DOCUMENT_ROOT'] . $productDir . "/main.jpg")
+            ? $productDir . "/main.jpg"
+            : "https://via.placeholder.com/150";
+        $items[] = $row;
+    }
+
+    if ($closeConn) {
+        $conn->close();
+    }
+    return $items;
+}
+
+function renderOrderTab($orders, $status, $title)
+{
+    $filteredOrders = array_filter($orders, fn($order) => $order['Status'] === $status);
+    ?>
+    <div class="tab-pane fade <?php echo $status === 'Pending' ? 'show active' : ''; ?>"
+        id="<?php echo strtolower($status); ?>" role="tabpanel" aria-labelledby="<?php echo strtolower($status); ?>-tab">
+        <?php if (!empty($filteredOrders)): ?>
+            <div class="list-group">
+                <?php foreach ($filteredOrders as $order): ?>
+                    <div class="mb-4 border rounded">
+                        <a href="#" class="list-group-item list-group-item-action">
+                            <div class="d-flex w-100 justify-content-between">
+                                <h5 class="mb-1">訂單號碼: ORD-<?php echo $order['OrderID']; ?></h5>
+                                <small><?php echo $order['OrderDate']; ?></small>
+                            </div>
+                            <?php foreach (getOrderDetails($order['OrderID']) as $item): ?>
+                                <div class="d-flex align-items-center mb-2">
+                                    <div class="me-3" style="width: 60px; height: 60px;">
+                                        <img src="<?php echo $item['image']; ?>" alt="<?php echo $item['ProductName']; ?>"
+                                            class="img-fluid" style="max-height: 100%;">
+                                    </div>
+                                    <div>
+                                        <p class="mb-1"><?php echo $item['ProductName']; ?></p>
+                                        <p class="mb-0 text-secondary">規格:
+                                            <?php echo $item['Color'] . ', ' . $item['SizeDescription']; ?>
+                                        </p>
+                                        <p class="mb-0">數量: <?php echo $item['Quantity']; ?> 件</p>
+                                        <p class="mb-0">價格: <span class="text-danger fw-bold">$<?php echo $item['Price']; ?></span>
+                                        </p>
+                                    </div>
+                                </div>
+                            <?php endforeach; ?>
+                            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                                <div><span class="badge fs-6
+                                    <?php
+                                    switch ($order['Status']) {
+                                        case 'Pending':
+                                            echo 'bg-info';
+                                            $statusText = '處理中';
+                                            break;
+                                        case 'Completed':
+                                            echo 'bg-success';
+                                            $statusText = '已完成';
+                                            break;
+                                        case 'Cancel':
+                                            echo 'bg-warning';
+                                            $statusText = '已取消';
+                                            break;
+                                        default:
+                                            echo 'bg-secondary';
+                                            $statusText = $order['Status'];
+                                    }
+                                    ?>">
+                                        <?php echo $statusText; ?>
+                                    </span></div>
+                                <div class="text-end">
+                                    <p class="mb-0">訂單金額: <span
+                                            class="text-danger fw-bold">$<?php echo $order['TotalAmount']; ?></span>
+                                    </p>
+                                </div>
+                                <button class="btn btn-outline-secondary btn-sm">再買一次</button>
+                            </div>
+                        </a>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+        <?php else: ?>
+            <p class="card-text mt-3">目前沒有<?php echo $title; ?>的訂單。</p>
+        <?php endif; ?>
+    </div>
+    <?php
+}
 ?>

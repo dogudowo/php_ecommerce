@@ -12,23 +12,23 @@ if ($_SESSION['user_role'] === 'admin') {
     header('Location: backend.php');
     exit;
 }
+require_once __DIR__ . '/php/APIs.php';
+$memberId = $_SESSION['user_id'];
+$orders = getMemberOrders($memberId);
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="icon" href="imgs/webimg.ico" type="image/x-icon">
     <style>
         html,
         body {
             overflow-x: hidden;
             overflow-y: scroll;
-            /* 防止橫向滾動條 */
         }
     </style>
     <title>歐印精品-我的訂單</title>
@@ -37,7 +37,7 @@ if ($_SESSION['user_role'] === 'admin') {
 <body>
     <?php include "header.php"; ?>
     <div class="container text-center border-bottom border-black my-3">
-        <img src="imgs/title.png" alt="歐印精品" img-fluid>
+        <img src="imgs/title.png" alt="歐印精品" class="img-fluid">
         <h1 class="h1">我的訂單</h1>
     </div>
 
@@ -49,13 +49,21 @@ if ($_SESSION['user_role'] === 'admin') {
                         <h3>會員資訊</h3>
                     </div>
                     <div class="card-body">
-                        <h4><?php echo htmlspecialchars($_SESSION['user_name']); ?></h4>
-                        <p class="mb-0">
-                            <strong>身份：</strong> 會員
-                        </p>
-                        <p class="mb-0">
-                            <strong>手機號碼：</strong> <?php echo htmlspecialchars($_SESSION['user_phone']); ?>
-                        </p>
+                        <?php
+                        $memberDetails = getMembers();
+                        $currentMember = array_filter($memberDetails, function ($member) {
+                            return $member['MemberID'] == $_SESSION['user_id'];
+                        });
+                        $currentMember = reset($currentMember);
+                        ?>
+                        <h4><?php echo htmlspecialchars($currentMember['membername']); ?></h4>
+                        <p class="mb-0"><strong>身份：</strong> <?php echo htmlspecialchars($currentMember['role']); ?></p>
+                        <p class="mb-0"><strong>手機號碼：</strong>
+                            <?php echo htmlspecialchars($currentMember['phonenum']); ?></p>
+                        <p class="mb-0"><strong>電子郵件：</strong>
+                            <?php echo htmlspecialchars($currentMember['memberemail']); ?></p>
+                        <p class="mb-0"><strong>訂單數量：</strong>
+                            <?php echo htmlspecialchars($currentMember['order_count']); ?></p>
                     </div>
                 </div>
             </div>
@@ -66,55 +74,23 @@ if ($_SESSION['user_role'] === 'admin') {
                         <h3>您的訂單</h3>
                     </div>
                     <div class="card-body">
-                        <!-- 一般會員看到的訂單列表 -->
-                        <?php if ($_SESSION['user_phone'] === '0912345679'): ?>
-                            <div class="list-group">
-                                <a href="#" class="list-group-item list-group-item-action">
-                                    <div class="d-flex w-100 justify-content-between">
-                                        <h5 class="mb-1">訂單號碼: ORD-20230001</h5>
-                                        <small>2023/12/15</small>
-                                    </div>
-                                    <div class="d-flex align-items-center mb-2">
-                                        <div class="me-3" style="width: 60px; height: 60px;">
-                                            <img src="imgs/products/iphone_case.jpg" alt="iPhone 玻璃貼" class="img-fluid"
-                                                style="max-height: 100%;">
-                                        </div>
-                                        <div>
-                                            <p class="mb-1">【網皮直營特選】秒貼除塵貼 iPhone滿版曲面9H玻璃保護貼 護眼防藍 蘋果 13/14/15/16 玻璃貼</p>
-                                            <p class="mb-0 text-secondary">規格: 高清亮面,14 = 13 = 13 PRO</p>
-                                            <p class="mb-0">數量: 1 件</p>
-                                            <p class="mb-0"><del class="text-secondary">$300</del> <span
-                                                    class="text-danger fw-bold">$69</span></p>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex align-items-center mb-2 mt-3 pt-2 border-top">
-                                        <div class="me-3" style="width: 60px; height: 60px;">
-                                            <img src="imgs/products/dhc_lip.jpg" alt="DHC護唇膏" class="img-fluid"
-                                                style="max-height: 100%;">
-                                        </div>
-                                        <div>
-                                            <p class="mb-1">【網皮直營特選】DHC純欖護唇膏1.5g 官方直營</p>
-                                            <p class="mb-0 text-secondary">規格: 一入</p>
-                                            <p class="mb-0">數量: 1 件</p>
-                                            <p class="mb-0"><del class="text-secondary">$350</del> <span
-                                                    class="text-danger fw-bold">$199</span></p>
-                                        </div>
-                                    </div>
-                                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                                        <div>
-                                            <span class="text-success">狀態: 已完成</span>
-                                        </div>
-                                        <div class="text-end">
-                                            <p class="mb-0">訂單金額: <span class="text-danger fw-bold">$238</span></p>
-                                            <button class="btn btn-outline-secondary btn-sm mt-2">再買一次</button>
-                                            <button class="btn btn-outline-primary btn-sm mt-2">聯絡賣家</button>
-                                        </div>
-                                    </div>
-                                </a>
-                            </div>
-                        <?php else: ?>
-                            <p class="card-text">目前沒有訂單記錄。</p>
-                        <?php endif; ?>
+                        <ul class="nav nav-tabs mb-3" id="orderTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-success active" id="pending-tab" data-bs-toggle="tab"
+                                    data-bs-target="#pending" type="button" role="tab" aria-controls="pending"
+                                    aria-selected="true">進行中訂單</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link text-success" id="completed-tab" data-bs-toggle="tab"
+                                    data-bs-target="#completed" type="button" role="tab" aria-controls="completed"
+                                    aria-selected="false">已完成訂單</button>
+                            </li>
+                        </ul>
+
+                        <div class="tab-content" id="orderTabsContent">
+                            <?php renderOrderTab($orders, 'Pending', '進行中'); ?>
+                            <?php renderOrderTab($orders, 'Completed', '已完成'); ?>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -122,9 +98,7 @@ if ($_SESSION['user_role'] === 'admin') {
     </div>
 
     <?php include "footer.php"; ?>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
-        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
