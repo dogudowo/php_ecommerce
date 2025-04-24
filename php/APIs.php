@@ -343,8 +343,6 @@ function getCartItems($memberId)
     }
 
     return $items;
-
-    $conn->close();
 }
 
 function registerUser($name, $phone, $email, $password, $city = null, $address = null)
