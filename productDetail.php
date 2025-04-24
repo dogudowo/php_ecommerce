@@ -58,7 +58,8 @@ $product['success'] = true;
                         <p class="fw-bold mb-1">尺寸</p>
                         <div>
                             <?php foreach ($product['sizeOptions'] as $sizeOption): ?>
-                                <button class="btn btn-outline-dark me-1 mb-1"><?php echo $sizeOption['size']; ?></button>
+                                <button
+                                    class="btn btn-outline-success me-1 mb-1 size-option"><?php echo $sizeOption['sizeDescription']; ?></button>
                             <?php endforeach; ?>
                         </div>
                     </div>
@@ -67,7 +68,8 @@ $product['success'] = true;
                         <p class="fw-bold mb-1">顏色</p>
                         <div>
                             <?php foreach ($product['sizeOptions'][0]['colors'] as $colorOption): ?>
-                                <button class="btn btn-outline-dark me-1 mb-1"><?php echo $colorOption['color']; ?></button>
+                                <button
+                                    class="btn btn-outline-success me-1 mb-1 color-option"><?php echo $colorOption['color']; ?></button>
                             <?php endforeach; ?>
                         </div>
                     </div>
@@ -115,6 +117,44 @@ $product['success'] = true;
             var input = document.getElementById('quantity');
             var value = parseInt(input.value);
             input.value = value + 1;
+        });
+
+        // 自動選中第一個尺寸和顏色
+        document.addEventListener('DOMContentLoaded', function () {
+            const firstSize = document.querySelector('.size-option');
+            if (firstSize) {
+                firstSize.classList.remove('btn-outline-success');
+                firstSize.classList.add('btn-success');
+            }
+
+            const firstColor = document.querySelector('.color-option');
+            if (firstColor) {
+                firstColor.classList.remove('btn-outline-success');
+                firstColor.classList.add('btn-success');
+            }
+        });
+
+        // 尺寸和顏色選擇功能
+        document.querySelectorAll('.size-option').forEach(button => {
+            button.addEventListener('click', function () {
+                document.querySelectorAll('.size-option').forEach(btn => {
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-success');
+                });
+                this.classList.remove('btn-outline-success');
+                this.classList.add('btn-success');
+            });
+        });
+
+        document.querySelectorAll('.color-option').forEach(button => {
+            button.addEventListener('click', function () {
+                document.querySelectorAll('.color-option').forEach(btn => {
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-outline-success');
+                });
+                this.classList.remove('btn-outline-success');
+                this.classList.add('btn-success');
+            });
         });
     </script>
 </body>
