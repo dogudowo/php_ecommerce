@@ -187,7 +187,10 @@ function getProductById($productId)
     $product['galleryImages'] = [];
     $i = 1;
     while (file_exists($productDir . "/gallery-" . $i . ".jpg")) {
-        $product['galleryImages'][] = $webPath . "/gallery-" . $i . ".jpg";
+        $product['galleryImages'][] = [
+            'url' => $webPath . "/gallery-" . $i . ".jpg",
+            'description' => "Gallery image $i for product " . $product['ProductName']
+        ];
         $i++;
     }
 
@@ -195,9 +198,10 @@ function getProductById($productId)
     return $product;
 }
 
-function handleProductImages($productName, $mainImage, $galleryImages) {
+function handleProductImages($productName, $mainImage, $galleryImages)
+{
     $productDir = "/Applications/XAMPP/xamppfiles/htdocs/public_html/imgs/products/" . $productName;
-    
+
     if (!file_exists($productDir)) {
         if (!mkdir($productDir, 0777, true)) {
             throw new Exception("無法建立目錄：$productDir");
@@ -221,11 +225,12 @@ function handleProductImages($productName, $mainImage, $galleryImages) {
     }
 }
 
-function validateProductInput($input) {
+function validateProductInput($input)
+{
     if (empty($input['productName']) || empty($input['productType'])) {
         throw new Exception('缺少必要欄位');
     }
-    
+
     if (empty($input['colors']) || empty($input['stocks']) || empty($input['prices'])) {
         throw new Exception('缺少商品規格資訊');
     }

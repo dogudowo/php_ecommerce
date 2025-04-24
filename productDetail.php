@@ -1,32 +1,20 @@
 <?php
 // 接收產品ID
-$product_id = isset($_GET['product_id']) ? $_GET['product_id'] : 'T6927';
+$product_id = isset($_GET['product_id']) ? (int) $_GET['product_id'] : 1;
 
-// 產品數據 (在實際應用中，這些數據可能來自資料庫)
-$products = [
-    'T6927' => [
-        'title' => 'Haugas All-in 箱',
-        'description' => 'Haugas All-in 箱 #歐印箱 #全能箱，只有你沒想到的沒有我們做不到的！所有功能齊備一箱 1️⃣秤重⋯ 2️⃣煞車⋯ 3️⃣杯架⋯ 4️⃣密碼鎖⋯ 5️⃣細鋁框⋯ 6️⃣日乃本飛機輪⋯ 7️⃣乾濕分離收納⋯⋯⋯⋯ 8️⃣還有最重要的保固 #我知道你缺一個全能萬用箱',
-        'sizes' => ['20吋', '24吋', '28吋'],
-        'colors' => ['黑色', '銀色', '金色', '玫瑰金'],
-        'main_img' => 'imgs/products/T6927/main.jpg',
-        'gallery' => [
-            'imgs/products/T6927/T6927-1.jpg',
-            'imgs/products/T6927/T6927-2.jpg',
-            'imgs/products/T6927/T6927-3.jpg',
-            'imgs/products/T6927/T6927-4.jpg',
-            'imgs/products/T6927/T6927-5.jpg'
-        ]
-    ]
-];
+// 直接調用API函數獲取產品數據
+require_once __DIR__ . '/php/APIs.php';
+$product = getProductById($product_id);
 
-// 檢查產品是否存在
-if (!array_key_exists($product_id, $products)) {
-    $product_id = 'T6927'; // 如果不存在，使用默認產品
+// 檢查API響應是否成功
+if (!$product) {
+    // 包含404頁面並結束當前腳本執行
+    include __DIR__ . '/404.php';
+    exit;
 }
 
-// 獲取當前產品數據
-$product = $products[$product_id];
+// 確保產品有 success 鍵
+$product['success'] = true;
 ?>
 
 <!DOCTYPE html>
@@ -46,31 +34,31 @@ $product = $products[$product_id];
             /* 防止橫向滾動條 */
         }
     </style>
-    <title>歐印精品-<?php echo $product['title']; ?></title>
+    <title>歐印精品-<?php echo $product['ProductName']; ?></title>
 </head>
 
 <body>
     <?php include "header.php"; ?>
     <div class="container text-center border-bottom border-black my-3">
         <img src="imgs/title.png" alt="歐印精品" img-fluid>
-        <h1 class="h1"><?php echo $product_id . ' ' . $product['title']; ?></h1>
+        <h1 class="h1"><?php echo $product['ProductName']; ?></h1>
     </div>
 
     <div class="container">
         <div class="row">
             <div class="col-lg-6 col-none">
-                <img src="<?php echo $product['main_img']; ?>" alt="product image" class="img-fluid">
+                <img src="<?php echo $product['mainImage']; ?>" alt="product image" class="img-fluid">
             </div>
             <div class="col-lg-6 col-12">
                 <div class="container mb-4">
-                    <p><?php echo $product['description']; ?></p>
+                    <p><?php echo $product['Description']; ?></p>
                 </div>
                 <div class="container">
                     <div class="mb-4">
                         <p class="fw-bold mb-1">尺寸</p>
                         <div>
-                            <?php foreach ($product['sizes'] as $size): ?>
-                                <button class="btn btn-outline-dark me-1 mb-1"><?php echo $size; ?></button>
+                            <?php foreach ($product['sizeOptions'] as $sizeOption): ?>
+                                <button class="btn btn-outline-dark me-1 mb-1"><?php echo $sizeOption['size']; ?></button>
                             <?php endforeach; ?>
                         </div>
                     </div>
@@ -78,8 +66,8 @@ $product = $products[$product_id];
                     <div class="mb-4">
                         <p class="fw-bold mb-1">顏色</p>
                         <div>
-                            <?php foreach ($product['colors'] as $color): ?>
-                                <button class="btn btn-outline-dark me-1 mb-1"><?php echo $color; ?></button>
+                            <?php foreach ($product['sizeOptions'][0]['colors'] as $colorOption): ?>
+                                <button class="btn btn-outline-dark me-1 mb-1"><?php echo $colorOption['color']; ?></button>
                             <?php endforeach; ?>
                         </div>
                     </div>
@@ -98,11 +86,13 @@ $product = $products[$product_id];
             </div>
 
             <div class="row mt-5 col-12 col-lg-9 mx-auto">
-                <?php foreach ($product['gallery'] as $img): ?>
-                    <div class="d-flex-column text-center">
-                        <img src="<?php echo $img; ?>" alt="" class="img-fluid rounded">
-                    </div>
-                <?php endforeach; ?>
+                <?php if (isset($product['galleryImages']) && is_array($product['galleryImages'])): ?>
+                    <?php foreach ($product['galleryImages'] as $img): ?>
+                        <div class="col-12 col-lg-9 mx-auto">
+                            <img src="<?php echo $img['url']; ?>" alt="產品圖片" class="img-fluid">
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             </div>
         </div>
     </div>

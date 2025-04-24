@@ -132,38 +132,113 @@
                         <h4>全部行李箱</h4>
 
                         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                            <!-- 產品卡片 1 -->
+                            <?php 
+                            require_once 'php/APIs.php';
+                            $products = getProducts();
+                            foreach ($products as $product) {
+                                if ($product['Type'] === 'aluminum' || $product['Type'] === 'zipper') {
+                            ?>
                             <div class="col">
-                                <a href="productDetail.php?product_id=T6927" class="text-decoration-none">
+                                <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>" class="text-decoration-none">
                                     <div class="card h-100" style="cursor: pointer;">
-                                        <img src="imgs/products/T6927/main.jpg" class="card-img-top" alt="T6927 行李箱">
-                                        <div class="card-body text-black">
-                                            <h5 class="card-title">T6927 Haugas All-in 箱</h5>
-                                            <p class="card-text">26吋/29吋</p>
+                                        <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg" class="card-img-top" alt="<?= $product['ProductName'] ?>">
+                                        <div class="card-body text-black pb-0 mb-0">
+                                            <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
+                                            <p class="fs-6 mb-0">價錢: <span class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span></p>
+                                            <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
                                         </div>
-
                                         <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
                                     </div>
                                 </a>
                             </div>
+                            <?php 
+                                }
+                            } 
+                            ?>
                         </div>
                     </div>
                     <div class="tab-pane fade" id="v-pills-accessories" role="tabpanel"
                         aria-labelledby="v-pills-accessories-tab">
                         <!-- 行李箱配件內容 -->
                         <h4>行李箱配件</h4>
-                        <p>這裡是行李箱配件的內容。</p>
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                            <?php 
+                            foreach ($products as $product) {
+                                if ($product['Type'] === 'accessories') {
+                            ?>
+                            <div class="col">
+                                <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>" class="text-decoration-none">
+                                    <div class="card h-100" style="cursor: pointer;">
+                                        <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg" class="card-img-top" alt="<?= $product['ProductName'] ?>">
+                                        <div class="card-body text-black pb-0 mb-0">
+                                            <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
+                                            <p class="fs-6 mb-0">價錢: <span class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span></p>
+                                            <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
+                                        </div>
+                                        <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
+                                    </div>
+                                </a>
+                            </div>
+                            <?php 
+                                }
+                            } 
+                            ?>
+                        </div>
                     </div>
                     <div class="tab-pane fade" id="v-pills-travel" role="tabpanel" aria-labelledby="v-pills-travel-tab">
                         <!-- 旅遊周邊內容 -->
                         <h4>旅遊周邊</h4>
-                        <p>這裡是旅遊周邊的內容。</p>
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                            <?php 
+                            foreach ($products as $product) {
+                                if ($product['Type'] === 'travel') {
+                            ?>
+                            <div class="col">
+                                <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>" class="text-decoration-none">
+                                    <div class="card h-100" style="cursor: pointer;">
+                                        <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg" class="card-img-top" alt="<?= $product['ProductName'] ?>">
+                                        <div class="card-body text-black pb-0 mb-0">
+                                            <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
+                                            <p class="fs-6 mb-0">價錢: <span class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span></p>
+                                            <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
+                                        </div>
+                                        <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
+                                    </div>
+                                </a>
+                            </div>
+                            <?php 
+                                }
+                            } 
+                            ?>
+                        </div>
                     </div>
                     <div class="tab-pane fade" id="v-pills-selected" role="tabpanel"
                         aria-labelledby="v-pills-selected-tab">
                         <!-- 歐印嚴選內容 -->
                         <h4>歐印嚴選</h4>
-                        <p>這裡是歐印嚴選的內容。</p>
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                            <?php 
+                            foreach ($products as $product) {
+                                if ($product['Type'] === 'featured') {
+                            ?>
+                            <div class="col">
+                                <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>" class="text-decoration-none">
+                                    <div class="card h-100" style="cursor: pointer;">
+                                        <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg" class="card-img-top" alt="<?= $product['ProductName'] ?>">
+                                        <div class="card-body text-black pb-0 mb-0">
+                                            <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
+                                            <p class="fs-6 mb-0">價錢: <span class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span></p>
+                                            <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
+                                        </div>
+                                        <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
+                                    </div>
+                                </a>
+                            </div>
+                            <?php 
+                                }
+                            } 
+                            ?>
+                        </div>
                     </div>
                 </div>
             </div>
