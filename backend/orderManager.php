@@ -3,10 +3,10 @@
     <div class="card">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
             <h5 class="mb-0">所有訂單</h5>
-            <div class="input-group w-50">
-                <input type="text" class="form-control" placeholder="搜尋訂單...">
-                <button class="btn btn-outline-secondary" type="button">搜尋</button>
-            </div>
+            <form method="get" class="input-group w-50">
+                <input type="text" class="form-control" name="search" placeholder="搜尋訂單...">
+                <button class="btn btn-outline-secondary" type="submit">搜尋</button>
+            </form>
         </div>
         <div class="card-body">
             <div class="table-responsive">
@@ -22,53 +22,68 @@
                         </tr>
                     </thead>
                     <tbody>
-                        <tr>
-                            <td>ORD-20230001</td>
-                            <td>李小明</td>
-                            <td>NT$5,800</td>
-                            <td><span class="badge bg-success">已完成</span></td>
-                            <td>2023/12/15</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-info">查看</button>
-                                <button class="btn btn-sm btn-outline-warning">編輯</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>ORD-20230002</td>
-                            <td>張美美</td>
-                            <td>NT$3,200</td>
-                            <td><span class="badge bg-warning text-dark">處理中</span></td>
-                            <td>2023/12/20</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-info">查看</button>
-                                <button class="btn btn-sm btn-outline-warning">編輯</button>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td>ORD-20230003</td>
-                            <td>王大明</td>
-                            <td>NT$7,600</td>
-                            <td><span class="badge bg-danger">已取消</span></td>
-                            <td>2023/12/22</td>
-                            <td>
-                                <button class="btn btn-sm btn-outline-info">查看</button>
-                                <button class="btn btn-sm btn-outline-warning">編輯</button>
-                            </td>
-                        </tr>
+                        <?php
+                        require_once __DIR__ . '/../php/APIs.php';
+                        try {
+                            $orders = getOrders();
+                            if ($orders === false) {
+                                error_log("獲取訂單數據失敗: " . print_r(error_get_last(), true));
+                                echo '<tr><td colspan="6" class="text-center text-danger">獲取訂單數據時發生錯誤</td></tr>';
+                            } elseif (!empty($orders)) {
+                                foreach ($orders as $order) {
+                                    $statusClass = match ($order['Status']) {
+                                        'Completed' => 'bg-success',
+                                        'Pending' => 'bg-info text-dark',
+                                        'Cancel' => 'bg-warning',
+                                        'abnormal' => 'bg-danger',
+                                        default => 'bg-secondary'
+                                    };
+                                    $statusText = match ($order['Status']) {
+                                        'Completed' => '已完成',
+                                        'Pending' => '處理中',
+                                        'Cancel' => '已取消',
+                                        'abnormal' => '異常',
+                                        default => $order['Status']
+                                    };
+                                    ?>
+                                    <tr>
+                                        <td>ORD-<?= htmlspecialchars($order['OrderID']) ?></td>
+                                        <td><?= htmlspecialchars($order['customer_name']) ?></td>
+                                        <td>NT$<?= number_format($order['total_amount']) ?></td>
+                                        <td><span class="badge <?= $statusClass ?>"><?= htmlspecialchars($statusText) ?></span></td>
+                                        </td>
+                                        <td><?= htmlspecialchars($order['OrderDate']) ?></td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-info">查看</button>
+                                            <button class="btn btn-sm btn-outline-warning">編輯</button>
+                                        </td>
+                                    </tr>
+                                    <?php
+                                }
+                            } else {
+                                echo '<tr><td colspan="6" class="text-center">目前沒有訂單記錄</td></tr>';
+                            }
+                        } catch (Exception $e) {
+                            error_log("訂單管理頁面錯誤: " . $e->getMessage());
+                            echo '<tr><td colspan="6" class="text-center text-danger">系統錯誤: ' . htmlspecialchars($e->getMessage()) . '</td></tr>';
+                        }
+                        ?>
                     </tbody>
                 </table>
             </div>
-            <div class="d-flex justify-content-between align-items-center">
-                <span>顯示 1 到 3 筆，共 3 筆</span>
-                <nav>
-                    <ul class="pagination mb-0">
-                        <li class="page-item disabled"><a class="page-link" href="#">上一頁</a>
-                        </li>
-                        <li class="page-item active"><a class="page-link" href="#">1</a></li>
-                        <li class="page-item disabled"><a class="page-link" href="#">下一頁</a>
-                        </li>
-                    </ul>
-                </nav>
+            <div class="d-flex justify-content-between align-items-center mt-3">
+                <?php if (!empty($orders)): ?>
+                    <span>顯示 1 到 <?= count($orders) ?> 筆，共 <?= count($orders) ?> 筆</span>
+                    <nav>
+                        <ul class="pagination mb-0">
+                            <li class="page-item disabled"><a class="page-link" href="#">上一頁</a></li>
+                            <li class="page-item active"><a class="page-link" href="#">1</a></li>
+                            <li class="page-item disabled"><a class="page-link" href="#">下一頁</a></li>
+                        </ul>
+                    </nav>
+                <?php else: ?>
+                    <span>目前沒有資料可顯示</span>
+                <?php endif; ?>
             </div>
         </div>
     </div>

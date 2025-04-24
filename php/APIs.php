@@ -235,4 +235,49 @@ function validateProductInput($input)
         throw new Exception('缺少商品規格資訊');
     }
 }
+
+function getOrders($conn = null)
+{
+    $closeConn = false;
+    if ($conn === null) {
+        $conn = db_connect();
+        $closeConn = true;
+    }
+
+    $sql = "SELECT 
+                o.OrderID,
+                m.Name as customer_name,
+                SUM(oi.Quantity * opt.Price) as total_amount,
+                o.Status,
+                o.OrderDate,
+                m.MemberID
+            FROM Orders o
+            JOIN Member m ON o.MembersID = m.MemberID
+            JOIN OrderItem oi ON o.OrderID = oi.OrderID
+            JOIN Options opt ON oi.OptionID = opt.OptionID
+            GROUP BY o.OrderID, m.Name, o.Status, o.OrderDate, m.MemberID
+            ORDER BY o.OrderDate DESC";
+
+    $result = $conn->query($sql);
+
+    if (!$result) {
+        error_log("訂單查詢失敗：" . $conn->error);
+        if ($closeConn) {
+            $conn->close();
+        }
+        return [];
+    }
+
+    $orders = [];
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            $orders[] = $row;
+        }
+    }
+
+    if ($closeConn) {
+        $conn->close();
+    }
+    return $orders;
+}
 ?>
