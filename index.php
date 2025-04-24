@@ -132,28 +132,32 @@
                         <h4>全部行李箱</h4>
 
                         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                            <?php 
-                            require_once 'php/APIs.php';
+                            <?php
+                            require_once __DIR__ . '/php/APIs.php';
                             $products = getProducts();
                             foreach ($products as $product) {
                                 if ($product['Type'] === 'aluminum' || $product['Type'] === 'zipper') {
-                            ?>
-                            <div class="col">
-                                <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>" class="text-decoration-none">
-                                    <div class="card h-100" style="cursor: pointer;">
-                                        <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg" class="card-img-top" alt="<?= $product['ProductName'] ?>">
-                                        <div class="card-body text-black pb-0 mb-0">
-                                            <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
-                                            <p class="fs-6 mb-0">價錢: <span class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span></p>
-                                            <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
-                                        </div>
-                                        <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
+                                    ?>
+                                    <div class="col">
+                                        <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>"
+                                            class="text-decoration-none">
+                                            <div class="card h-100" style="cursor: pointer;">
+                                                <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg"
+                                                    class="card-img-top" alt="<?= $product['ProductName'] ?>">
+                                                <div class="card-body text-black pb-0 mb-0">
+                                                    <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
+                                                    <p class="fs-6 mb-0">價錢: <span
+                                                            class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span>
+                                                    </p>
+                                                    <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
+                                                </div>
+                                                <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
+                                            </div>
+                                        </a>
                                     </div>
-                                </a>
-                            </div>
-                            <?php 
+                                    <?php
                                 }
-                            } 
+                            }
                             ?>
                         </div>
                     </div>
@@ -162,26 +166,30 @@
                         <!-- 行李箱配件內容 -->
                         <h4>行李箱配件</h4>
                         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                            <?php 
+                            <?php
                             foreach ($products as $product) {
                                 if ($product['Type'] === 'accessories') {
-                            ?>
-                            <div class="col">
-                                <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>" class="text-decoration-none">
-                                    <div class="card h-100" style="cursor: pointer;">
-                                        <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg" class="card-img-top" alt="<?= $product['ProductName'] ?>">
-                                        <div class="card-body text-black pb-0 mb-0">
-                                            <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
-                                            <p class="fs-6 mb-0">價錢: <span class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span></p>
-                                            <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
-                                        </div>
-                                        <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
+                                    ?>
+                                    <div class="col">
+                                        <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>"
+                                            class="text-decoration-none">
+                                            <div class="card h-100" style="cursor: pointer;">
+                                                <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg"
+                                                    class="card-img-top" alt="<?= $product['ProductName'] ?>">
+                                                <div class="card-body text-black pb-0 mb-0">
+                                                    <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
+                                                    <p class="fs-6 mb-0">價錢: <span
+                                                            class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span>
+                                                    </p>
+                                                    <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
+                                                </div>
+                                                <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
+                                            </div>
+                                        </a>
                                     </div>
-                                </a>
-                            </div>
-                            <?php 
+                                    <?php
                                 }
-                            } 
+                            }
                             ?>
                         </div>
                     </div>
@@ -189,26 +197,30 @@
                         <!-- 旅遊周邊內容 -->
                         <h4>旅遊周邊</h4>
                         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                            <?php 
+                            <?php
                             foreach ($products as $product) {
                                 if ($product['Type'] === 'travel') {
-                            ?>
-                            <div class="col">
-                                <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>" class="text-decoration-none">
-                                    <div class="card h-100" style="cursor: pointer;">
-                                        <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg" class="card-img-top" alt="<?= $product['ProductName'] ?>">
-                                        <div class="card-body text-black pb-0 mb-0">
-                                            <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
-                                            <p class="fs-6 mb-0">價錢: <span class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span></p>
-                                            <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
-                                        </div>
-                                        <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
+                                    ?>
+                                    <div class="col">
+                                        <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>"
+                                            class="text-decoration-none">
+                                            <div class="card h-100" style="cursor: pointer;">
+                                                <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg"
+                                                    class="card-img-top" alt="<?= $product['ProductName'] ?>">
+                                                <div class="card-body text-black pb-0 mb-0">
+                                                    <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
+                                                    <p class="fs-6 mb-0">價錢: <span
+                                                            class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span>
+                                                    </p>
+                                                    <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
+                                                </div>
+                                                <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
+                                            </div>
+                                        </a>
                                     </div>
-                                </a>
-                            </div>
-                            <?php 
+                                    <?php
                                 }
-                            } 
+                            }
                             ?>
                         </div>
                     </div>
@@ -217,26 +229,30 @@
                         <!-- 歐印嚴選內容 -->
                         <h4>歐印嚴選</h4>
                         <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                            <?php 
+                            <?php
                             foreach ($products as $product) {
                                 if ($product['Type'] === 'featured') {
-                            ?>
-                            <div class="col">
-                                <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>" class="text-decoration-none">
-                                    <div class="card h-100" style="cursor: pointer;">
-                                        <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg" class="card-img-top" alt="<?= $product['ProductName'] ?>">
-                                        <div class="card-body text-black pb-0 mb-0">
-                                            <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
-                                            <p class="fs-6 mb-0">價錢: <span class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span></p>
-                                            <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
-                                        </div>
-                                        <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
+                                    ?>
+                                    <div class="col">
+                                        <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>"
+                                            class="text-decoration-none">
+                                            <div class="card h-100" style="cursor: pointer;">
+                                                <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg"
+                                                    class="card-img-top" alt="<?= $product['ProductName'] ?>">
+                                                <div class="card-body text-black pb-0 mb-0">
+                                                    <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
+                                                    <p class="fs-6 mb-0">價錢: <span
+                                                            class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span>
+                                                    </p>
+                                                    <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
+                                                </div>
+                                                <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
+                                            </div>
+                                        </a>
                                     </div>
-                                </a>
-                            </div>
-                            <?php 
+                                    <?php
                                 }
-                            } 
+                            }
                             ?>
                         </div>
                     </div>
