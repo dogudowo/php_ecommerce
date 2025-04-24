@@ -1,6 +1,6 @@
 <?php
 header('Content-Type: application/json');
-require_once '/Applications/XAMPP/xamppfiles/htdocs/public_html/php/APIs.php';
+require_once __DIR__ . '/APIs.php';
 
 try {
     // 記錄接收到的資料
@@ -40,11 +40,12 @@ try {
         echo json_encode(['success' => false, 'message' => '新增商品失敗，請查看伺服器日誌']);
     }
 } catch (Exception $e) {
-    function handleProductError(Exception $e) {
+    function handleProductError(Exception $e)
+    {
         error_log('商品操作錯誤: ' . $e->getMessage());
         echo json_encode(['success' => false, 'message' => $e->getMessage()]);
     }
-    
+
     // 然後在 try-catch 中使用
     try {
         error_log('新增商品時發生錯誤: ' . $e->getMessage());

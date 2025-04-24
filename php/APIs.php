@@ -1,6 +1,6 @@
 <?php
 // 確保引用此檔案的程式碼使用正確的路徑，例如：require_once 'php/getMember.php';
-require_once 'db_connect.php';
+require_once __DIR__ . '/db_connect.php';
 
 function getMembers($conn = null)
 {

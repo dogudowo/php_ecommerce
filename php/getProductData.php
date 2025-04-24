@@ -4,7 +4,7 @@ ini_set('display_errors', 1);
 ini_set('error_reporting', E_ALL);
 
 // 修正路徑引入
-require_once __DIR__ . '/../php/APIs.php';
+require_once __DIR__ . '/APIs.php';
 
 // 設置響應內容類型為 JSON
 header('Content-Type: application/json');
