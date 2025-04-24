@@ -77,13 +77,14 @@ $product['success'] = true;
                     <div class="mb-4">
                         <p class="fw-bold mb-1">數量</p>
                         <div class="input-group" style="max-width: 150px;">
-                            <button class="btn btn-outline-dark" type="button" id="decrease-qty">-</button>
-                            <input type="number" class="form-control text-center" value="1" min="1" id="quantity">
-                            <button class="btn btn-outline-dark" type="button" id="increase-qty">+</button>
+                            <button class="btn btn-outline-success" type="button" id="decrease-qty">-</button>
+                            <input type="number" class="form-control text-center border-success" value="1" min="1"
+                                id="quantity">
+                            <button class="btn btn-outline-success" type="button" id="increase-qty">+</button>
                         </div>
                     </div>
 
-                    <button class="btn btn-primary mt-3">加入購物車</button>
+                    <button class="btn btn-primary mt-3" id="add-to-cart">加入購物車</button>
                 </div>
             </div>
 
@@ -155,6 +156,99 @@ $product['success'] = true;
                 this.classList.remove('btn-outline-success');
                 this.classList.add('btn-success');
             });
+        });
+
+        document.getElementById('add-to-cart').addEventListener('click', function () {
+            // 檢查是否已登入
+            const memberId = <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 0; ?>;
+            if (memberId === 0) {
+                const alertDiv = document.createElement('div');
+                alertDiv.className = 'alert alert-warning alert-dismissible fade show position-fixed top-50 start-50 translate-middle text-center';
+                alertDiv.setAttribute('role', 'alert');
+                alertDiv.style.zIndex = '9999';
+                alertDiv.style.minWidth = '200px';
+                alertDiv.style.maxWidth = '80%';
+                alertDiv.style.width = 'auto';
+                alertDiv.style.padding = '15px 30px';
+                alertDiv.innerHTML = `
+                    <div class="d-flex justify-content-center align-items-center">
+                        請先登入後再進行購物
+                    </div>
+                `;
+                document.body.appendChild(alertDiv);
+                setTimeout(() => {
+                    const bsAlert = new bootstrap.Alert(alertDiv);
+                    bsAlert.close();
+                }, 1500);
+                return;
+            }
+
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const selectedSize = document.querySelector('.size-option.btn-success');
+            const selectedColor = document.querySelector('.color-option.btn-success');
+
+            // 獲取選中的尺寸和顏色對應的optionID
+            const sizeIndex = Array.from(document.querySelectorAll('.size-option')).indexOf(selectedSize);
+            const colorIndex = Array.from(document.querySelectorAll('.color-option')).indexOf(selectedColor);
+            const sizeOptions = <?php echo json_encode($product['sizeOptions']); ?>;
+            const optionId = sizeOptions[sizeIndex].colors[colorIndex].optionId;
+
+            fetch('php/APIs.php?action=addToCart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    memberId: <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 0; ?>,
+                    optionId: optionId,
+                    quantity: quantity
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // 創建Bootstrap alert元素
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-success alert-dismissible fade show position-fixed top-50 start-50 translate-middle text-center';
+                    alertDiv.setAttribute('role', 'alert');
+                    alertDiv.style.zIndex = '9999';
+                    alertDiv.style.minWidth = '200px';
+                    alertDiv.style.maxWidth = '80%';
+                    alertDiv.style.width = 'auto';
+                    alertDiv.style.padding = '15px 30px';
+                    alertDiv.innerHTML = `
+                        <div class="d-flex justify-content-center align-items-center">
+                            ${data.success ? '已加入購物車' : '加入購物車失敗: ' + data.message}
+                        </div>
+                    `;
+                    // 添加到body
+                    document.body.appendChild(alertDiv);
+                    // 1.5秒後自動消失
+                    setTimeout(() => {
+                        const bsAlert = new bootstrap.Alert(alertDiv);
+                        bsAlert.close();
+                    }, 1500);
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    const alertDiv = document.createElement('div');
+                    alertDiv.className = 'alert alert-danger alert-dismissible fade show position-fixed top-50 start-50 translate-middle text-center';
+                    alertDiv.setAttribute('role', 'alert');
+                    alertDiv.style.zIndex = '9999';
+                    alertDiv.style.minWidth = '200px';
+                    alertDiv.style.maxWidth = '80%';
+                    alertDiv.style.width = 'auto';
+                    alertDiv.style.padding = '15px 30px';
+                    alertDiv.innerHTML = `
+                        <div class="d-flex justify-content-center align-items-center">
+                            發生錯誤，請稍後再試
+                        </div>
+                    `;
+                    document.body.appendChild(alertDiv);
+                    setTimeout(() => {
+                        const bsAlert = new bootstrap.Alert(alertDiv);
+                        bsAlert.close();
+                    }, 1500);
+                });
         });
     </script>
 </body>

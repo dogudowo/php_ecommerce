@@ -306,35 +306,45 @@ function getCart($memberId, $conn = null)
     return $cart;
 }
 
-function getCartItems($memberId, $conn = null)
+function getCartItems($memberId)
 {
-    $closeConn = false;
-    if ($conn === null) {
-        $conn = db_connect();
-        $closeConn = true;
-    }
+    $conn = db_connect();
 
-    $sql = "SELECT ci.*, p.ProductName, p.Type, o.Color, o.Size, o.SizeDescription, o.Price 
-            FROM CartItem ci
-            JOIN Options o ON ci.OptionID = o.OptionID
-            JOIN Product p ON o.ProductID = p.ProductID
-            WHERE ci.MemberID = ?";
-    $stmt = $conn->prepare($sql);
+    $stmt = $conn->prepare("
+        SELECT 
+            ci.Quantity,
+            ci.OptionID,
+            p.ProductName,
+            p.ProductID,
+            o.Price,
+            o.Color,
+            o.SizeDescription,
+            o.Size
+        FROM CartItem ci
+        JOIN Options o ON ci.OptionID = o.OptionID
+        JOIN Product p ON o.ProductID = p.ProductID
+        WHERE ci.MemberID = ?
+    ");
     $stmt->bind_param("i", $memberId);
     $stmt->execute();
     $result = $stmt->get_result();
 
     $items = [];
-    if ($result->num_rows > 0) {
-        while ($row = $result->fetch_assoc()) {
-            $items[] = $row;
-        }
+    while ($row = $result->fetch_assoc()) {
+        $items[] = $row;
     }
 
-    if ($closeConn) {
-        $conn->close();
+    // 获取商品图片
+    foreach ($items as &$item) {
+        $productDir = "/public_html/imgs/products/" . $item['ProductName'];
+        $item['image'] = file_exists($_SERVER['DOCUMENT_ROOT'] . $productDir . "/main.jpg")
+            ? $productDir . "/main.jpg"
+            : "https://via.placeholder.com/50";
     }
+
     return $items;
+
+    $conn->close();
 }
 
 function registerUser($name, $phone, $email, $password, $city = null, $address = null)
@@ -422,5 +432,118 @@ function authenticateUser($phone, $password)
 
     $conn->close();
     return ['success' => false];
+}
+
+// 處理AJAX請求
+if (isset($_GET['action'])) {
+    header('Content-Type: application/json');
+    session_start();
+
+    switch ($_GET['action']) {
+        case 'addToCart':
+            $data = json_decode(file_get_contents('php://input'), true);
+            echo json_encode(addToCart($data['memberId'], $data['optionId'], $data['quantity']));
+            break;
+        case 'removeFromCart':
+            $data = json_decode(file_get_contents('php://input'), true);
+            echo json_encode(removeFromCart($data['memberId'], $data['optionId']));
+            break;
+        case 'updateCartQuantity':
+            $data = json_decode(file_get_contents('php://input'), true);
+            echo json_encode(updateCartQuantity($data['memberId'], $data['optionId'], $data['quantity']));
+            break;
+        default:
+            echo json_encode(['success' => false, 'message' => '無效的操作']);
+    }
+    exit;
+}
+
+function addToCart($memberId, $optionId, $quantity, $conn = null)
+{
+    $closeConn = false;
+    if ($conn === null) {
+        $conn = db_connect();
+        $closeConn = true;
+    }
+
+    $conn->begin_transaction();
+    try {
+        // 檢查是否已有相同商品在購物車
+        $stmt = $conn->prepare("SELECT Quantity FROM CartItem WHERE MemberID = ? AND OptionID = ?");
+        $stmt->bind_param("ii", $memberId, $optionId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            // 更新數量
+            $row = $result->fetch_assoc();
+            $newQuantity = $row['Quantity'] + $quantity;
+            $stmt = $conn->prepare("UPDATE CartItem SET Quantity = ? WHERE MemberID = ? AND OptionID = ?");
+            $stmt->bind_param("iii", $newQuantity, $memberId, $optionId);
+        } else {
+            // 新增商品
+            $stmt = $conn->prepare("INSERT INTO CartItem (MemberID, OptionID, Quantity) VALUES (?, ?, ?)");
+            $stmt->bind_param("iii", $memberId, $optionId, $quantity);
+        }
+        $stmt->execute();
+
+        $conn->commit();
+        return ['success' => true];
+    } catch (Exception $e) {
+        $conn->rollback();
+        error_log("加入購物車失敗：" . $e->getMessage());
+        return ['success' => false, 'message' => '加入購物車失敗'];
+    } finally {
+        if ($closeConn) {
+            $conn->close();
+        }
+    }
+}
+
+function removeFromCart($memberId, $optionId, $conn = null)
+{
+    $closeConn = false;
+    if ($conn === null) {
+        $conn = db_connect();
+        $closeConn = true;
+    }
+
+    try {
+        $stmt = $conn->prepare("DELETE FROM CartItem WHERE MemberID = ? AND OptionID = ?");
+        $stmt->bind_param("ii", $memberId, $optionId);
+        $stmt->execute();
+        return ['success' => true];
+    } catch (Exception $e) {
+        error_log("移除購物車商品失敗：" . $e->getMessage());
+        return ['success' => false, 'message' => '移除商品失敗'];
+    } finally {
+        if ($closeConn) {
+            $conn->close();
+        }
+    }
+}
+
+function updateCartQuantity($memberId, $optionId, $quantity, $conn = null)
+{
+    $closeConn = false;
+    if ($conn === null) {
+        $conn = db_connect();
+        $closeConn = true;
+    }
+
+    try {
+        $stmt = $conn->prepare("UPDATE CartItem SET Quantity = ? WHERE MemberID = ? AND OptionID = ?");
+        $stmt->bind_param("iii", $quantity, $memberId, $optionId);
+        $stmt->execute();
+
+        return ['success' => true];
+    } catch (Exception $e) {
+        error_log("更新購物車數量失敗：" . $e->getMessage());
+        return ['success' => false, 'message' => '更新數量失敗'];
+    } finally {
+        if ($closeConn) {
+            $conn->close();
+        }
+    }
 }
 ?>
