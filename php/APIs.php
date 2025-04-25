@@ -2,13 +2,18 @@
 // 確保引用此檔案的程式碼使用正確的路徑，例如：require_once 'php/getMember.php';
 require_once __DIR__ . '/db_connect.php';
 
-function getMembers($conn = null)
+function getDbConnection(&$conn, &$closeConn)
 {
     $closeConn = false;
     if ($conn === null) {
         $conn = db_connect();
         $closeConn = true;
     }
+}
+//獲取會員
+function getMembers($conn = null)
+{
+    getDbConnection($conn, $closeConn);
 
     $sql = "SELECT 
                 m.MemberID,
@@ -49,7 +54,7 @@ function getMembers($conn = null)
     }
     return $members;
 }
-
+//增加商品
 function addProduct($productName, $productType, $mainImage, $galleryImages, $sizes, $sizeDescriptions, $colors, $stocks, $prices, $productDescription = '')
 {
     $conn = db_connect();
@@ -96,7 +101,7 @@ function addProduct($productName, $productType, $mainImage, $galleryImages, $siz
         $conn->close();
     }
 }
-
+//獲取所有產品
 function getProducts()
 {
     $conn = db_connect();
@@ -132,7 +137,7 @@ function getProducts()
     $conn->close();
     return $products;
 }
-
+//獲取單個產品
 function getProductById($productId)
 {
     $conn = db_connect();
@@ -199,7 +204,6 @@ function getProductById($productId)
     $conn->close();
     return $product;
 }
-
 function handleProductImages($productName, $mainImage, $galleryImages)
 {
     $productDir = $productDir = __DIR__ . "/../imgs/products/" . $productName;
@@ -226,25 +230,9 @@ function handleProductImages($productName, $mainImage, $galleryImages)
         }
     }
 }
-
-function validateProductInput($input)
-{
-    if (empty($input['productName']) || empty($input['productType'])) {
-        throw new Exception('缺少必要欄位');
-    }
-
-    if (empty($input['colors']) || empty($input['stocks']) || empty($input['prices'])) {
-        throw new Exception('缺少商品規格資訊');
-    }
-}
-
 function getOrders($conn = null)
 {
-    $closeConn = false;
-    if ($conn === null) {
-        $conn = db_connect();
-        $closeConn = true;
-    }
+    getDbConnection($conn, $closeConn);
 
     $sql = "SELECT 
                 o.OrderID,
@@ -282,32 +270,6 @@ function getOrders($conn = null)
     }
     return $orders;
 }
-
-function getCart($memberId, $conn = null)
-{
-    $closeConn = false;
-    if ($conn === null) {
-        $conn = db_connect();
-        $closeConn = true;
-    }
-
-    $sql = "SELECT * FROM Cart WHERE MemberID = ?";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("i", $memberId);
-    $stmt->execute();
-    $result = $stmt->get_result();
-
-    $cart = null;
-    if ($result->num_rows > 0) {
-        $cart = $result->fetch_assoc();
-    }
-
-    if ($closeConn) {
-        $conn->close();
-    }
-    return $cart;
-}
-
 function getCartItems($memberId)
 {
     $conn = db_connect();
@@ -346,7 +308,6 @@ function getCartItems($memberId)
 
     return $items;
 }
-
 function registerUser($name, $phone, $email, $password, $city = null, $address = null)
 {
     $conn = db_connect();
@@ -402,7 +363,6 @@ function registerUser($name, $phone, $email, $password, $city = null, $address =
         $conn->close();
     }
 }
-
 function authenticateUser($phone, $password)
 {
     $conn = db_connect();
@@ -433,42 +393,9 @@ function authenticateUser($phone, $password)
     $conn->close();
     return ['success' => false];
 }
-
-// 處理AJAX請求
-if (isset($_GET['action'])) {
-    header('Content-Type: application/json');
-    session_start();
-
-    switch ($_GET['action']) {
-        case 'addToCart':
-            $data = json_decode(file_get_contents('php://input'), true);
-            echo json_encode(addToCart($data['memberId'], $data['optionId'], $data['quantity']));
-            break;
-        case 'removeFromCart':
-            $data = json_decode(file_get_contents('php://input'), true);
-            echo json_encode(removeFromCart($data['memberId'], $data['optionId']));
-            break;
-        case 'updateCartQuantity':
-            $data = json_decode(file_get_contents('php://input'), true);
-            echo json_encode(updateCartQuantity($data['memberId'], $data['optionId'], $data['quantity']));
-            break;
-        case 'reorder':
-            $data = json_decode(file_get_contents('php://input'), true);
-            echo json_encode(reorder($data['memberId'], $data['orderId']));
-            break;
-        default:
-            echo json_encode(['success' => false, 'message' => '無效的操作']);
-    }
-    exit;
-}
-
 function addToCart($memberId, $optionId, $quantity, $conn = null)
 {
-    $closeConn = false;
-    if ($conn === null) {
-        $conn = db_connect();
-        $closeConn = true;
-    }
+    getDbConnection($conn, $closeConn);
 
     $conn->begin_transaction();
     try {
@@ -503,14 +430,9 @@ function addToCart($memberId, $optionId, $quantity, $conn = null)
         }
     }
 }
-
 function removeFromCart($memberId, $optionId, $conn = null)
 {
-    $closeConn = false;
-    if ($conn === null) {
-        $conn = db_connect();
-        $closeConn = true;
-    }
+    getDbConnection($conn, $closeConn);
 
     try {
         $stmt = $conn->prepare("DELETE FROM CartItem WHERE MemberID = ? AND OptionID = ?");
@@ -526,14 +448,9 @@ function removeFromCart($memberId, $optionId, $conn = null)
         }
     }
 }
-
 function updateCartQuantity($memberId, $optionId, $quantity, $conn = null)
 {
-    $closeConn = false;
-    if ($conn === null) {
-        $conn = db_connect();
-        $closeConn = true;
-    }
+    getDbConnection($conn, $closeConn);
 
     try {
         $stmt = $conn->prepare("UPDATE CartItem SET Quantity = ? WHERE MemberID = ? AND OptionID = ?");
@@ -550,14 +467,9 @@ function updateCartQuantity($memberId, $optionId, $quantity, $conn = null)
         }
     }
 }
-
 function createOrder($memberId, $conn = null)
 {
-    $closeConn = false;
-    if ($conn === null) {
-        $conn = db_connect();
-        $closeConn = true;
-    }
+    getDbConnection($conn, $closeConn);
 
     $conn->begin_transaction();
     try {
@@ -583,14 +495,9 @@ function createOrder($memberId, $conn = null)
         }
     }
 }
-
 function addOrderItem($orderId, $optionId, $quantity, $conn = null)
 {
-    $closeConn = false;
-    if ($conn === null) {
-        $conn = db_connect();
-        $closeConn = true;
-    }
+    getDbConnection($conn, $closeConn);
 
     try {
         $stmt = $conn->prepare("INSERT INTO OrderItem (OrderID, OptionID, Quantity) VALUES (?, ?, ?)");
@@ -606,7 +513,6 @@ function addOrderItem($orderId, $optionId, $quantity, $conn = null)
         }
     }
 }
-
 function checkout($memberId)
 {
     $conn = db_connect();
@@ -647,41 +553,9 @@ function checkout($memberId)
         $conn->close();
     }
 }
-
-// 处理AJAX请求部分添加结账处理
-if (isset($_GET['action'])) {
-    header('Content-Type: application/json');
-    session_start();
-
-    switch ($_GET['action']) {
-        case 'addToCart':
-            $data = json_decode(file_get_contents('php://input'), true);
-            echo json_encode(addToCart($data['memberId'], $data['optionId'], $data['quantity']));
-            break;
-        case 'removeFromCart':
-            $data = json_decode(file_get_contents('php://input'), true);
-            echo json_encode(removeFromCart($data['memberId'], $data['optionId']));
-            break;
-        case 'updateCartQuantity':
-            $data = json_decode(file_get_contents('php://input'), true);
-            echo json_encode(updateCartQuantity($data['memberId'], $data['optionId'], $data['quantity']));
-            break;
-        case 'checkout':
-            $data = json_decode(file_get_contents('php://input'), true);
-            echo json_encode(checkout($data['memberId']));
-            break;
-        default:
-            echo json_encode(['success' => false, 'message' => '无有效操作']);
-    }
-    exit;
-}
 function getMemberOrders($memberId, $conn = null)
 {
-    $closeConn = false;
-    if ($conn === null) {
-        $conn = db_connect();
-        $closeConn = true;
-    }
+    getDbConnection($conn, $closeConn);
 
     $sql = "SELECT 
                 o.OrderID,
@@ -712,14 +586,9 @@ function getMemberOrders($memberId, $conn = null)
     }
     return $orders;
 }
-
 function getOrderDetails($orderId, $conn = null)
 {
-    $closeConn = false;
-    if ($conn === null) {
-        $conn = db_connect();
-        $closeConn = true;
-    }
+    getDbConnection($conn, $closeConn);
 
     $sql = "SELECT 
                 p.ProductName,
@@ -755,7 +624,6 @@ function getOrderDetails($orderId, $conn = null)
     }
     return $items;
 }
-
 function renderOrderTab($orders, $status, $title)
 {
     $filteredOrders = array_filter($orders, fn($order) => $order['Status'] === $status);
@@ -829,14 +697,9 @@ function renderOrderTab($orders, $status, $title)
     </div>
     <?php
 }
-
 function reorder($memberId, $orderId, $conn = null)
 {
-    $closeConn = false;
-    if ($conn === null) {
-        $conn = db_connect();
-        $closeConn = true;
-    }
+    getDbConnection($conn, $closeConn);
 
     $conn->begin_transaction();
     try {
@@ -870,5 +733,36 @@ function reorder($memberId, $orderId, $conn = null)
             $conn->close();
         }
     }
+}
+// 處理AJAX請求
+if (isset($_GET['action'])) {
+    header('Content-Type: application/json');
+    session_start();
+
+    switch ($_GET['action']) {
+        case 'addToCart':
+            $data = json_decode(file_get_contents('php://input'), true);
+            echo json_encode(addToCart($data['memberId'], $data['optionId'], $data['quantity']));
+            break;
+        case 'removeFromCart':
+            $data = json_decode(file_get_contents('php://input'), true);
+            echo json_encode(removeFromCart($data['memberId'], $data['optionId']));
+            break;
+        case 'updateCartQuantity':
+            $data = json_decode(file_get_contents('php://input'), true);
+            echo json_encode(updateCartQuantity($data['memberId'], $data['optionId'], $data['quantity']));
+            break;
+        case 'reorder':
+            $data = json_decode(file_get_contents('php://input'), true);
+            echo json_encode(reorder($data['memberId'], $data['orderId']));
+            break;
+        case 'checkout':
+            $data = json_decode(file_get_contents('php://input'), true);
+            echo json_encode(checkout($data['memberId']));
+            break;
+        default:
+            echo json_encode(['success' => false, 'message' => '無效的操作']);
+    }
+    exit;
 }
 ?>

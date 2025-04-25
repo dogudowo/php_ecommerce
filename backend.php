@@ -25,10 +25,10 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
     <?php include "header.php"; ?>
 
     <div class="container mt-4">
-        <div class="text-center border-bottom border-black pb-3 mb-4">
+        <!-- <div class="text-center border-bottom border-black pb-3 mb-4">
             <img src="imgs/title.png" alt="歐印精品" class="img-fluid">
             <h1 class="h1">後台管理系統</h1>
-        </div>
+        </div> -->
 
         <!-- Offcanvas 觸發按鈕：僅在小於 lg 時顯示 -->
         <div class="d-lg-none mb-3">
