@@ -179,7 +179,7 @@ function getProductById($productId)
     $product['sizeOptions'] = array_values($sizeOptions);
 
     // 檢查產品圖片是否存在
-    $productDir = "/Applications/XAMPP/xamppfiles/htdocs/public_html/imgs/products/" . $product['ProductName'];
+    $productDir = __DIR__ . "/../imgs/products/" . $product['ProductName'];
     $webPath = "/public_html/imgs/products/" . $product['ProductName'];
 
     $product['mainImage'] = file_exists($productDir . "/main.jpg") ? $webPath . "/main.jpg" : "https://via.placeholder.com/150";
@@ -200,7 +200,7 @@ function getProductById($productId)
 
 function handleProductImages($productName, $mainImage, $galleryImages)
 {
-    $productDir = "/Applications/XAMPP/xamppfiles/htdocs/public_html/imgs/products/" . $productName;
+    $productDir = $productDir = __DIR__ . "/../imgs/products/" . $productName;
 
     if (!file_exists($productDir)) {
         if (!mkdir($productDir, 0777, true)) {
