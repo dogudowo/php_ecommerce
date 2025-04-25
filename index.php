@@ -201,7 +201,8 @@
                                                     <p class="fs-6 mb-0">價錢: <span
                                                             class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span>
                                                     </p>
-                                                    <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
+                                                    <p class="fs-4 text-danger"> <strong>$<?= $product['MinPrice'] ?></strong>
+                                                    </p>
                                                 </div>
                                                 <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
                                             </div>
