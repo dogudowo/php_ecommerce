@@ -84,6 +84,19 @@ $product['success'] = true;
                         </div>
                     </div>
 
+                    <!-- 新增價格區塊 -->
+                    <div class="mb-4">
+                        <p class="fw-bold mb-1">價格</p>
+                        <div>
+                            <span class="fs-6 text-decoration-line-through" id="original-price">
+                                NT$ <?php echo number_format($product['sizeOptions'][0]['price'] * 1.2, 0); ?>
+                            </span>
+                            <div class="h3 text-danger fw-bold" id="product-price">
+                                NT$ <?php echo number_format($product['sizeOptions'][0]['price'], 0); ?>
+                            </div>
+                        </div>
+                    </div>
+
                     <button class="btn btn-primary mt-3" id="add-to-cart">加入購物車</button>
                 </div>
             </div>
@@ -164,6 +177,12 @@ $product['success'] = true;
                 const sizeOptions = <?php echo json_encode($product['sizeOptions']); ?>;
                 const colorButtonsContainer = document.querySelector('.color-option').parentNode; // 只獲取按鈕容器
                 colorButtonsContainer.innerHTML = ''; // 只清空按鈕
+
+                // 更新價格顯示
+                const currentPrice = sizeOptions[sizeIndex].price;
+                const originalPrice = currentPrice * 1.2;
+                document.getElementById('product-price').textContent = 'NT$ ' + currentPrice.toLocaleString('en-US', { maximumFractionDigits: 0 });
+                document.getElementById('original-price').textContent = 'NT$ ' + originalPrice.toLocaleString('en-US', { maximumFractionDigits: 0 });
 
                 sizeOptions[sizeIndex].colors.forEach(colorOption => {
                     const colorBtn = document.createElement('button');
