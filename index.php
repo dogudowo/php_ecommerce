@@ -131,14 +131,59 @@
                         <!-- 全部行李箱內容 -->
                         <h4>全部行李箱</h4>
 
-                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                        <!-- 篩選控制項 -->
+                        <div class="row mb-4">
+                            <div class="col-md-3 mb-3">
+                                <h5>尺寸篩選</h5>
+                                <select class="form-select" id="size-filter">
+                                    <option value="all" selected>全部尺寸</option>
+                                    <option value="large">28吋以上</option>
+                                    <option value="medium">25~28吋</option>
+                                    <option value="small">21~24吋</option>
+                                    <option value="cabin">20吋以下</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <h5>材質篩選</h5>
+                                <select class="form-select" id="material-filter">
+                                    <option value="all" selected>全部材質</option>
+                                    <option value="aluminum">鋁框款</option>
+                                    <option value="zipper">拉鍊款</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="luggage-container">
                             <?php
                             require_once __DIR__ . '/php/APIs.php';
                             $products = getProducts();
                             foreach ($products as $product) {
                                 if ($product['Type'] === 'aluminum' || $product['Type'] === 'zipper') {
+                                    $productDetails = getProductById($product['ProductID']);
+                                    $sizes = [];
+                                    if (isset($productDetails['sizeOptions'])) {
+                                        foreach ($productDetails['sizeOptions'] as $sizeOption) {
+                                            $sizes[] = $sizeOption['size'];
+                                        }
+                                    }
+
+                                    // 將尺寸和材質信息添加為data屬性
+                                    $sizeClass = '';
+                                    if (!empty($sizes)) {
+                                        $maxSize = max($sizes);
+                                        if ($maxSize > 28) {
+                                            $sizeClass = 'large';
+                                        } elseif ($maxSize >= 25) {
+                                            $sizeClass = 'medium';
+                                        } elseif ($maxSize >= 21) {
+                                            $sizeClass = 'small';
+                                        } else {
+                                            $sizeClass = 'cabin';
+                                        }
+                                    }
                                     ?>
-                                    <div class="col">
+                                    <div class="col product-item" data-size="<?= $sizeClass ?>"
+                                        data-material="<?= $product['Type'] ?>">
                                         <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>"
                                             class="text-decoration-none">
                                             <div class="card h-100" style="cursor: pointer;">
@@ -148,7 +193,6 @@
                                                     <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
                                                     <p class="mb-0 mt-2">尺寸:
                                                         <?php
-                                                        $productDetails = getProductById($product['ProductID']);
                                                         if (isset($productDetails['sizeOptions'])) {
                                                             echo implode(', ', array_column($productDetails['sizeOptions'], 'size'));
                                                         }
@@ -284,6 +328,65 @@
             offcanvasEl.querySelectorAll(".nav-link").forEach((btn) => {
                 btn.addEventListener("click", () => offcanvasInstance.hide());
             });
+
+            // 篩選功能
+            let currentSizeFilter = 'all';
+            let currentMaterialFilter = 'all';
+
+            // 尺寸篩選下拉選單變更事件
+            document.getElementById('size-filter').addEventListener('change', function () {
+                currentSizeFilter = this.value;
+                applyFilters();
+            });
+
+            // 材質篩選下拉選單變更事件
+            document.getElementById('material-filter').addEventListener('change', function () {
+                currentMaterialFilter = this.value;
+                applyFilters();
+            });
+
+            // 應用篩選函數
+            function applyFilters() {
+                const productItems = document.querySelectorAll('.product-item');
+                let visibleCount = 0;
+
+                productItems.forEach(item => {
+                    const itemSize = item.getAttribute('data-size');
+                    const itemMaterial = item.getAttribute('data-material');
+
+                    // 檢查是否符合當前篩選條件
+                    const sizeMatch = currentSizeFilter === 'all' || itemSize === currentSizeFilter;
+                    const materialMatch = currentMaterialFilter === 'all' || itemMaterial === currentMaterialFilter;
+
+                    // 如果同時符合尺寸和材質篩選條件，則顯示該項目，否則隱藏
+                    if (sizeMatch && materialMatch) {
+                        item.style.display = '';
+                        visibleCount++;
+                    } else {
+                        item.style.display = 'none';
+                    }
+                });
+
+                // 檢查是否有顯示的產品
+                const noResultsMessage = document.getElementById('no-results-message');
+
+                // 只有當沒有可見產品時才顯示提示信息
+                if (visibleCount === 0) {
+                    if (!noResultsMessage) {
+                        const container = document.getElementById('luggage-container');
+                        const message = document.createElement('div');
+                        message.id = 'no-results-message';
+                        message.className = 'col-12 text-center my-5';
+                        message.innerHTML = '<h5>沒有符合條件的商品</h5>';
+                        container.appendChild(message);
+                    }
+                } else {
+                    // 如果有顯示的產品且有提示信息，則移除提示
+                    if (noResultsMessage) {
+                        noResultsMessage.remove();
+                    }
+                }
+            }
         });
     </script>
 </body>
