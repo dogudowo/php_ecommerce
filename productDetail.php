@@ -122,13 +122,27 @@ $product['success'] = true;
 
         // 自動選中第一個尺寸和顏色
         document.addEventListener('DOMContentLoaded', function () {
-            const firstSize = document.querySelector('.size-option');
+            const sizeOptions = <?php echo json_encode($product['sizeOptions']); ?>;
+
+            // 檢查每個尺寸是否有可用庫存
+            document.querySelectorAll('.size-option').forEach((button, index) => {
+                const allColorsOutOfStock = sizeOptions[index].colors.every(
+                    color => color.stock <= 0
+                );
+
+                if (allColorsOutOfStock) {
+                    button.disabled = true;
+                    button.classList.add('disabled');
+                }
+            });
+
+            const firstSize = document.querySelector('.size-option:not(:disabled)');
             if (firstSize) {
                 firstSize.classList.remove('btn-outline-success');
                 firstSize.classList.add('btn-success');
             }
 
-            const firstColor = document.querySelector('.color-option');
+            const firstColor = document.querySelector('.color-option:not(:disabled)');
             if (firstColor) {
                 firstColor.classList.remove('btn-outline-success');
                 firstColor.classList.add('btn-success');
@@ -144,6 +158,42 @@ $product['success'] = true;
                 });
                 this.classList.remove('btn-outline-success');
                 this.classList.add('btn-success');
+
+                // 根據選擇的尺寸更新顏色選項
+                const sizeIndex = Array.from(document.querySelectorAll('.size-option')).indexOf(this);
+                const sizeOptions = <?php echo json_encode($product['sizeOptions']); ?>;
+                const colorButtonsContainer = document.querySelector('.color-option').parentNode; // 只獲取按鈕容器
+                colorButtonsContainer.innerHTML = ''; // 只清空按鈕
+
+                sizeOptions[sizeIndex].colors.forEach(colorOption => {
+                    const colorBtn = document.createElement('button');
+                    colorBtn.className = 'btn btn-outline-success me-1 mb-1 color-option';
+                    colorBtn.textContent = colorOption.color;
+
+                    // 如果庫存為0，設置為disabled
+                    if (colorOption.stock <= 0) {
+                        colorBtn.disabled = true;
+                        colorBtn.classList.add('disabled');
+                    }
+
+                    colorBtn.addEventListener('click', function () {
+                        document.querySelectorAll('.color-option').forEach(btn => {
+                            btn.classList.remove('btn-success');
+                            btn.classList.add('btn-outline-success');
+                        });
+                        this.classList.remove('btn-outline-success');
+                        this.classList.add('btn-success');
+                    });
+
+                    colorButtonsContainer.appendChild(colorBtn);
+                });
+
+                // 自動選中第一個可用的顏色
+                const firstAvailableColor = colorButtonsContainer.querySelector('.color-option:not(:disabled)');
+                if (firstAvailableColor) {
+                    firstAvailableColor.classList.remove('btn-outline-success');
+                    firstAvailableColor.classList.add('btn-success');
+                }
             });
         });
 
