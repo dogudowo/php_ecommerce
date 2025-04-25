@@ -146,6 +146,14 @@
                                                     class="card-img-top" alt="<?= $product['ProductName'] ?>">
                                                 <div class="card-body text-black pb-0 mb-0">
                                                     <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
+                                                    <p class="mb-0 mt-2">尺寸:
+                                                        <?php
+                                                        $productDetails = getProductById($product['ProductID']);
+                                                        if (isset($productDetails['sizeOptions'])) {
+                                                            echo implode(', ', array_column($productDetails['sizeOptions'], 'size'));
+                                                        }
+                                                        ?> 吋
+                                                    </p>
                                                     <p class="fs-6 mb-0">價錢: <span
                                                             class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span>
                                                     </p>
