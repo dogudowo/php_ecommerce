@@ -240,6 +240,72 @@
 </div>
 
 <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // 處理所有的移除尺寸和移除顏色按鈕（包含新增和編輯模式）
+        document.addEventListener('click', function(event) {
+            // 移除尺寸按鈕
+            if (event.target.classList.contains('remove-size')) {
+                const sizeContainer = event.target.closest('#sizeContainer, #edit-sizeContainer');
+                const sizeSections = sizeContainer.querySelectorAll('.size-section');
+                
+                if (sizeSections.length > 1) {
+                    const sizeSection = event.target.closest('.size-section');
+                    sizeSection.remove();
+                    
+                    // 更新索引
+                    const isEdit = sizeContainer.id === 'edit-sizeContainer';
+                    const prefix = isEdit ? 'edit_' : '';
+                    
+                    sizeSections.forEach((section, index) => {
+                        section.querySelectorAll(`input[name^="${prefix}colors"], input[name^="${prefix}stocks"]`).forEach(input => {
+                            input.name = input.name.replace(/\[\d+\]/, `[${index}]`);
+                        });
+                    });
+                } else {
+                    alert('至少需要一個尺寸');
+                }
+            }
+            
+            // 移除顏色按鈕
+            if (event.target.classList.contains('remove-color-stock')) {
+                const colorStockContainer = event.target.closest('.color-stock-container');
+                const colorStocks = colorStockContainer.querySelectorAll('.color-stock');
+                
+                if (colorStocks.length > 1) {
+                    event.target.closest('.color-stock').remove();
+                } else {
+                    alert('每個尺寸至少需要一個顏色選項');
+                }
+            }
+            
+            // 新增顏色按鈕
+            if (event.target.classList.contains('add-color-stock')) {
+                const sizeSection = event.target.closest('.size-section');
+                const colorStockContainer = sizeSection.querySelector('.color-stock-container');
+                const sizeContainer = sizeSection.closest('#sizeContainer, #edit-sizeContainer');
+                const isEdit = sizeContainer.id === 'edit-sizeContainer';
+                const prefix = isEdit ? 'edit_' : '';
+                
+                // 找出當前尺寸的索引
+                const sizeIndex = Array.from(sizeContainer.querySelectorAll('.size-section')).indexOf(sizeSection);
+                
+                // 複製第一個顏色區塊
+                const firstColorStock = colorStockContainer.querySelector('.color-stock');
+                const newColorStock = firstColorStock.cloneNode(true);
+                
+                // 清空輸入值
+                newColorStock.querySelectorAll('input').forEach(input => {
+                    input.value = '';
+                    if (input.name) {
+                        input.name = input.name.replace(/\[\d+\]/, `[${sizeIndex}]`);
+                    }
+                });
+                
+                colorStockContainer.appendChild(newColorStock);
+            }
+        });
+    });
+
     document
         .getElementById("mainImage")
         .addEventListener("change", function (event) {
@@ -299,50 +365,6 @@
 
         colorStockContainer.appendChild(newColorStock);
         sizeContainer.appendChild(newSizeSection);
-    });
-
-    document.getElementById("sizeContainer").addEventListener("click", function (event) {
-        if (event.target.classList.contains("add-color-stock")) {
-            // 處理新增顏色的邏輯
-            const colorStockContainer = event.target
-                .closest(".size-section")
-                .querySelector(".color-stock-container");
-            const newColorStock = document
-                .querySelector(".color-stock")
-                .cloneNode(true);
-            newColorStock
-                .querySelectorAll("input")
-                .forEach((input) => (input.value = ""));
-
-            const sizeIndex = Array.from(
-                document.querySelectorAll(".size-section")
-            ).indexOf(event.target.closest(".size-section"));
-            newColorStock.querySelectorAll("input").forEach((input) => {
-                input.name = input.name.replace(/\[\d+\]/, `[${sizeIndex}]`);
-            });
-
-            colorStockContainer.appendChild(newColorStock);
-        } else if (event.target.classList.contains("remove-color-stock") || 
-                   event.target.classList.contains("edit-remove-color-stock")) {
-            // 處理移除顏色的邏輯
-            const currentSection = event.target.closest(".size-section");
-            const colorStocks = currentSection.querySelectorAll(".color-stock");
-
-            if (colorStocks.length > 1) {
-                event.target.closest(".color-stock").remove();
-            } else {
-                alert("每個尺寸至少需要一個顏色選項");
-            }
-        } else if (event.target.classList.contains("remove-size") || 
-                   event.target.classList.contains("edit-remove-size")) {
-            // 處理移除尺寸的邏輯
-            const sizeSections = document.querySelectorAll(".size-section");
-            if (sizeSections.length > 1) {
-                event.target.closest(".size-section").remove();
-            } else {
-                alert("至少需要一個尺寸");
-            }
-        }
     });
 
     document
@@ -531,100 +553,47 @@
     let editSizeIndex = 0;
 
     document.getElementById("edit-addSize").addEventListener("click", function () {
-        document
-            .getElementById("edit-addSize")
-            .addEventListener("click", function () {
-                const sizeContainer = document.getElementById("edit-sizeContainer");
-                const sizeSections = sizeContainer.querySelectorAll(".size-section");
-                const sizeIndex = sizeSections.length;
+        const sizeContainer = document.getElementById("edit-sizeContainer");
+        const sizeSections = sizeContainer.querySelectorAll(".size-section");
+        const sizeIndex = sizeSections.length;
 
-                const newSizeSection = document.createElement("div");
-                newSizeSection.className = "size-section mb-3";
-                newSizeSection.innerHTML = `
-                <label class="form-label">尺寸與價格</label>
-                <div class="row g-2 mb-2">
-                    <div class="col">
-                        <input type="text" class="form-control" name="edit_sizes[]" placeholder="尺寸" >
-                    </div>
-                    <div class="col">
-                        <input type="text" class="form-control" name="edit_sizeDescriptions[]" placeholder="尺寸描述">
-                    </div>
-                    <div class="col">
-                        <input type="number" class="form-control" name="edit_prices[]" placeholder="價格" required>
-                    </div>
-                    <div class="col-auto">
-                        <button type="button" class="btn btn-danger remove-size">移除尺寸</button>
-                    </div>
+        const newSizeSection = document.createElement("div");
+        newSizeSection.className = "size-section mb-3";
+        newSizeSection.innerHTML = `
+            <label class="form-label">尺寸與價格</label>
+            <div class="row g-2 mb-2">
+                <div class="col">
+                    <input type="text" class="form-control" name="edit_sizes[]" placeholder="尺寸">
                 </div>
-                <div class="color-stock-container mt-2">
-                    <div class="color-stock mb-2">
-                        <div class="row g-2">
-                            <div class="col">
-                                <input type="text" class="form-control" name="edit_colors[${sizeIndex}][]" placeholder="顏色" required>
-                            </div>
-                            <div class="col">
-                                <input type="number" class="form-control" name="edit_stocks[${sizeIndex}][]" placeholder="庫存" required>
-                            </div>
-                            <input type="hidden" name="edit_optionIds[${sizeIndex}][]" value="new">
-                            <div class="col-auto">
-                                <button type="button" class="btn btn-primary add-color-stock">新增顏色</button>
-                                <button type="button" class="btn btn-danger remove-color-stock">移除</button>
-                            </div>
+                <div class="col">
+                    <input type="text" class="form-control" name="edit_sizeDescriptions[]" placeholder="尺寸描述">
+                </div>
+                <div class="col">
+                    <input type="number" class="form-control" name="edit_prices[]" placeholder="價格" required>
+                </div>
+                <div class="col-auto">
+                    <button type="button" class="btn btn-danger remove-size">移除尺寸</button>
+                </div>
+            </div>
+            <div class="color-stock-container mt-2">
+                <div class="color-stock mb-2">
+                    <div class="row g-2">
+                        <div class="col">
+                            <input type="text" class="form-control" name="edit_colors[${sizeIndex}][]" placeholder="顏色" required>
+                        </div>
+                        <div class="col">
+                            <input type="number" class="form-control" name="edit_stocks[${sizeIndex}][]" placeholder="庫存" required>
+                        </div>  
+                        <input type="hidden" name="edit_optionIds[${sizeIndex}][]" value="new">
+                        <div class="col-auto">
+                            <button type="button" class="btn btn-primary add-color-stock">新增顏色</button>
+                            <button type="button" class="btn btn-danger remove-color-stock">移除</button>
                         </div>
                     </div>
                 </div>
-            `;
-                sizeContainer.appendChild(newSizeSection);
-            });
-    });
-
-    // 編輯商品的尺寸和顏色事件處理
-    document.addEventListener("click", function (event) {
-        if (event.target.classList.contains("edit-add-color-stock")) {
-            const sizeSection = event.target.closest(".size-section");
-            const colorStockContainer = sizeSection.querySelector(
-                ".color-stock-container"
-            );
-            const sizeIndex = Array.from(
-                document.querySelectorAll(".size-section")
-            ).indexOf(sizeSection);
-
-            const newColorStock = document.createElement("div");
-            newColorStock.className = "color-stock mb-2";
-            newColorStock.innerHTML = `
-                <div class="row g-2">
-                    <input type="hidden" name="edit_optionIds[${sizeIndex}][]" value="new">
-                    <div class="col">
-                        <input type="text" class="form-control" name="edit_colors[${sizeIndex}][]" placeholder="顏色" required>
-                    </div>
-                    <div class="col">
-                        <input type="number" class="form-control" name="edit_stocks[${sizeIndex}][]" placeholder="庫存" required>
-                    </div>
-                    <div class="col-auto">
-                        <button type="button" class="btn btn-primary edit-add-color-stock">新增顏色</button>
-                        <button type="button" class="btn btn-danger edit-remove-color-stock">移除</button>
-                    </div>
-                </div>
-            `;
-
-            colorStockContainer.appendChild(newColorStock);
-        } else if (event.target.classList.contains("edit-remove-color-stock")) {
-            const currentSection = event.target.closest(".size-section");
-            const colorStocks = currentSection.querySelectorAll(".color-stock");
-
-            if (colorStocks.length > 1) {
-                event.target.closest(".color-stock").remove();
-            } else {
-                alert("每個尺寸至少需要一個顏色選項");
-            }
-        } else if (event.target.classList.contains("edit-remove-size")) {
-            const sizeSections = document.querySelectorAll(".size-section");
-            if (sizeSections.length > 1) {
-                event.target.closest(".size-section").remove();
-            } else {
-                alert("至少需要一個尺寸");
-            }
-        }
+            </div>
+        `;
+        sizeContainer.appendChild(newSizeSection);
     });
 
     document
