@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h1 class="h1">會員註冊</h1>
     </div>
 
-    <main class="container-sm col-12 col-md-6 col-lg-3 mx-auto my-5">
+    <main class="container-sm col-12 col-md-6 col-lg-4 mx-auto my-5">
         <?php if (!empty($error_message)): ?>
             <div class="alert alert-danger" role="alert">
                 <?php echo htmlspecialchars($error_message); ?>
@@ -101,13 +101,37 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             </div>
 
             <div class="form-floating mb-3">
-                <input type="text" class="form-control" id="city" name="city" placeholder="城市">
-                <label for="city">城市 (選填)</label>
+                <select class="form-select" id="city" name="city" required>
+                    <option value="" selected disabled>請選擇城市</option>
+                    <option value="基隆市">基隆市</option>
+                    <option value="新北市">新北市</option>
+                    <option value="台北市">台北市</option>
+                    <option value="桃園市">桃園市</option>
+                    <option value="新竹縣">新竹縣</option>
+                    <option value="新竹市">新竹市</option>
+                    <option value="苗栗縣">苗栗縣</option>
+                    <option value="台中市">台中市</option>
+                    <option value="彰化縣">彰化縣</option>
+                    <option value="南投縣">南投縣</option>
+                    <option value="雲林縣">雲林縣</option>
+                    <option value="嘉義縣">嘉義縣</option>
+                    <option value="嘉義市">嘉義市</option>
+                    <option value="台南市">台南市</option>
+                    <option value="高雄市">高雄市</option>
+                    <option value="屏東縣">屏東縣</option>
+                    <option value="宜蘭縣">宜蘭縣</option>
+                    <option value="花蓮縣">花蓮縣</option>
+                    <option value="台東縣">台東縣</option>
+                    <option value="金門縣">金門縣</option>
+                    <option value="連江縣">連江縣</option>
+                    <option value="澎湖縣">澎湖縣</option>
+                </select>
+                <label for="city">城市</label>
             </div>
 
             <div class="form-floating mb-3">
-                <input type="text" class="form-control" id="address" name="address" placeholder="地址">
-                <label for="address">地址 (選填)</label>
+                <input type="text" class="form-control" id="address" name="address" placeholder="地址" required>
+                <label for="address">地址</label>
             </div>
 
             <button class="w-100 btn btn-lg btn-success" type="submit">註冊</button>

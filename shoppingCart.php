@@ -173,7 +173,7 @@ foreach ($cartItems as $item) {
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            location.reload();
+                            location.reload();  // 確保這裡有強制刷新
                         } else {
                             alert('移除商品失敗: ' + data.message);
                         }

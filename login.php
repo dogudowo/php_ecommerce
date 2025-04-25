@@ -102,7 +102,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <button class="w-100 btn btn-lg btn-success" type="submit">登入</button>
 
             <p class="mt-3 text-center">
-                <!-- <a href="#" class="text-decoration-none">忘記密碼？</a> | -->
                 <a href="register.php" class="text-decoration-none">註冊會員</a>
             </p>
 

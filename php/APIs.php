@@ -15,6 +15,8 @@ function getMembers($conn = null)
                 m.Name as membername,
                 m.Phone as phonenum,
                 m.Email as memberemail,
+                m.City,
+                m.Address,
                 COUNT(DISTINCT o.OrderID) as order_count,
                 CASE 
                     WHEN m.IsAdmin = 1 THEN '管理員'
@@ -22,7 +24,7 @@ function getMembers($conn = null)
                 END as role
             FROM Member m
             LEFT JOIN Orders o ON m.MemberID = o.MembersID
-            GROUP BY m.MemberID, m.Name, m.Phone, m.Email, m.IsAdmin
+            GROUP BY m.MemberID, m.Name, m.Phone, m.Email, m.City, m.Address, m.IsAdmin
             ORDER BY m.MemberID ASC";
 
     $result = $conn->query($sql);
@@ -450,6 +452,10 @@ if (isset($_GET['action'])) {
             $data = json_decode(file_get_contents('php://input'), true);
             echo json_encode(updateCartQuantity($data['memberId'], $data['optionId'], $data['quantity']));
             break;
+        case 'reorder':
+            $data = json_decode(file_get_contents('php://input'), true);
+            echo json_encode(reorder($data['memberId'], $data['orderId']));
+            break;
         default:
             echo json_encode(['success' => false, 'message' => '無效的操作']);
     }
@@ -810,7 +816,8 @@ function renderOrderTab($orders, $status, $title)
                                             class="text-danger fw-bold">$<?php echo $order['TotalAmount']; ?></span>
                                     </p>
                                 </div>
-                                <button class="btn btn-outline-secondary btn-sm">再買一次</button>
+                                <button class="btn btn-outline-secondary reorder-btn"
+                                    data-order-id="<?php echo $order['OrderID']; ?>">再買一次</button>
                             </div>
                         </a>
                     </div>
@@ -821,5 +828,47 @@ function renderOrderTab($orders, $status, $title)
         <?php endif; ?>
     </div>
     <?php
+}
+
+function reorder($memberId, $orderId, $conn = null)
+{
+    $closeConn = false;
+    if ($conn === null) {
+        $conn = db_connect();
+        $closeConn = true;
+    }
+
+    $conn->begin_transaction();
+    try {
+        // 先清空購物車
+        $stmt = $conn->prepare("DELETE FROM CartItem WHERE MemberID = ?");
+        $stmt->bind_param("i", $memberId);
+        $stmt->execute();
+
+        // 獲取訂單商品
+        $stmt = $conn->prepare("SELECT OptionID, Quantity FROM OrderItem WHERE OrderID = ?");
+        $stmt->bind_param("i", $orderId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        // 將商品加入購物車
+        while ($row = $result->fetch_assoc()) {
+            $addResult = addToCart($memberId, $row['OptionID'], $row['Quantity'], $conn);
+            if (!$addResult['success']) {
+                throw new Exception("無法將商品加入購物車");
+            }
+        }
+
+        $conn->commit();
+        return ['success' => true];
+    } catch (Exception $e) {
+        $conn->rollback();
+        error_log("再買一次失敗：" . $e->getMessage());
+        return ['success' => false, 'message' => $e->getMessage()];
+    } finally {
+        if ($closeConn) {
+            $conn->close();
+        }
+    }
 }
 ?>

@@ -99,6 +99,37 @@ $orders = getMemberOrders($memberId);
 
     <?php include "footer.php"; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // 處理再買一次按鈕
+        document.querySelectorAll('.reorder-btn').forEach(button => {
+            button.addEventListener('click', function () {
+                const orderId = this.getAttribute('data-order-id');
+
+                fetch('php/APIs.php?action=reorder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        memberId: <?php echo $_SESSION['user_id']; ?>,
+                        orderId: orderId
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            window.location.href = 'shoppingCart.php';  // 確保成功後跳轉到購物車頁面
+                        } else {
+                            alert('再買一次失敗: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('發生錯誤，請稍後再試');
+                    });
+            });
+        });
+    </script>
 </body>
 
 </html>

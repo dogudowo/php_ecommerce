@@ -52,6 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <div class="row">
             <div class="col-md-8">
+
                 <div class="card mb-4">
                     <div class="card-header bg-light">
                         <h4>訂單明細</h4>
@@ -96,6 +97,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         </table>
                     </div>
                 </div>
+
+                <!-- 新增收件人資訊區塊 -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h4>收件人資訊</h4>
+                    </div>
+                    <div class="card-body">
+                        <?php
+                        // 獲取當前會員資訊
+                        require_once __DIR__ . '/php/APIs.php';
+                        $memberDetails = getMembers();
+                        $currentMember = array_filter($memberDetails, function ($member) {
+                            return $member['MemberID'] == $_SESSION['user_id'];
+                        });
+                        $currentMember = reset($currentMember);
+                        ?>
+                        <div class="mb-3">
+                            <label class="form-label">姓名</label>
+                            <input type="text" class="form-control"
+                                value="<?php echo htmlspecialchars($currentMember['membername']); ?>" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">手機號碼</label>
+                            <input type="text" class="form-control"
+                                value="<?php echo htmlspecialchars($currentMember['phonenum']); ?>" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">電子郵件</label>
+                            <input type="text" class="form-control"
+                                value="<?php echo htmlspecialchars($currentMember['memberemail']); ?>" disabled>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">送貨地址</label>
+                            <input type="text" class="form-control"
+                                value="<?php echo htmlspecialchars($currentMember['City'] . $currentMember['Address']); ?>"
+                                disabled>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 新增付款資訊區塊 -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <h4>付款資訊</h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" id="creditCard"
+                                value="credit_card" checked>
+                            <label class="form-check-label" for="creditCard">信用卡付款</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" id="atmTransfer"
+                                value="atm_transfer">
+                            <label class="form-check-label" for="atmTransfer">ATM轉帳</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="payment_method" id="cod" value="cod">
+                            <label class="form-check-label" for="cod">貨到付款</label>
+                        </div>
+                    </div>
+                </div>
             </div>
 
             <div class=" col-md-4">
@@ -118,7 +181,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <h5>$<?php echo number_format($total); ?></h5>
                         </div>
                         <form method="POST" class="mt-4">
-                            <button type="submit" class="btn btn-primary w-100 btn-lg">確認結帳</button>
+                            <button type="submit" class="btn btn-primary w-100 btn-lg">確認下單</button>
                         </form>
                     </div>
                 </div>
@@ -127,7 +190,44 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 
     <?php include "footer.php"; ?>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- 新增確認Modal -->
+    <div class="modal fade" id="confirmModal" tabindex="-1" aria-labelledby="confirmModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmModalLabel">確認訂單</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    您確定要提交此訂單嗎？
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="confirmOrder">確認下單</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const form = document.querySelector('form[method="POST"]');
+            const submitBtn = form.querySelector('button[type="submit"]');
+
+            submitBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const modal = new bootstrap.Modal(document.getElementById('confirmModal'));
+                modal.show();
+            });
+
+            document.getElementById('confirmOrder').addEventListener('click', function () {
+                form.submit();
+            });
+        });
+    </script>
+</body>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 
 </html>
