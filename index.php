@@ -8,6 +8,15 @@
         integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
     <link rel="stylesheet" href="css/navPillsStyles.css">
     <link rel="icon" href="imgs/webimg.ico" type="image/x-icon">
+    <style>
+        .card {
+            transition: box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            box-shadow: 0 0 7px rgba(0, 0, 0, 0.5);
+        }
+    </style>
     <title>歐印精品-首頁</title>
 </head>
 
