@@ -16,31 +16,31 @@
     <!-- 輪播照片 -->
     <div class="container">
         <div id="homeCarsousel" class="carousel slide" data-bs-ride="carousel">
-            <div class="carousel-indicators w-75 justify-content-center mx-auto align-items-center">
-                <button type="button" data-bs-target="#homeCarsousel" data-bs-slide-to="0" class="active"
-                    aria-current="true" aria-label="Slide 1"></button>
-                <button type="button" data-bs-target="#homeCarsousel" data-bs-slide-to="1"
-                    aria-label="Slide 2"></button>
-                <button type="button" data-bs-target="#homeCarsousel" data-bs-slide-to="2"
-                    aria-label="Slide 3"></button>
-                <button type="button" data-bs-target="#homeCarsousel" data-bs-slide-to="3"
-                    aria-label="Slide 4"></button>
-            </div>
-            <div class="carousel-inner w-100 justify-content-center mx-auto align-items-center">
-                <div class="carousel-item active">
-                    <img src="imgs/carousel/8e0df82ae92ea1f199311609bef37ade_1.jpg"
-                        class="d-block w-100 justify-content-center" alt="...">
-                </div>
-                <div class="carousel-item">
-                    <img src="imgs/carousel/2025movingwith.jpg" class="d-block w-100 justify-content-center" alt="...">
-                </div>
-                <div class="carousel-item">
-                    <img src="imgs/carousel/6021.jpg" class="d-block w-100 justify-content-center" alt="...">
-                </div>
-                <div class="carousel-item">
-                    <img src="imgs/carousel/allen1.jpg" class="d-block w-100 justify-content-center" alt="...">
-                </div>
-            </div>
+            <?php
+            // 獲取carousel目錄中的所有圖片
+            $carouselDir = 'imgs/carousel/';
+            $images = glob($carouselDir . '*.{jpg,jpeg,png,gif}', GLOB_BRACE);
+
+            // 輪播指示器
+            echo '<div class="carousel-indicators w-75 justify-content-center mx-auto align-items-center">';
+            foreach ($images as $key => $image) {
+                $active = $key === 0 ? 'active' : '';
+                echo '<button type="button" data-bs-target="#homeCarsousel" data-bs-slide-to="' . $key . '" 
+                    class="' . $active . '" aria-current="' . ($key === 0 ? 'true' : 'false') . '" 
+                    aria-label="Slide ' . ($key + 1) . '"></button>';
+            }
+            echo '</div>';
+
+            // 輪播內容
+            echo '<div class="carousel-inner w-100 justify-content-center mx-auto align-items-center">';
+            foreach ($images as $key => $image) {
+                $active = $key === 0 ? 'active' : '';
+                echo '<div class="carousel-item ' . $active . '">
+                    <img src="' . $image . '" class="d-block w-100 justify-content-center" alt="輪播圖片">
+                </div>';
+            }
+            echo '</div>';
+            ?>
             <button class="carousel-control-prev" type="button" data-bs-target="#homeCarsousel" data-bs-slide="prev">
                 <span class="carousel-control-prev-icon" aria-hidden="true"></span>
                 <span class="visually-hidden">Previous</span>
