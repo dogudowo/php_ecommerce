@@ -5,7 +5,7 @@ deploy: setup-permissions setup-config
 
 # 設置目錄權限
 setup-permissions:
-	sudo chmod -R 755 .
+	chmod -R 755 .
 
 # 複製配置文件（僅當目標文件不存在時）
 setup-config:
