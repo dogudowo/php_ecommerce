@@ -29,10 +29,8 @@
                                 ? "NT$" . number_format($product['MinPrice'])
                                 : "NT$" . number_format($product['MinPrice']) . " ~ " . number_format($product['MaxPrice']);
 
-                            $productDir = "/public_html/imgs/products/" . $product['ProductName'];
-                            $imgSrc = file_exists($_SERVER['DOCUMENT_ROOT'] . $productDir . "/main.jpg")
-                                ? $productDir . "/main.jpg"
-                                : "https://via.placeholder.com/50";
+                            $productDir = "imgs/products/" . $product['ProductName'];
+                            $imgSrc = $productDir . "/main.jpg";
 
                             echo "<tr>
                                 <td>{$product['ProductID']}</td>

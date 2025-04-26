@@ -187,9 +187,9 @@ function getProductById($productId)
 
     // 檢查產品圖片是否存在
     $productDir = __DIR__ . "/../imgs/products/" . $product['ProductName'];
-    $webPath = "/public_html/imgs/products/" . $product['ProductName'];
+    $webPath = "imgs/products/" . $product['ProductName'];
 
-    $product['mainImage'] = file_exists($productDir . "/main.jpg") ? $webPath . "/main.jpg" : "https://via.placeholder.com/150";
+    $product['mainImage'] = $webPath . "/main.jpg";
 
     $product['galleryImages'] = [];
     $i = 1;
@@ -300,10 +300,8 @@ function getCartItems($memberId)
 
     // 获取商品图片
     foreach ($items as &$item) {
-        $productDir = "/public_html/imgs/products/" . $item['ProductName'];
-        $item['image'] = file_exists($_SERVER['DOCUMENT_ROOT'] . $productDir . "/main.jpg")
-            ? $productDir . "/main.jpg"
-            : "https://via.placeholder.com/50";
+        $productDir = "imgs/products/" . $item['ProductName'];
+        $item['image'] = $productDir . "/main.jpg";
     }
 
     return $items;
@@ -612,10 +610,8 @@ function getOrderDetails($orderId, $conn = null)
     $items = [];
     while ($row = $result->fetch_assoc()) {
         // 獲取商品圖片
-        $productDir = "/public_html/imgs/products/" . $row['ProductName'];
-        $row['image'] = file_exists($_SERVER['DOCUMENT_ROOT'] . $productDir . "/main.jpg")
-            ? $productDir . "/main.jpg"
-            : "https://via.placeholder.com/150";
+        $productDir = "imgs/products/" . $row['ProductName'];
+        $row['image'] = $productDir . "/main.jpg";
         $items[] = $row;
     }
 
