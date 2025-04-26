@@ -1,13 +1,11 @@
 <?php
 function db_connect()
 {
-    $servername = "localhost";
-    $username = "root";
-    $password = "";
-    $dbname = "D1256977"; // 資料庫名稱
+    $config = require __DIR__ . '/config.php';
+    $db = $config['db'];
 
     // 建立連線
-    $conn = new mysqli($servername, $username, $password, $dbname);
+    $conn = new mysqli($db['servername'], $db['username'], $db['password'], $db['dbname']);
 
     // 檢查連線
     if ($conn->connect_error) {
