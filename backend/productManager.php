@@ -1,6 +1,6 @@
-<div class="tab-pane fade show active" id="products" role="tabpanel" aria-labelledby="v-pills-products-tab">
-    <h3 class="mb-3">商品管理</h3>
-    <div class="mb-3">
+<div class="tab-pane show active" id="products" role="tabpanel" aria-labelledby="v-pills-products-tab">
+    <div class="d-flex flex-wrap gap-4 align-items-start ">
+        <h3 class="mb-3">商品管理</h3>
         <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addProductModal">新增商品</button>
     </div>
     <div class="card">

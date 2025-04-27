@@ -1,4 +1,4 @@
-<div class="tab-pane fade" id="members" role="tabpanel" aria-labelledby="v-pills-members-tab">
+<div class="tab-pane" id="members" role="tabpanel" aria-labelledby="v-pills-members-tab">
     <h3 class="mb-3">會員管理</h3>
     <div class="card">
         <div class="card-header bg-light">

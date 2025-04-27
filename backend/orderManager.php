@@ -1,12 +1,12 @@
-<div class="tab-pane fade" id="orders" role="tabpanel" aria-labelledby="v-pills-orders-tab">
-    <h3 class="mb-3">訂單管理</h3>
+<div class="tab-pane" id="orders" role="tabpanel" aria-labelledby="v-pills-orders-tab">
+    <h3 class="mb-3">購買訂單管理</h3>
     <div class="card">
         <div class="card-header bg-light d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">所有訂單</h5>
-            <form method="get" class="input-group w-50">
+            <h5 class="mb-0">購買訂單</h5>
+            <!-- <form method="get" class="input-group w-50">
                 <input type="text" class="form-control" name="search" placeholder="搜尋訂單...">
                 <button class="btn btn-outline-secondary" type="submit">搜尋</button>
-            </form>
+            </form> -->
         </div>
         <div class="card-body">
             <div class="table-responsive">
