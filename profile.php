@@ -1,3 +1,8 @@
+<?php
+session_start();
+$isAdmin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 

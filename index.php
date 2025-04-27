@@ -30,7 +30,13 @@
             $carouselDir = 'imgs/carousel/';
             $images = glob($carouselDir . '*.{jpg,jpeg,png,gif}', GLOB_BRACE);
 
-            // 輪播指示器
+            // 如果是管理員，顯示編輯按鈕
+            if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin') {
+                echo '<button class="btn btn-primary position-absolute" style="right: 20px; top: 20px; z-index: 10;" 
+                      data-bs-toggle="modal" data-bs-target="#carouselModal">
+                      <i class="bi bi-pencil"></i> 編輯
+                      </button>';
+            }
             echo '<div class="carousel-indicators w-75 justify-content-center mx-auto align-items-center">';
             foreach ($images as $key => $image) {
                 $active = $key === 0 ? 'active' : '';
@@ -402,3 +408,86 @@
 </body>
 
 </html>
+
+<!-- 輪播編輯Modal -->
+<div class="modal fade" id="carouselModal" tabindex="-1" aria-labelledby="carouselModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="carouselModalLabel">輪播圖片管理</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label for="carouselImage" class="form-label">上傳新圖片</label>
+                        <input class="form-control" type="file" id="carouselImage" name="carouselImage"
+                            accept="image/*">
+                    </div>
+                    <button type="submit" class="btn btn-primary">上傳</button>
+                </form>
+
+                <div class="mt-4">
+                    <h6>現有圖片</h6>
+                    <div class="row" id="carouselImagesList">
+                        <?php foreach ($images as $image): ?>
+                            <div class="col-md-4 mb-3">
+                                <div class="card">
+                                    <img src="<?= $image ?>" class="card-img-top">
+                                    <div class="card-body text-center">
+                                        <button class="btn btn-danger btn-sm delete-btn"
+                                            data-image="<?= basename($image) ?>">刪除</button>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const uploadForm = document.getElementById('uploadForm');
+        if (uploadForm) {
+            uploadForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                const formData = new FormData(this);
+
+                fetch('php/handleCarousel.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        }
+                    });
+            });
+        }
+
+        document.querySelectorAll('.delete-btn').forEach(btn => {
+            btn.addEventListener('click', function () {
+                const imageName = this.getAttribute('data-image');
+                if (confirm('確定要刪除這張圖片嗎？')) {
+                    fetch('php/handleCarousel.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ action: 'delete', imageName: imageName })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                location.reload();
+                            }
+                        });
+                }
+            });
+        });
+    });
+</script>

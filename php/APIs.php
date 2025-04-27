@@ -730,6 +730,49 @@ function reorder($memberId, $orderId, $conn = null)
         }
     }
 }
+
+function getCarouselImages()
+{
+    $carouselDir = realpath(__DIR__ . '/../imgs/carousel/');
+    if (!$carouselDir) {
+        return [];
+    }
+    $images = glob($carouselDir . '/*.{jpg,jpeg,png,gif}', GLOB_BRACE);
+    return array_map('basename', $images);
+}
+
+function addCarouselImage($imageFile)
+{
+    $targetDir = realpath(__DIR__ . '/../imgs/carousel/');
+    if (!$targetDir) {
+        return false;
+    }
+
+    $targetFile = $targetDir . '/' . basename($imageFile['name']);
+    return move_uploaded_file($imageFile['tmp_name'], $targetFile);
+}
+
+function deleteCarouselImage($imageName)
+{
+    $targetDir = realpath(__DIR__ . '/../imgs/carousel/');
+    if (!$targetDir) {
+        error_log("Carousel directory not found");
+        return false;
+    }
+
+    $targetFile = $targetDir . '/' . basename($imageName);
+    if (!file_exists($targetFile)) {
+        error_log("File not found: $targetFile");
+        return false;
+    }
+
+    if (!is_writable($targetFile)) {
+        error_log("Permission denied for file: $targetFile");
+        return false;
+    }
+
+    return unlink($targetFile);
+}
 // 處理AJAX請求
 if (isset($_GET['action'])) {
     header('Content-Type: application/json');
