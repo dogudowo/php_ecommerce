@@ -20,7 +20,7 @@
                     <tbody>
                         <?php
                         // 使用小寫路徑
-                        include_once '/Applications/XAMPP/xamppfiles/htdocs/public_html/php/APIs.php';
+                        include_once __DIR__ . '/../php/APIs.php';
 
                         // 添加錯誤處理
                         try {

@@ -584,6 +584,30 @@ function getMemberOrders($memberId, $conn = null)
     }
     return $orders;
 }
+if (isset($_GET['action']) && $_GET['action'] === 'getOrderDetails' && isset($_GET['order_id'])) {
+    $orderId = (int) $_GET['order_id'];
+    $orderDetails = getOrderDetails($orderId);
+
+    if ($orderDetails) {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => true,
+            'items' => $orderDetails['items'],
+            'status' => $orderDetails['status'],
+            'statusClass' => $orderDetails['statusClass'],
+            'statusText' => $orderDetails['statusText'],
+            'total_amount' => $orderDetails['total_amount']
+        ]);
+    } else {
+        header('Content-Type: application/json');
+        echo json_encode([
+            'success' => false,
+            'message' => '找不到訂單詳情'
+        ]);
+    }
+    exit;
+}
+
 function getOrderDetails($orderId, $conn = null)
 {
     getDbConnection($conn, $closeConn);
@@ -615,80 +639,103 @@ function getOrderDetails($orderId, $conn = null)
         $items[] = $row;
     }
 
+    // 獲取訂單狀態
+    $stmt = $conn->prepare("SELECT Status FROM Orders WHERE OrderID = ?");
+    $stmt->bind_param("i", $orderId);
+    $stmt->execute();
+    $statusResult = $stmt->get_result();
+    $statusRow = $statusResult->fetch_assoc();
+    $status = $statusRow['Status'];
+
+    // 狀態類別和文本
+    $statusClass = match ($status) {
+        'Completed' => 'bg-success',
+        'Pending' => 'bg-info text-dark',
+        'Cancel' => 'bg-warning',
+        'abnormal' => 'bg-danger',
+        default => 'bg-secondary'
+    };
+    $statusText = match ($status) {
+        'Completed' => '已完成',
+        'Pending' => '處理中',
+        'Cancel' => '已取消',
+        'abnormal' => '異常',
+        default => $status
+    };
+
     if ($closeConn) {
         $conn->close();
     }
-    return $items;
+
+    return [
+        'items' => $items,
+        'total_amount' => array_sum(array_column($items, 'Subtotal')),
+        'status' => $status,
+        'statusClass' => $statusClass,
+        'statusText' => $statusText
+    ];
 }
 function renderOrderTab($orders, $status, $title)
 {
     $filteredOrders = array_filter($orders, fn($order) => $order['Status'] === $status);
+
+    $statusClasses = [
+        'Pending' => 'bg-info',
+        'Completed' => 'bg-success',
+        'Cancel' => 'bg-warning'
+    ];
+
+    $statusTexts = [
+        'Pending' => '處理中',
+        'Completed' => '已完成',
+        'Cancel' => '已取消'
+    ];
     ?>
-    <div class="tab-pane fade <?php echo $status === 'Pending' ? 'show active' : ''; ?>"
-        id="<?php echo strtolower($status); ?>" role="tabpanel" aria-labelledby="<?php echo strtolower($status); ?>-tab">
+    <div class="tab-pane fade <?= $status === 'Pending' ? 'show active' : '' ?>" id="<?= strtolower($status) ?>"
+        role="tabpanel" aria-labelledby="<?= strtolower($status) ?>-tab">
         <?php if (!empty($filteredOrders)): ?>
             <div class="list-group">
-                <?php foreach ($filteredOrders as $order): ?>
+                <?php foreach ($filteredOrders as $order):
+                    $orderDetails = getOrderDetails($order['OrderID']);
+                    ?>
                     <div class="mb-4 border rounded">
                         <a href="#" class="list-group-item list-group-item-action">
                             <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">訂單號碼: ORD-<?php echo $order['OrderID']; ?></h5>
-                                <small><?php echo $order['OrderDate']; ?></small>
+                                <h5 class="mb-1">訂單號碼: ORD-<?= $order['OrderID'] ?></h5>
+                                <small><?= $order['OrderDate'] ?></small>
                             </div>
-                            <?php foreach (getOrderDetails($order['OrderID']) as $item): ?>
+                            <?php foreach ($orderDetails['items'] as $item): ?>
                                 <div class="d-flex align-items-center mb-2">
                                     <div class="me-3" style="width: 60px; height: 60px;">
-                                        <img src="<?php echo $item['image']; ?>" alt="<?php echo $item['ProductName']; ?>"
-                                            class="img-fluid" style="max-height: 100%;">
+                                        <img src="<?= $item['image'] ?>" alt="<?= $item['ProductName'] ?>" class="img-fluid"
+                                            style="max-height: 100%;">
                                     </div>
                                     <div>
-                                        <p class="mb-1"><?php echo $item['ProductName']; ?></p>
-                                        <p class="mb-0 text-secondary">規格:
-                                            <?php echo $item['Color'] . ', ' . $item['SizeDescription']; ?>
-                                        </p>
-                                        <p class="mb-0">數量: <?php echo $item['Quantity']; ?> 件</p>
-                                        <p class="mb-0">價格: <span class="text-danger fw-bold">$<?php echo $item['Price']; ?></span>
-                                        </p>
+                                        <p class="mb-1"><?= $item['ProductName'] ?></p>
+                                        <p class="mb-0 text-secondary">規格: <?= $item['Color'] ?>, <?= $item['SizeDescription'] ?></p>
+                                        <p class="mb-0">數量: <?= $item['Quantity'] ?> 件</p>
+                                        <p class="mb-0">單價: <span class="text-danger fw-bold">$<?= $item['Price'] ?></span></p>
                                     </div>
                                 </div>
                             <?php endforeach; ?>
                             <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                                <div><span class="badge fs-6
-                                    <?php
-                                    switch ($order['Status']) {
-                                        case 'Pending':
-                                            echo 'bg-info';
-                                            $statusText = '處理中';
-                                            break;
-                                        case 'Completed':
-                                            echo 'bg-success';
-                                            $statusText = '已完成';
-                                            break;
-                                        case 'Cancel':
-                                            echo 'bg-warning';
-                                            $statusText = '已取消';
-                                            break;
-                                        default:
-                                            echo 'bg-secondary';
-                                            $statusText = $order['Status'];
-                                    }
-                                    ?>">
-                                        <?php echo $statusText; ?>
-                                    </span></div>
+                                <div>
+                                    <span class="badge fs-6 <?= $statusClasses[$order['Status']] ?? 'bg-secondary' ?>">
+                                        <?= $statusTexts[$order['Status']] ?? $order['Status'] ?>
+                                    </span>
+                                </div>
                                 <div class="text-end">
-                                    <p class="mb-0">訂單金額: <span
-                                            class="text-danger fw-bold">$<?php echo $order['TotalAmount']; ?></span>
-                                    </p>
+                                    <p class="mb-0">訂單金額: <span class="text-danger fw-bold">$<?= $order['TotalAmount'] ?></span></p>
                                 </div>
                                 <button class="btn btn-outline-secondary reorder-btn"
-                                    data-order-id="<?php echo $order['OrderID']; ?>">再買一次</button>
+                                    data-order-id="<?= $order['OrderID'] ?>">再買一次</button>
                             </div>
                         </a>
                     </div>
                 <?php endforeach; ?>
             </div>
         <?php else: ?>
-            <p class="card-text mt-3">目前沒有<?php echo $title; ?>的訂單。</p>
+            <p class="card-text mt-3">目前沒有<?= $title ?>的訂單。</p>
         <?php endif; ?>
     </div>
     <?php
@@ -773,6 +820,26 @@ function deleteCarouselImage($imageName)
 
     return unlink($targetFile);
 }
+
+function updateOrderStatus($orderId, $newStatus, $conn = null)
+{
+    getDbConnection($conn, $closeConn);
+
+    try {
+        $stmt = $conn->prepare("UPDATE Orders SET Status = ? WHERE OrderID = ?");
+        $stmt->bind_param("si", $newStatus, $orderId);
+        $stmt->execute();
+
+        return ['success' => true];
+    } catch (Exception $e) {
+        error_log("更新訂單狀態失敗: " . $e->getMessage());
+        return ['success' => false, 'message' => '更新訂單狀態失敗'];
+    } finally {
+        if ($closeConn) {
+            $conn->close();
+        }
+    }
+}
 // 處理AJAX請求
 if (isset($_GET['action'])) {
     header('Content-Type: application/json');
@@ -798,6 +865,10 @@ if (isset($_GET['action'])) {
         case 'checkout':
             $data = json_decode(file_get_contents('php://input'), true);
             echo json_encode(checkout($data['memberId']));
+            break;
+        case 'updateOrderStatus':
+            $data = json_decode(file_get_contents('php://input'), true);
+            echo json_encode(updateOrderStatus($data['order_id'], $data['new_status']));
             break;
         default:
             echo json_encode(['success' => false, 'message' => '無效的操作']);
