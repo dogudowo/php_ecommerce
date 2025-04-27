@@ -584,30 +584,6 @@ function getMemberOrders($memberId, $conn = null)
     }
     return $orders;
 }
-if (isset($_GET['action']) && $_GET['action'] === 'getOrderDetails' && isset($_GET['order_id'])) {
-    $orderId = (int) $_GET['order_id'];
-    $orderDetails = getOrderDetails($orderId);
-
-    if ($orderDetails) {
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => true,
-            'items' => $orderDetails['items'],
-            'status' => $orderDetails['status'],
-            'statusClass' => $orderDetails['statusClass'],
-            'statusText' => $orderDetails['statusText'],
-            'total_amount' => $orderDetails['total_amount']
-        ]);
-    } else {
-        header('Content-Type: application/json');
-        echo json_encode([
-            'success' => false,
-            'message' => '找不到訂單詳情'
-        ]);
-    }
-    exit;
-}
-
 function getOrderDetails($orderId, $conn = null)
 {
     getDbConnection($conn, $closeConn);
@@ -677,18 +653,27 @@ function getOrderDetails($orderId, $conn = null)
 }
 function renderOrderTab($orders, $status, $title)
 {
-    $filteredOrders = array_filter($orders, fn($order) => $order['Status'] === $status);
+    // 修改過濾邏輯：進行中訂單顯示 Pending 和 Shipping 狀態，已完成訂單顯示其他狀態
+    if ($status === 'Pending') {
+        $filteredOrders = array_filter($orders, fn($order) => in_array($order['Status'], ['Pending', 'Shipping']));
+    } else {
+        $filteredOrders = array_filter($orders, fn($order) => !in_array($order['Status'], ['Pending', 'Shipping']));
+    }
 
     $statusClasses = [
         'Pending' => 'bg-info',
+        'Shipping' => 'bg-primary',
         'Completed' => 'bg-success',
-        'Cancel' => 'bg-warning'
+        'Cancel' => 'bg-warning',
+        'abnormal' => 'bg-danger'
     ];
 
     $statusTexts = [
         'Pending' => '處理中',
+        'Shipping' => '運送中',
         'Completed' => '已完成',
-        'Cancel' => '已取消'
+        'Cancel' => '已取消',
+        'abnormal' => '異常'
     ];
     ?>
     <div class="tab-pane fade <?= $status === 'Pending' ? 'show active' : '' ?>" id="<?= strtolower($status) ?>"
@@ -777,7 +762,6 @@ function reorder($memberId, $orderId, $conn = null)
         }
     }
 }
-
 function getCarouselImages()
 {
     $carouselDir = realpath(__DIR__ . '/../imgs/carousel/');
@@ -787,7 +771,6 @@ function getCarouselImages()
     $images = glob($carouselDir . '/*.{jpg,jpeg,png,gif}', GLOB_BRACE);
     return array_map('basename', $images);
 }
-
 function addCarouselImage($imageFile)
 {
     $targetDir = realpath(__DIR__ . '/../imgs/carousel/');
@@ -798,7 +781,6 @@ function addCarouselImage($imageFile)
     $targetFile = $targetDir . '/' . basename($imageFile['name']);
     return move_uploaded_file($imageFile['tmp_name'], $targetFile);
 }
-
 function deleteCarouselImage($imageName)
 {
     $targetDir = realpath(__DIR__ . '/../imgs/carousel/');
@@ -820,7 +802,6 @@ function deleteCarouselImage($imageName)
 
     return unlink($targetFile);
 }
-
 function updateOrderStatus($orderId, $newStatus, $conn = null)
 {
     getDbConnection($conn, $closeConn);
@@ -869,6 +850,26 @@ if (isset($_GET['action'])) {
         case 'updateOrderStatus':
             $data = json_decode(file_get_contents('php://input'), true);
             echo json_encode(updateOrderStatus($data['order_id'], $data['new_status']));
+            break;
+        case 'getOrderDetails':
+            if (!isset($_GET['order_id'])) {
+                echo json_encode(['success' => false, 'message' => '缺少訂單ID']);
+                break;
+            }
+            $orderId = (int) $_GET['order_id'];
+            $orderDetails = getOrderDetails($orderId);
+            if ($orderDetails) {
+                echo json_encode([
+                    'success' => true,
+                    'items' => $orderDetails['items'],
+                    'status' => $orderDetails['status'],
+                    'statusClass' => $orderDetails['statusClass'],
+                    'statusText' => $orderDetails['statusText'],
+                    'total_amount' => $orderDetails['total_amount']
+                ]);
+            } else {
+                echo json_encode(['success' => false, 'message' => '找不到訂單詳情']);
+            }
             break;
         default:
             echo json_encode(['success' => false, 'message' => '無效的操作']);
