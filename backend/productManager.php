@@ -306,6 +306,72 @@
         });
     });
 
+    document.addEventListener('DOMContentLoaded', function() {
+        // 處理所有的移除尺寸和移除顏色按鈕（包含新增和編輯模式）
+        document.addEventListener('click', function(event) {
+            // 移除尺寸按鈕
+            if (event.target.classList.contains('remove-size')) {
+                const sizeContainer = event.target.closest('#sizeContainer, #edit-sizeContainer');
+                const sizeSections = sizeContainer.querySelectorAll('.size-section');
+                
+                if (sizeSections.length > 1) {
+                    const sizeSection = event.target.closest('.size-section');
+                    sizeSection.remove();
+                    
+                    // 更新索引
+                    const isEdit = sizeContainer.id === 'edit-sizeContainer';
+                    const prefix = isEdit ? 'edit_' : '';
+                    
+                    sizeSections.forEach((section, index) => {
+                        section.querySelectorAll(`input[name^="${prefix}colors"], input[name^="${prefix}stocks"]`).forEach(input => {
+                            input.name = input.name.replace(/\[\d+\]/, `[${index}]`);
+                        });
+                    });
+                } else {
+                    alert('至少需要一個尺寸');
+                }
+            }
+            
+            // 移除顏色按鈕
+            if (event.target.classList.contains('remove-color-stock')) {
+                const colorStockContainer = event.target.closest('.color-stock-container');
+                const colorStocks = colorStockContainer.querySelectorAll('.color-stock');
+                
+                if (colorStocks.length > 1) {
+                    event.target.closest('.color-stock').remove();
+                } else {
+                    alert('每個尺寸至少需要一個顏色選項');
+                }
+            }
+            
+            // 新增顏色按鈕
+            if (event.target.classList.contains('add-color-stock')) {
+                const sizeSection = event.target.closest('.size-section');
+                const colorStockContainer = sizeSection.querySelector('.color-stock-container');
+                const sizeContainer = sizeSection.closest('#sizeContainer, #edit-sizeContainer');
+                const isEdit = sizeContainer.id === 'edit-sizeContainer';
+                const prefix = isEdit ? 'edit_' : '';
+                
+                // 找出當前尺寸的索引
+                const sizeIndex = Array.from(sizeContainer.querySelectorAll('.size-section')).indexOf(sizeSection);
+                
+                // 複製第一個顏色區塊
+                const firstColorStock = colorStockContainer.querySelector('.color-stock');
+                const newColorStock = firstColorStock.cloneNode(true);
+                
+                // 清空輸入值
+                newColorStock.querySelectorAll('input').forEach(input => {
+                    input.value = '';
+                    if (input.name) {
+                        input.name = input.name.replace(/\[\d+\]/, `[${sizeIndex}]`);
+                    }
+                });
+                
+                colorStockContainer.appendChild(newColorStock);
+            }
+        });
+    });
+
     document
         .getElementById("mainImage")
         .addEventListener("change", function (event) {
@@ -366,6 +432,48 @@
         colorStockContainer.appendChild(newColorStock);
         sizeContainer.appendChild(newSizeSection);
     });
+
+    document
+        .getElementById("sizeContainer")
+        .addEventListener("click", function (event) {
+            if (event.target.classList.contains("add-color-stock")) {
+                const colorStockContainer = event.target
+                    .closest(".size-section")
+                    .querySelector(".color-stock-container");
+                const newColorStock = document
+                    .querySelector(".color-stock")
+                    .cloneNode(true);
+                newColorStock
+                    .querySelectorAll("input")
+                    .forEach((input) => (input.value = ""));
+
+                const sizeIndex = Array.from(
+                    document.querySelectorAll(".size-section")
+                ).indexOf(event.target.closest(".size-section"));
+                newColorStock.querySelectorAll("input").forEach((input) => {
+                    input.name = input.name.replace(/\[\d+\]/, `[${sizeIndex}]`);
+                });
+
+                colorStockContainer.appendChild(newColorStock);
+            } else if (event.target.classList.contains("edit-remove-color-stock")) {
+                // 檢查當前尺寸區塊中的顏色項目數量
+                const currentSection = event.target.closest(".size-section");
+                const colorStocks = currentSection.querySelectorAll(".color-stock");
+
+                if (colorStocks.length > 1) {
+                    event.target.closest(".color-stock").remove();
+                } else {
+                    alert("每個尺寸至少需要一個顏色選項");
+                }
+            } else if (event.target.classList.contains("edit-remove-size")) {
+                const sizeSections = document.querySelectorAll(".size-section");
+                if (sizeSections.length > 1) {
+                    event.target.closest(".size-section").remove();
+                } else {
+                    alert("至少需要一個尺寸");
+                }
+            }
+        });
 
     document
         .getElementById("addProductForm")
