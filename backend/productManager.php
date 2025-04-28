@@ -240,7 +240,7 @@
 </div>
 
 <script>
-    // 只保留一組事件代理，移除重複的 document.addEventListener('DOMContentLoaded', ...) 和 document.addEventListener('click', ...)
+    // 只保留一組事件代理，移除所有重複的 document.addEventListener('DOMContentLoaded', ...) 和 document.addEventListener('click', ...)
     document.addEventListener('DOMContentLoaded', function() {
         // 處理所有的移除尺寸和移除顏色按鈕（包含新增和編輯模式）
         document.addEventListener('click', function(event) {
@@ -367,48 +367,6 @@
         colorStockContainer.appendChild(newColorStock);
         sizeContainer.appendChild(newSizeSection);
     });
-
-    document
-        .getElementById("sizeContainer")
-        .addEventListener("click", function (event) {
-            if (event.target.classList.contains("add-color-stock")) {
-                const colorStockContainer = event.target
-                    .closest(".size-section")
-                    .querySelector(".color-stock-container");
-                const newColorStock = document
-                    .querySelector(".color-stock")
-                    .cloneNode(true);
-                newColorStock
-                    .querySelectorAll("input")
-                    .forEach((input) => (input.value = ""));
-
-                const sizeIndex = Array.from(
-                    document.querySelectorAll(".size-section")
-                ).indexOf(event.target.closest(".size-section"));
-                newColorStock.querySelectorAll("input").forEach((input) => {
-                    input.name = input.name.replace(/\[\d+\]/, `[${sizeIndex}]`);
-                });
-
-                colorStockContainer.appendChild(newColorStock);
-            } else if (event.target.classList.contains("edit-remove-color-stock")) {
-                // 檢查當前尺寸區塊中的顏色項目數量
-                const currentSection = event.target.closest(".size-section");
-                const colorStocks = currentSection.querySelectorAll(".color-stock");
-
-                if (colorStocks.length > 1) {
-                    event.target.closest(".color-stock").remove();
-                } else {
-                    alert("每個尺寸至少需要一個顏色選項");
-                }
-            } else if (event.target.classList.contains("edit-remove-size")) {
-                const sizeSections = document.querySelectorAll(".size-section");
-                if (sizeSections.length > 1) {
-                    event.target.closest(".size-section").remove();
-                } else {
-                    alert("至少需要一個尺寸");
-                }
-            }
-        });
 
     document
         .getElementById("addProductForm")
