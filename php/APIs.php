@@ -498,12 +498,30 @@ function addOrderItem($orderId, $optionId, $quantity, $conn = null)
     getDbConnection($conn, $closeConn);
 
     try {
+        // 检查库存
+        $stmt = $conn->prepare("SELECT Stock FROM Options WHERE OptionID = ? FOR UPDATE");
+        $stmt->bind_param("i", $optionId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+        $row = $result->fetch_assoc();
+
+        if ($row['Stock'] < $quantity) {
+            throw new Exception("商品庫存不足");
+        }
+
+        // 更新库存
+        $stmt = $conn->prepare("UPDATE Options SET Stock = Stock - ? WHERE OptionID = ?");
+        $stmt->bind_param("ii", $quantity, $optionId);
+        $stmt->execute();
+
+        // 添加訂單項目
         $stmt = $conn->prepare("INSERT INTO OrderItem (OrderID, OptionID, Quantity) VALUES (?, ?, ?)");
         $stmt->bind_param("iii", $orderId, $optionId, $quantity);
         $stmt->execute();
+
         return true;
     } catch (Exception $e) {
-        error_log("添加订单项失败: " . $e->getMessage());
+        error_log("添加訂單項目失敗: " . $e->getMessage());
         return false;
     } finally {
         if ($closeConn) {
@@ -520,20 +538,47 @@ function checkout($memberId)
         // 获取购物车商品
         $cartItems = getCartItems($memberId);
         if (empty($cartItems)) {
-            return ['success' => false, 'message' => '购物车为空'];
+            return ['success' => false, 'message' => '購物車為空'];
+        }
+
+        // 检查所有商品库存
+        foreach ($cartItems as $item) {
+            $stmt = $conn->prepare("SELECT 
+                o.Stock, 
+                p.ProductName,
+                o.Color,
+                o.SizeDescription
+                FROM Options o
+                JOIN Product p ON o.ProductID = p.ProductID
+                WHERE o.OptionID = ? FOR UPDATE");
+            $stmt->bind_param("i", $item['OptionID']);
+            $stmt->execute();
+            $result = $stmt->get_result();
+            $row = $result->fetch_assoc();
+
+            if ($row['Stock'] < $item['Quantity']) {
+                $optionName = $row['ProductName'] . ' - ' . $row['Color'] . ' (' . $row['SizeDescription'] . ')';
+                throw new Exception("商品 [{$optionName}] 庫存不足");
+            }
         }
 
         // 创建订单
         $orderId = createOrder($memberId, $conn);
         if (!$orderId) {
-            throw new Exception("无法创建订单");
+            throw new Exception("無法創建訂單");
         }
 
-        // 添加订单项
+        // 添加订单项并更新库存
         foreach ($cartItems as $item) {
-            if (!addOrderItem($orderId, $item['OptionID'], $item['Quantity'], $conn)) {
-                throw new Exception("添加订单项失败");
-            }
+            // 更新庫存
+            $stmt = $conn->prepare("UPDATE Options SET Stock = Stock - ? WHERE OptionID = ?");
+            $stmt->bind_param("ii", $item['Quantity'], $item['OptionID']);
+            $stmt->execute();
+
+            // 添加訂單項目
+            $stmt = $conn->prepare("INSERT INTO OrderItem (OrderID, OptionID, Quantity) VALUES (?, ?, ?)");
+            $stmt->bind_param("iii", $orderId, $item['OptionID'], $item['Quantity']);
+            $stmt->execute();
         }
 
         // 清空购物车
@@ -545,8 +590,12 @@ function checkout($memberId)
         return ['success' => true, 'orderId' => $orderId];
     } catch (Exception $e) {
         $conn->rollback();
-        error_log("结账失败: " . $e->getMessage());
-        return ['success' => false, 'message' => '结账失败: ' . $e->getMessage()];
+        error_log("結帳失敗: " . $e->getMessage());
+        return [
+            'success' => false,
+            'message' => '結帳失敗: ' . $e->getMessage(),
+            'details' => $cartItems // 返回完整的購物車商品資訊
+        ];
     } finally {
         $conn->close();
     }
@@ -683,39 +732,45 @@ function renderOrderTab($orders, $status, $title)
                 <?php foreach ($filteredOrders as $order):
                     $orderDetails = getOrderDetails($order['OrderID']);
                     ?>
-                    <div class="mb-4 border rounded">
-                        <a href="#" class="list-group-item list-group-item-action">
-                            <div class="d-flex w-100 justify-content-between">
-                                <h5 class="mb-1">訂單號碼: ORD-<?= $order['OrderID'] ?></h5>
-                                <small><?= $order['OrderDate'] ?></small>
-                            </div>
-                            <?php foreach ($orderDetails['items'] as $item): ?>
-                                <div class="d-flex align-items-center mb-2">
-                                    <div class="me-3" style="width: 60px; height: 60px;">
-                                        <img src="<?= $item['image'] ?>" alt="<?= $item['ProductName'] ?>" class="img-fluid"
-                                            style="max-height: 100%;">
-                                    </div>
-                                    <div>
-                                        <p class="mb-1"><?= $item['ProductName'] ?></p>
-                                        <p class="mb-0 text-secondary">規格: <?= $item['Color'] ?>, <?= $item['SizeDescription'] ?></p>
-                                        <p class="mb-0">數量: <?= $item['Quantity'] ?> 件</p>
-                                        <p class="mb-0">單價: <span class="text-danger fw-bold">$<?= $item['Price'] ?></span></p>
-                                    </div>
+                    <div class="list-group-item mb-4 border rounded">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">訂單號碼: ORD-<?= $order['OrderID'] ?></h5>
+                            <small><?= $order['OrderDate'] ?></small>
+                        </div>
+                        <?php foreach ($orderDetails['items'] as $item): ?>
+                            <div class="d-flex align-items-center mb-2">
+                                <div class="me-3" style="width: 60px; height: 60px;">
+                                    <img src="<?= $item['image'] ?>" alt="<?= $item['ProductName'] ?>" class="img-fluid"
+                                        style="max-height: 100%;">
                                 </div>
-                            <?php endforeach; ?>
-                            <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
                                 <div>
-                                    <span class="badge fs-6 <?= $statusClasses[$order['Status']] ?? 'bg-secondary' ?>">
-                                        <?= $statusTexts[$order['Status']] ?? $order['Status'] ?>
-                                    </span>
+                                    <p class="mb-1"><?= $item['ProductName'] ?></p>
+                                    <p class="mb-0 text-secondary">規格: <?= $item['Color'] ?>, <?= $item['SizeDescription'] ?></p>
+                                    <p class="mb-0">數量: <?= $item['Quantity'] ?> 件</p>
+                                    <p class="mb-0">單價: <span class="text-danger fw-bold">$<?= $item['Price'] ?></span></p>
                                 </div>
-                                <div class="text-end">
-                                    <p class="mb-0">訂單金額: <span class="text-danger fw-bold">$<?= $order['TotalAmount'] ?></span></p>
-                                </div>
+                            </div>
+                        <?php endforeach; ?>
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                            <div>
+                                <span class="badge fs-6 <?= $statusClasses[$order['Status']] ?? 'bg-secondary' ?>">
+                                    <?= $statusTexts[$order['Status']] ?? $order['Status'] ?>
+                                </span>
+                            </div>
+                            <div class="text-end">
+                                <p class="mb-0">訂單金額: <span class="text-danger fw-bold">$<?= $order['TotalAmount'] ?></span></p>
+                            </div>
+                            <div>
+                                <?php if ($status === 'Pending'): ?>
+                                    <button class="btn btn-success payment-btn" data-order-id="<?= $order['OrderID'] ?>"
+                                        data-order-amount="<?= number_format($order['TotalAmount']) ?>">
+                                        付款
+                                    </button>
+                                <?php endif; ?>
                                 <button class="btn btn-outline-secondary reorder-btn"
                                     data-order-id="<?= $order['OrderID'] ?>">再買一次</button>
                             </div>
-                        </a>
+                        </div>
                     </div>
                 <?php endforeach; ?>
             </div>
@@ -802,26 +857,55 @@ function deleteCarouselImage($imageName)
 
     return unlink($targetFile);
 }
-function updateOrderStatus($orderId, $newStatus, $conn = null)
+function updateOrderStatus($orderId, $newStatus, $memberId)
 {
-    getDbConnection($conn, $closeConn);
+    $conn = db_connect();
+    $conn->begin_transaction();
 
     try {
+        // 首先验证订单是否存在
+        $stmt = $conn->prepare("SELECT Status FROM Orders WHERE OrderID = ?");
+        $stmt->bind_param("i", $orderId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows === 0) {
+            return ['success' => false, 'message' => '訂單不存在'];
+        }
+
+        // 更新订单状态
         $stmt = $conn->prepare("UPDATE Orders SET Status = ? WHERE OrderID = ?");
         $stmt->bind_param("si", $newStatus, $orderId);
         $stmt->execute();
 
+        $conn->commit();
         return ['success' => true];
     } catch (Exception $e) {
+        $conn->rollback();
         error_log("更新訂單狀態失敗: " . $e->getMessage());
         return ['success' => false, 'message' => '更新訂單狀態失敗'];
     } finally {
-        if ($closeConn) {
-            $conn->close();
-        }
+        $conn->close();
     }
 }
-// 處理AJAX請求
+function generateReceipt($orderId)
+{
+    // 获取订单详情
+    $orderDetails = getOrderDetails($orderId);
+
+    // 生成收据HTML或PDF
+    $receipt = '<div class="receipt">
+                  <h2>收据 #ORD-' . $orderId . '</h2>
+                  <p>日期: ' . date('Y-m-d H:i:s') . '</p>
+                  // ... 其他收据内容 ...
+                </div>';
+
+    // 保存或发送收据
+    file_put_contents(__DIR__ . '/receipts/ORD-' . $orderId . '.html', $receipt);
+    return $receipt;
+}
+
+// 处理AJAX请求
 if (isset($_GET['action'])) {
     header('Content-Type: application/json');
     session_start();
@@ -849,7 +933,7 @@ if (isset($_GET['action'])) {
             break;
         case 'updateOrderStatus':
             $data = json_decode(file_get_contents('php://input'), true);
-            echo json_encode(updateOrderStatus($data['order_id'], $data['new_status']));
+            echo json_encode(updateOrderStatus($data['order_id'], $data['new_status'], $data['memberId']));
             break;
         case 'getOrderDetails':
             if (!isset($_GET['order_id'])) {

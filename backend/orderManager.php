@@ -213,7 +213,8 @@
             },
             body: JSON.stringify({
                 order_id: orderId,
-                new_status: newStatus
+                new_status: newStatus,
+                member_id: <?php echo isset($_SESSION['user_id']) ? $_SESSION['user_id'] : 'null'; ?>
             })
         })
             .then(response => response.json())

@@ -58,7 +58,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
                         <button class="nav-link " id="v-pills-orders-tab-offcanvas" data-bs-toggle="pill"
                             data-bs-target="#orders" type="button" role="tab" aria-controls="orders"
                             aria-selected="true" data-bs-dismiss="offcanvas">
-                            <i class="bi bi-cart-check me-2"></i> 訂單管理
+                            <i class="bi bi-cart-check me-2"></i> 購買訂單管理
+                        </button>
+                        <button class="nav-link" id="v-pills-reparis-tab-offcanvas" data-bs-toggle="pill"
+                            data-bs-target="#repairs" type="button" role="tab" aria-controls="repairs"
+                            aria-selected="false" data-bs-dismiss="offcanvas">
+                            <i class="bi bi-people me-2"></i> 維修訂單管理
                         </button>
                         <button class="nav-link" id="v-pills-members-tab-offcanvas" data-bs-toggle="pill"
                             data-bs-target="#members" type="button" role="tab" aria-controls="members"
@@ -87,7 +92,12 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
                             <button class="nav-link " id="v-pills-orders-tab" data-bs-toggle="pill"
                                 data-bs-target="#orders" type="button" role="tab" aria-controls="orders"
                                 aria-selected="true">
-                                <i class="bi bi-cart-check me-2"></i> 訂單管理
+                                <i class="bi bi-cart-check me-2"></i> 購買訂單管理
+                            </button>
+                            <button class="nav-link " id="v-pills-repairs-tab" data-bs-toggle="pill"
+                                data-bs-target="#repairs" type="button" role="tab" aria-controls="repairs"
+                                aria-selected="true">
+                                <i class="bi bi-cart-check me-2"></i> 維修訂單管理
                             </button>
                             <button class="nav-link" id="v-pills-members-tab" data-bs-toggle="pill"
                                 data-bs-target="#members" type="button" role="tab" aria-controls="members"
@@ -106,6 +116,8 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
                     <?php include "backend/productManager.php"; ?>
                     <!-- 訂單管理 -->
                     <?php include "backend/orderManager.php"; ?>
+                    <!-- 維修訂單管理 -->
+                    <?php include "backend/repairOrderManager.php"; ?>
                     <!-- 會員管理 -->
                     <?php include "backend/memberManager.php"; ?>
                 </div>

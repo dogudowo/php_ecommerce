@@ -136,19 +136,6 @@ $product['success'] = true;
         // 自動選中第一個尺寸和顏色
         document.addEventListener('DOMContentLoaded', function () {
             const sizeOptions = <?php echo json_encode($product['sizeOptions']); ?>;
-
-            // 檢查每個尺寸是否有可用庫存
-            document.querySelectorAll('.size-option').forEach((button, index) => {
-                const allColorsOutOfStock = sizeOptions[index].colors.every(
-                    color => color.stock <= 0
-                );
-
-                if (allColorsOutOfStock) {
-                    button.disabled = true;
-                    button.classList.add('disabled');
-                }
-            });
-
             const firstSize = document.querySelector('.size-option:not(:disabled)');
             if (firstSize) {
                 firstSize.classList.remove('btn-outline-success');

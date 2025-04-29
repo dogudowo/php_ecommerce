@@ -58,10 +58,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         <h4>訂單明細</h4>
                     </div>
                     <div class="card-body">
-                        <table class="table">
+                        <table class="table align-items-center">
                             <thead>
                                 <tr>
-                                    <th>商品</th>
+                                    <th>商品圖片</th>
+                                    <th>商品名稱</th>
                                     <th>規格</th>
                                     <th>單價</th>
                                     <th>數量</th>
@@ -78,6 +79,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                                     height="80" style="object-fit: cover; object-position: center;"
                                                     class="me-2">
                                             <?php endif; ?>
+                                        </td>
+                                        <td style="vertical-align: middle;">
+                                            <?php echo htmlspecialchars($item['ProductName']); ?>
                                         </td>
                                         <td style="vertical-align: middle;">
                                             <?= htmlspecialchars($item['Color']) ?>
@@ -133,29 +137,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             <input type="text" class="form-control"
                                 value="<?php echo htmlspecialchars($currentMember['City'] . $currentMember['Address']); ?>"
                                 disabled>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- 新增付款資訊區塊 -->
-                <div class="card mb-4">
-                    <div class="card-header bg-light">
-                        <h4>付款資訊</h4>
-                    </div>
-                    <div class="card-body">
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="payment_method" id="creditCard"
-                                value="credit_card" checked>
-                            <label class="form-check-label" for="creditCard">信用卡付款</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="payment_method" id="atmTransfer"
-                                value="atm_transfer">
-                            <label class="form-check-label" for="atmTransfer">ATM轉帳</label>
-                        </div>
-                        <div class="form-check">
-                            <input class="form-check-input" type="radio" name="payment_method" id="cod" value="cod">
-                            <label class="form-check-label" for="cod">貨到付款</label>
                         </div>
                     </div>
                 </div>
