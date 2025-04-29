@@ -1,156 +1,166 @@
+<?php
+session_start();
+require_once __DIR__ . '/php/APIs.php';
+
+// 1. 資料獲取與分類
+$allProducts = getProducts();
+$luggages = $accessories = $travels = $featureds = [];
+
+foreach ($allProducts as $p) {
+    $details = getProductById($p['ProductID']);
+    $p['details'] = $details;
+    switch ($p['Type']) {
+        case 'aluminum':
+        case 'zipper':
+            $luggages[] = $p;
+            break;
+        case 'accessories':
+            $accessories[] = $p;
+            break;
+        case 'travel':
+            $travels[] = $p;
+            break;
+        case 'featured':
+            $featureds[] = $p;
+            break;
+    }
+}
+
+function renderProductCard(array $product)
+{
+    $sizes = array_column($product['details']['sizeOptions'] ?? [], 'size');
+    $sizeClass = '';
+    if (!empty($sizes)) {
+        $max = max($sizes);
+        if ($max > 28)
+            $sizeClass = 'large';
+        elseif ($max >= 25)
+            $sizeClass = 'medium';
+        elseif ($max >= 21)
+            $sizeClass = 'small';
+        else
+            $sizeClass = 'cabin';
+    }
+    $img = "imgs/products/{$product['ProductID']}/main.jpg";
+    ?>
+    <div class="col-md-4 mb-3 d-flex justify-content-center product-item" data-size="<?= $sizeClass ?>"
+        data-material="<?= htmlspecialchars($product['Type'], ENT_QUOTES) ?>">
+        <div class="card" style="width:100%; max-width:320px; border-radius:20px; transition:transform .2s;"
+            onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
+            <!-- 點擊區域 -->
+            <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>" class="text-decoration-none text-black">
+                <img src="<?= $img ?>" class="card-img-top" style="border-radius:20px 20px 0 0; object-fit:cover;"
+                    alt="<?= htmlspecialchars($product['ProductName'], ENT_QUOTES) ?>">
+                <div class="card-body pb-0 mb-2">
+                    <h5 class="card-title mb-1"><?= htmlspecialchars($product['ProductName'], ENT_QUOTES) ?></h5>
+                    <?php if (!empty($sizes)): ?>
+                        <p class="card-text mb-0">尺寸：<?= implode(', ', $sizes) ?> 吋</p>
+                    <?php endif; ?>
+                    <p class="mb-0">
+                        價格：
+                        <span class="text-decoration-line-through text-muted">
+                            $<?= number_format(round($product['MaxPrice'] * 1.2), 0) ?>
+                        </span>
+                    </p>
+                    <p class="text-danger fs-4 mt-0">
+                        <strong>$<?= number_format($product['MinPrice'], 0) ?></strong>
+                    </p>
+                </div>
+            </a>
+            <!-- 卡片底部按鈕 -->
+            <div class="card-footer bg-transparent border-0 text-center pb-3">
+                <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>" class="btn btn-success"
+                    style="border-radius:20px; width:80%;">
+                    查看詳情
+                </a>
+            </div>
+        </div>
+    </div>
+    <?php
+}
+?>
+
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-TW">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
+    <title>歐印精品-首頁</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/navPillsStyles.css">
-    <link rel="icon" href="imgs/webimg.ico" type="image/x-icon">
     <style>
         .card {
-            transition: box-shadow 0.3s ease;
+            transition: box-shadow .3s;
         }
 
         .card:hover {
             box-shadow: 0 0 7px rgba(0, 0, 0, 0.5);
         }
     </style>
-    <title>歐印精品-首頁</title>
 </head>
 
 <body>
-    <?php include "header.php"; ?>
-    <!-- 輪播照片 -->
-    <div class="container">
-        <div id="homeCarsousel" class="carousel slide" data-bs-ride="carousel">
-            <?php
-            // 獲取carousel目錄中的所有圖片
-            $carouselDir = 'imgs/carousel/';
-            $images = glob($carouselDir . '*.{jpg,jpeg,png,gif}', GLOB_BRACE);
-
-            // 如果是管理員，顯示編輯按鈕
-            if (isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin') {
-                echo '<button class="btn btn-primary position-absolute" style="right: 20px; top: 20px; z-index: 10;" 
-                      data-bs-toggle="modal" data-bs-target="#carouselModal">
-                      <i class="bi bi-pencil"></i> 編輯
-                      </button>';
-            }
-            echo '<div class="carousel-indicators w-75 justify-content-center mx-auto align-items-center">';
-            foreach ($images as $key => $image) {
-                $active = $key === 0 ? 'active' : '';
-                echo '<button type="button" data-bs-target="#homeCarsousel" data-bs-slide-to="' . $key . '" 
-                    class="' . $active . '" aria-current="' . ($key === 0 ? 'true' : 'false') . '" 
-                    aria-label="Slide ' . ($key + 1) . '"></button>';
-            }
-            echo '</div>';
-
-            // 輪播內容
-            echo '<div class="carousel-inner w-100 justify-content-center mx-auto align-items-center">';
-            foreach ($images as $key => $image) {
-                $active = $key === 0 ? 'active' : '';
-                echo '<div class="carousel-item ' . $active . '">
-                    <img src="' . $image . '" class="d-block w-100 justify-content-center" alt="輪播圖片">
-                </div>';
-            }
-            echo '</div>';
-            ?>
-            <button class="carousel-control-prev" type="button" data-bs-target="#homeCarsousel" data-bs-slide="prev">
-                <span class="carousel-control-prev-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Previous</span>
+    <?php include 'header.php'; ?>
+    <!-- Carousel -->
+    <div class="containe-fluid">
+        <?php
+        $dir = 'imgs/carousel/';
+        $imgs = glob($dir . '*.{jpg,jpeg,png,gif}', GLOB_BRACE);
+        ?>
+        <div id="homeCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-indicators">
+                <?php foreach ($imgs as $i => $img): ?>
+                    <button type="button" data-bs-target="#homeCarousel" data-bs-slide-to="<?= $i ?>"
+                        class="<?= !$i ? 'active' : '' ?>"></button>
+                <?php endforeach; ?>
+            </div>
+            <div class="carousel-inner">
+                <?php foreach ($imgs as $i => $img): ?>
+                    <div class="carousel-item <?= !$i ? 'active' : '' ?>">
+                        <img src="<?= $img ?>" class="d-block w-100" alt="slide">
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <button class="carousel-control-prev" data-bs-target="#homeCarousel" data-bs-slide="prev">
+                <span class="carousel-control-prev-icon"></span>
             </button>
-            <button class="carousel-control-next" type="button" data-bs-target="#homeCarsousel" data-bs-slide="next">
-                <span class="carousel-control-next-icon" aria-hidden="true"></span>
-                <span class="visually-hidden">Next</span>
+            <button class="carousel-control-next" data-bs-target="#homeCarousel" data-bs-slide="next">
+                <span class="carousel-control-next-icon"></span>
             </button>
         </div>
     </div>
-    <br>
-    <!-- 商品區域 -->
-    <div class="container mt-3">
-        <!-- Offcanvas trigger button for small screens -->
-        <div class="d-md-none mb-3">
-            <button class="btn btn-success" type="button" data-bs-toggle="offcanvas"
-                data-bs-target="#offcanvasNavProducts" aria-controls="offcanvasNavProducts">
-                商品選項
-            </button>
-        </div>
 
-        <!-- Offcanvas component for navigation -->
-        <div class="offcanvas offcanvas-start w-50" tabindex="-1" id="offcanvasNavProducts"
-            aria-labelledby="offcanvasNavProductsLabel">
-            <div class="offcanvas-header">
-                <h5 class="offcanvas-title" id="offcanvasNavProductsLabel">商品選項</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="關閉"></button>
-            </div>
-            <div class="offcanvas-body">
-                <div class="nav flex-column nav-pills gap-2" id="v-pills-tabOffcanvas" role="tablist"
-                    aria-orientation="vertical">
-                    <button class="nav-link active" id="v-pills-products-tab" data-bs-toggle="pill"
-                        data-bs-target="#v-pills-products" type="button" role="tab" aria-controls="v-pills-products"
-                        aria-selected="true" data-bs-dismiss="offcanvas">
-                        全部行李箱
-                    </button>
-                    <button class="nav-link" id="v-pills-accessories-tab" data-bs-toggle="pill"
-                        data-bs-target="#v-pills-accessories" type="button" role="tab"
-                        aria-controls="v-pills-accessories" aria-selected="false" data-bs-dismiss="offcanvas">
-                        行李箱配件
-                    </button>
-                    <button class="nav-link" id="v-pills-travel-tab" data-bs-toggle="pill"
-                        data-bs-target="#v-pills-travel" type="button" role="tab" aria-controls="v-pills-travel"
-                        aria-selected="false" data-bs-dismiss="offcanvas">
-                        旅遊周邊
-                    </button>
-                    <button class="nav-link" id="v-pills-selected-tab" data-bs-toggle="pill"
-                        data-bs-target="#v-pills-selected" type="button" role="tab" aria-controls="v-pills-selected"
-                        aria-selected="false" data-bs-dismiss="offcanvas">
-                        歐印嚴選
-                    </button>
-                </div>
-            </div>
-        </div>
-        <div class="row justify-content-center">
-            <!-- Sidebar navigation for medium and larger screens -->
-            <div class="col-md-3 d-none d-md-block">
-                <div class="nav flex-column nav-pills me-3 gap-1" id="v-pills-tab" role="tablist"
-                    aria-orientation="vertical">
-                    <button class="nav-link active" id="v-pills-products-tab" data-bs-toggle="pill"
-                        data-bs-target="#v-pills-products" type="button" role="tab" aria-controls="v-pills-products"
-                        aria-selected="true">
-                        全部行李箱
-                    </button>
-                    <button class="nav-link" id="v-pills-accessories-tab" data-bs-toggle="pill"
-                        data-bs-target="#v-pills-accessories" type="button" role="tab"
-                        aria-controls="v-pills-accessories" aria-selected="false">
-                        行李箱配件
-                    </button>
-                    <button class="nav-link" id="v-pills-travel-tab" data-bs-toggle="pill"
-                        data-bs-target="#v-pills-travel" type="button" role="tab" aria-controls="v-pills-travel"
-                        aria-selected="false">
-                        旅遊周邊
-                    </button>
-                    <button class="nav-link" id="v-pills-selected-tab" data-bs-toggle="pill"
-                        data-bs-target="#v-pills-selected" type="button" role="tab" aria-controls="v-pills-selected"
-                        aria-selected="false">
-                        歐印嚴選
-                    </button>
-                </div>
-            </div>
-
-            <!-- Tab content -->
+    <!-- Products & Filters -->
+    <div class="container-fluid mt-3 px-3 mx-auto">
+        <div class="row col-lg-9 col-12  mx-auto">
+            <ul class="nav nav-pills mb-4 justify-content-center gap-4 fs-6" id="product-tabs">
+                <li class="nav-item">
+                    <a class="nav-link active" style="border-radius:20px;" href="#" data-bs-toggle="pill"
+                        data-bs-target="#tab-luggage">全部行李箱</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" style="border-radius:20px;" href="#" data-bs-toggle="pill"
+                        data-bs-target="#tab-accessories">行李箱配件</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" style="border-radius:20px;" href="#" data-bs-toggle="pill"
+                        data-bs-target="#tab-travel">旅行周邊</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link " style="border-radius:20px;" href="#" data-bs-toggle="pill"
+                        data-bs-target="#tab-featured">歐印精選</a>
+                </li>
+            </ul>
             <div class="col-md-9">
-                <div class="tab-content" id="v-pills-tabContent">
-                    <div class="tab-pane fade show active" id="v-pills-products" role="tabpanel"
-                        aria-labelledby="v-pills-products-tab">
-                        <!-- 全部行李箱內容 -->
+                <div class="tab-content">
+                    <div class="tab-pane fade show active" id="tab-luggage">
                         <h4>全部行李箱</h4>
-
-                        <!-- 篩選控制項 -->
+                        <!-- 篩選 Controls -->
                         <div class="row mb-4">
                             <div class="col-md-3 mb-3">
                                 <h5>尺寸篩選</h5>
-                                <select class="form-select" id="size-filter">
+                                <select id="size-filter" class="form-select">
                                     <option value="all" selected>全部尺寸</option>
                                     <option value="large">28吋以上</option>
                                     <option value="medium">25~28吋</option>
@@ -160,334 +170,80 @@
                             </div>
                             <div class="col-md-3 mb-3">
                                 <h5>材質篩選</h5>
-                                <select class="form-select" id="material-filter">
+                                <select id="material-filter" class="form-select">
                                     <option value="all" selected>全部材質</option>
                                     <option value="aluminum">鋁框款</option>
                                     <option value="zipper">拉鍊款</option>
                                 </select>
                             </div>
                         </div>
-
-                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4" id="luggage-container">
-                            <?php
-                            require_once __DIR__ . '/php/APIs.php';
-                            $products = getProducts();
-                            foreach ($products as $product) {
-                                if ($product['Type'] === 'aluminum' || $product['Type'] === 'zipper') {
-                                    $productDetails = getProductById($product['ProductID']);
-                                    $sizes = [];
-                                    if (isset($productDetails['sizeOptions'])) {
-                                        foreach ($productDetails['sizeOptions'] as $sizeOption) {
-                                            $sizes[] = $sizeOption['size'];
-                                        }
-                                    }
-
-                                    // 將尺寸和材質信息添加為data屬性
-                                    $sizeClass = '';
-                                    if (!empty($sizes)) {
-                                        $maxSize = max($sizes);
-                                        if ($maxSize > 28) {
-                                            $sizeClass = 'large';
-                                        } elseif ($maxSize >= 25) {
-                                            $sizeClass = 'medium';
-                                        } elseif ($maxSize >= 21) {
-                                            $sizeClass = 'small';
-                                        } else {
-                                            $sizeClass = 'cabin';
-                                        }
-                                    }
-                                    ?>
-                                    <div class="col product-item" data-size="<?= $sizeClass ?>"
-                                        data-material="<?= $product['Type'] ?>">
-                                        <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>"
-                                            class="text-decoration-none">
-                                            <div class="card h-100" style="cursor: pointer;">
-                                                <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg"
-                                                    class="card-img-top" alt="<?= $product['ProductName'] ?>">
-                                                <div class="card-body text-black pb-0 mb-0">
-                                                    <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
-                                                    <p class="mb-0 mt-2">尺寸:
-                                                        <?php
-                                                        if (isset($productDetails['sizeOptions'])) {
-                                                            echo implode(', ', array_column($productDetails['sizeOptions'], 'size'));
-                                                        }
-                                                        ?> 吋
-                                                    </p>
-                                                    <p class="fs-6 mb-0">價錢: <span
-                                                            class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span>
-                                                    </p>
-                                                    <p class="fs-4 text-danger"> <strong>$<?= $product['MinPrice'] ?></strong>
-                                                    </p>
-                                                </div>
-                                                <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <?php
-                                }
-                            }
-                            ?>
+                        <div class="row g-4" id="luggage-container">
+                            <?php foreach ($luggages as $p)
+                                renderProductCard($p); ?>
                         </div>
                     </div>
-                    <div class="tab-pane fade" id="v-pills-accessories" role="tabpanel"
-                        aria-labelledby="v-pills-accessories-tab">
-                        <!-- 行李箱配件內容 -->
+                    <div class="tab-pane fade" id="tab-accessories">
                         <h4>行李箱配件</h4>
-                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                            <?php
-                            foreach ($products as $product) {
-                                if ($product['Type'] === 'accessories') {
-                                    ?>
-                                    <div class="col">
-                                        <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>"
-                                            class="text-decoration-none">
-                                            <div class="card h-100" style="cursor: pointer;">
-                                                <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg"
-                                                    class="card-img-top" alt="<?= $product['ProductName'] ?>">
-                                                <div class="card-body text-black pb-0 mb-0">
-                                                    <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
-                                                    <p class="fs-6 mb-0">價錢: <span
-                                                            class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span>
-                                                    </p>
-                                                    <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
-                                                </div>
-                                                <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <?php
-                                }
-                            }
-                            ?>
-                        </div>
+                        <div class="row g-4"><?php foreach ($accessories as $p)
+                            renderProductCard($p); ?></div>
                     </div>
-                    <div class="tab-pane fade" id="v-pills-travel" role="tabpanel" aria-labelledby="v-pills-travel-tab">
-                        <!-- 旅遊周邊內容 -->
+                    <div class="tab-pane fade" id="tab-travel">
                         <h4>旅遊周邊</h4>
-                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                            <?php
-                            foreach ($products as $product) {
-                                if ($product['Type'] === 'travel') {
-                                    ?>
-                                    <div class="col">
-                                        <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>"
-                                            class="text-decoration-none">
-                                            <div class="card h-100" style="cursor: pointer;">
-                                                <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg"
-                                                    class="card-img-top" alt="<?= $product['ProductName'] ?>">
-                                                <div class="card-body text-black pb-0 mb-0">
-                                                    <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
-                                                    <p class="fs-6 mb-0">價錢: <span
-                                                            class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span>
-                                                    </p>
-                                                    <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
-                                                </div>
-                                                <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <?php
-                                }
-                            }
-                            ?>
-                        </div>
+                        <div class="row g-4"><?php foreach ($travels as $p)
+                            renderProductCard($p); ?></div>
                     </div>
-                    <div class="tab-pane fade" id="v-pills-selected" role="tabpanel"
-                        aria-labelledby="v-pills-selected-tab">
-                        <!-- 歐印嚴選內容 -->
+                    <div class="tab-pane fade" id="tab-featured">
                         <h4>歐印嚴選</h4>
-                        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
-                            <?php
-                            foreach ($products as $product) {
-                                if ($product['Type'] === 'featured') {
-                                    ?>
-                                    <div class="col">
-                                        <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>"
-                                            class="text-decoration-none">
-                                            <div class="card h-100" style="cursor: pointer;">
-                                                <img src="imgs/products/<?= $product['ProductName'] ?>/main.jpg"
-                                                    class="card-img-top" alt="<?= $product['ProductName'] ?>">
-                                                <div class="card-body text-black pb-0 mb-0">
-                                                    <h5 class="card-title mb-1"><?= $product['ProductName'] ?></h5>
-                                                    <p class="fs-6 mb-0">價錢: <span
-                                                            class="text-decoration-line-through">$<?= $product['MaxPrice'] ?></span>
-                                                    </p>
-                                                    <p class="fs-4 text-danger">$<?= $product['MinPrice'] ?></p>
-                                                </div>
-                                                <p class="text-center text-success border-top py-2 my-0">查看詳情</p>
-                                            </div>
-                                        </a>
-                                    </div>
-                                    <?php
-                                }
-                            }
-                            ?>
-                        </div>
+                        <div class="row g-4"><?php foreach ($featureds as $p)
+                            renderProductCard($p); ?></div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
-    <?php include "footer.php"; ?>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
-        crossorigin="anonymous"></script>
+    <?php include 'footer.php'; ?>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            // Grab the offcanvas element and create/get its Bootstrap instance
-            const offcanvasEl = document.getElementById("offcanvasNavProducts");
-            if (!offcanvasEl) return;
-            const offcanvasInstance = bootstrap.Offcanvas.getOrCreateInstance(offcanvasEl);
+        // 你的過濾邏輯
+        const sizeSelect = document.getElementById('size-filter');
+        const materialSelect = document.getElementById('material-filter');
+        const productItems = document.querySelectorAll('#luggage-container .product-item');
 
-            // Attach a click handler to every nav‑link INSIDE the offcanvas
-            offcanvasEl.querySelectorAll(".nav-link").forEach((btn) => {
-                btn.addEventListener("click", () => offcanvasInstance.hide());
+        function applyFilters() {
+            const sizeVal = sizeSelect.value;
+            const materialVal = materialSelect.value;
+            let visibleCount = 0;
+            productItems.forEach(item => {
+                const itemSize = item.dataset.size;
+                const itemMaterial = item.dataset.material;
+                const shouldShow = (sizeVal === 'all' || itemSize === sizeVal)
+                    && (materialVal === 'all' || itemMaterial === materialVal);
+                const container = item.closest('.col-md-3');
+                container.classList.toggle('visually-hidden', !shouldShow);
+                container.hidden = false;
+                if (shouldShow) visibleCount++;
             });
 
-            // 篩選功能
-            let currentSizeFilter = 'all';
-            let currentMaterialFilter = 'all';
-
-            // 尺寸篩選下拉選單變更事件
-            document.getElementById('size-filter').addEventListener('change', function () {
-                currentSizeFilter = this.value;
-                applyFilters();
-            });
-
-            // 材質篩選下拉選單變更事件
-            document.getElementById('material-filter').addEventListener('change', function () {
-                currentMaterialFilter = this.value;
-                applyFilters();
-            });
-
-            // 應用篩選函數
-            function applyFilters() {
-                const productItems = document.querySelectorAll('.product-item');
-                let visibleCount = 0;
-
-                productItems.forEach(item => {
-                    const itemSize = item.getAttribute('data-size');
-                    const itemMaterial = item.getAttribute('data-material');
-
-                    // 檢查是否符合當前篩選條件
-                    const sizeMatch = currentSizeFilter === 'all' || itemSize === currentSizeFilter;
-                    const materialMatch = currentMaterialFilter === 'all' || itemMaterial === currentMaterialFilter;
-
-                    // 如果同時符合尺寸和材質篩選條件，則顯示該項目，否則隱藏
-                    if (sizeMatch && materialMatch) {
-                        item.style.display = '';
-                        visibleCount++;
-                    } else {
-                        item.style.display = 'none';
-                    }
-                });
-
-                // 檢查是否有顯示的產品
-                const noResultsMessage = document.getElementById('no-results-message');
-
-                // 只有當沒有可見產品時才顯示提示信息
-                if (visibleCount === 0) {
-                    if (!noResultsMessage) {
-                        const container = document.getElementById('luggage-container');
-                        const message = document.createElement('div');
-                        message.id = 'no-results-message';
-                        message.className = 'col-12 text-center my-5';
-                        message.innerHTML = '<h5>沒有符合條件的商品</h5>';
-                        container.appendChild(message);
-                    }
-                } else {
-                    // 如果有顯示的產品且有提示信息，則移除提示
-                    if (noResultsMessage) {
-                        noResultsMessage.remove();
-                    }
+            // 无商品提示
+            const container = document.getElementById('luggage-container');
+            let emptyAlert = container.querySelector('.no-products-alert');
+            if (visibleCount === 0) {
+                if (!emptyAlert) {
+                    emptyAlert = document.createElement('div');
+                    emptyAlert.className = 'no-products-alert alert alert-info text-center mt-4';
+                    emptyAlert.innerHTML = '⚠️ 目前没有符合筛选条件的商品，请尝试其他筛选组合';
+                    container.appendChild(emptyAlert);
                 }
+            } else if (emptyAlert) {
+                emptyAlert.remove();
             }
-        });
+        }
+
+        sizeSelect.addEventListener('change', applyFilters);
+        materialSelect.addEventListener('change', applyFilters);
+        applyFilters();
     </script>
 </body>
 
 </html>
-
-<!-- 輪播編輯Modal -->
-<div class="modal fade" id="carouselModal" tabindex="-1" aria-labelledby="carouselModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="carouselModalLabel">輪播圖片管理</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-            </div>
-            <div class="modal-body">
-                <form id="uploadForm" enctype="multipart/form-data">
-                    <div class="mb-3">
-                        <label for="carouselImage" class="form-label">上傳新圖片</label>
-                        <input class="form-control" type="file" id="carouselImage" name="carouselImage"
-                            accept="image/*">
-                    </div>
-                    <button type="submit" class="btn btn-primary">上傳</button>
-                </form>
-
-                <div class="mt-4">
-                    <h6>現有圖片</h6>
-                    <div class="row" id="carouselImagesList">
-                        <?php foreach ($images as $image): ?>
-                            <div class="col-md-4 mb-3">
-                                <div class="card">
-                                    <img src="<?= $image ?>" class="card-img-top">
-                                    <div class="card-body text-center">
-                                        <button class="btn btn-danger btn-sm delete-btn"
-                                            data-image="<?= basename($image) ?>">刪除</button>
-                                    </div>
-                                </div>
-                            </div>
-                        <?php endforeach; ?>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const uploadForm = document.getElementById('uploadForm');
-        if (uploadForm) {
-            uploadForm.addEventListener('submit', function (e) {
-                e.preventDefault();
-                const formData = new FormData(this);
-
-                fetch('php/handleCarousel.php', {
-                    method: 'POST',
-                    body: formData
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            location.reload();
-                        }
-                    });
-            });
-        }
-
-        document.querySelectorAll('.delete-btn').forEach(btn => {
-            btn.addEventListener('click', function () {
-                const imageName = this.getAttribute('data-image');
-                if (confirm('確定要刪除這張圖片嗎？')) {
-                    fetch('php/handleCarousel.php', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({ action: 'delete', imageName: imageName })
-                    })
-                        .then(response => response.json())
-                        .then(data => {
-                            if (data.success) {
-                                location.reload();
-                            }
-                        });
-                }
-            });
-        });
-    });
-</script>

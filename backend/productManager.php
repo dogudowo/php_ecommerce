@@ -29,7 +29,7 @@
                                 ? "NT$" . number_format($product['MinPrice'])
                                 : "NT$" . number_format($product['MinPrice']) . " ~ " . number_format($product['MaxPrice']);
 
-                            $productDir = "imgs/products/" . $product['ProductName'];
+                            $productDir = "imgs/products/" . $product['ProductID'];
                             $imgSrc = $productDir . "/main.jpg";
 
                             echo "<tr>
@@ -241,22 +241,22 @@
 
 <script>
     // 只保留一組事件代理，移除所有重複的 document.addEventListener('DOMContentLoaded', ...) 和 document.addEventListener('click', ...)
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // 處理所有的移除尺寸和移除顏色按鈕（包含新增和編輯模式）
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function (event) {
             // 移除尺寸按鈕
             if (event.target.classList.contains('remove-size')) {
                 const sizeContainer = event.target.closest('#sizeContainer, #edit-sizeContainer');
                 const sizeSections = sizeContainer.querySelectorAll('.size-section');
-                
+
                 if (sizeSections.length > 1) {
                     const sizeSection = event.target.closest('.size-section');
                     sizeSection.remove();
-                    
+
                     // 更新索引
                     const isEdit = sizeContainer.id === 'edit-sizeContainer';
                     const prefix = isEdit ? 'edit_' : '';
-                    
+
                     sizeSections.forEach((section, index) => {
                         section.querySelectorAll(`input[name^="${prefix}colors"], input[name^="${prefix}stocks"]`).forEach(input => {
                             input.name = input.name.replace(/\[\d+\]/, `[${index}]`);
@@ -266,19 +266,19 @@
                     alert('至少需要一個尺寸');
                 }
             }
-            
+
             // 移除顏色按鈕
             if (event.target.classList.contains('remove-color-stock')) {
                 const colorStockContainer = event.target.closest('.color-stock-container');
                 const colorStocks = colorStockContainer.querySelectorAll('.color-stock');
-                
+
                 if (colorStocks.length > 1) {
                     event.target.closest('.color-stock').remove();
                 } else {
                     alert('每個尺寸至少需要一個顏色選項');
                 }
             }
-            
+
             // 新增顏色按鈕
             if (event.target.classList.contains('add-color-stock')) {
                 const sizeSection = event.target.closest('.size-section');
@@ -286,14 +286,14 @@
                 const sizeContainer = sizeSection.closest('#sizeContainer, #edit-sizeContainer');
                 const isEdit = sizeContainer.id === 'edit-sizeContainer';
                 const prefix = isEdit ? 'edit_' : '';
-                
+
                 // 找出當前尺寸的索引
                 const sizeIndex = Array.from(sizeContainer.querySelectorAll('.size-section')).indexOf(sizeSection);
-                
+
                 // 複製第一個顏色區塊
                 const firstColorStock = colorStockContainer.querySelector('.color-stock');
                 const newColorStock = firstColorStock.cloneNode(true);
-                
+
                 // 清空輸入值
                 newColorStock.querySelectorAll('input').forEach(input => {
                     input.value = '';
@@ -301,7 +301,7 @@
                         input.name = input.name.replace(/\[\d+\]/, `[${sizeIndex}]`);
                     }
                 });
-                
+
                 colorStockContainer.appendChild(newColorStock);
             }
         });

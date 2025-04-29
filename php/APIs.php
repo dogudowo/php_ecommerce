@@ -72,7 +72,7 @@ function addProduct($productName, $productType, $mainImage, $galleryImages, $siz
         $stmt->execute();
 
         // 儲存圖片
-        handleProductImages($productName, $mainImage, $galleryImages);
+        handleProductImages($productId, $mainImage, $galleryImages);
 
         // 新增尺寸、顏色、庫存
         $stmt = $conn->prepare("INSERT INTO Options (OptionID, ProductID, Color, Size, SizeDescription, Price, Stock) VALUES (?, ?, ?, ?, ?, ?, ?)");
@@ -186,8 +186,8 @@ function getProductById($productId)
     $product['sizeOptions'] = array_values($sizeOptions);
 
     // 檢查產品圖片是否存在
-    $productDir = __DIR__ . "/../imgs/products/" . $product['ProductName'];
-    $webPath = "imgs/products/" . $product['ProductName'];
+    $productDir = __DIR__ . "/../imgs/products/" . $product['ProductID'];
+    $webPath = "imgs/products/" . $product['ProductID'];
 
     $product['mainImage'] = $webPath . "/main.jpg";
 
@@ -204,9 +204,9 @@ function getProductById($productId)
     $conn->close();
     return $product;
 }
-function handleProductImages($productName, $mainImage, $galleryImages)
+function handleProductImages($productId, $mainImage, $galleryImages)
 {
-    $productDir = $productDir = __DIR__ . "/../imgs/products/" . $productName;
+    $productDir = __DIR__ . "/../imgs/products/" . $productId;
 
     if (!file_exists($productDir)) {
         if (!mkdir($productDir, 0777, true)) {
@@ -300,7 +300,7 @@ function getCartItems($memberId)
 
     // 获取商品图片
     foreach ($items as &$item) {
-        $productDir = "imgs/products/" . $item['ProductName'];
+        $productDir = "imgs/products/" . $item['ProductID'];
         $item['image'] = $productDir . "/main.jpg";
     }
 

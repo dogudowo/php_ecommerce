@@ -65,7 +65,7 @@ try {
     }
 
     // 處理圖片上傳
-    $productDir = "/Applications/XAMPP/xamppfiles/htdocs/public_html/imgs/products/" . $productName;
+    $productDir = __DIR__ . "/../imgs/products/" . $productId;
 
     // 如果目錄不存在就建立
     if (!file_exists($productDir)) {
