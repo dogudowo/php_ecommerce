@@ -43,7 +43,7 @@ function renderProductCard(array $product)
     }
     $img = "imgs/products/{$product['ProductID']}/main.jpg";
     ?>
-    <div class="col-md-4 mb-3 d-flex justify-content-center product-item" data-size="<?= $sizeClass ?>"
+    <div class="col-lg-4 col-md-6 mb-3 d-flex justify-content-center product-item" data-size="<?= $sizeClass ?>"
         data-material="<?= htmlspecialchars($product['Type'], ENT_QUOTES) ?>">
         <div class="card" style="width:100%; max-width:320px; border-radius:20px; transition:transform .2s;"
             onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
@@ -53,7 +53,7 @@ function renderProductCard(array $product)
                     alt="<?= htmlspecialchars($product['ProductName'], ENT_QUOTES) ?>">
                 <div class="card-body pb-0 mb-2">
                     <h5 class="card-title mb-1"><?= htmlspecialchars($product['ProductName'], ENT_QUOTES) ?></h5>
-                    <?php if (!empty($sizes)): ?>
+                    <?php if (!empty($sizes) || !($sizes = -1)): ?>
                         <p class="card-text mb-0">尺寸：<?= implode(', ', $sizes) ?> 吋</p>
                     <?php endif; ?>
                     <p class="mb-0">
@@ -133,7 +133,7 @@ function renderProductCard(array $product)
 
     <!-- Products & Filters -->
     <div class="container-fluid mt-3 px-3 mx-auto">
-        <div class="row col-lg-9 col-12  mx-auto">
+        <div class="row col-lg-8 col-12 mx-auto">
             <ul class="nav nav-pills mb-4 justify-content-center gap-4 fs-6" id="product-tabs">
                 <li class="nav-item">
                     <a class="nav-link active" style="border-radius:20px;" href="#" data-bs-toggle="pill"
@@ -219,10 +219,12 @@ function renderProductCard(array $product)
                 const itemMaterial = item.dataset.material;
                 const shouldShow = (sizeVal === 'all' || itemSize === sizeVal)
                     && (materialVal === 'all' || itemMaterial === materialVal);
-                const container = item.closest('.col-md-3');
-                container.classList.toggle('visually-hidden', !shouldShow);
-                container.hidden = false;
-                if (shouldShow) visibleCount++;
+                const container = item.closest('.col-md-3') || item.closest('.col-lg-4') || item;
+                if (container) {
+                    container.classList.toggle('visually-hidden', !shouldShow);
+                    container.hidden = false;
+                    if (shouldShow) visibleCount++;
+                }
             });
 
             // 无商品提示
