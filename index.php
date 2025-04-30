@@ -183,23 +183,27 @@ function renderProductCard(array $product)
                         </div>
                         <div class="row g-4" id="luggage-container">
                             <?php foreach ($luggages as $p)
-                                renderProductCard($p); ?>
+                                if ($p['isActive'] == 1)
+                                    renderProductCard($p); ?>
                         </div>
                     </div>
                     <div class="tab-pane fade" id="tab-accessories">
                         <h4>行李箱配件</h4>
                         <div class="row g-4"><?php foreach ($accessories as $p)
-                            renderProductCard($p); ?></div>
+                            if ($p['isActive'] == 1)
+                                renderProductCard($p); ?></div>
                     </div>
                     <div class="tab-pane fade" id="tab-travel">
                         <h4>旅遊周邊</h4>
                         <div class="row g-4"><?php foreach ($travels as $p)
-                            renderProductCard($p); ?></div>
+                            if ($p['isActive'] == 1)
+                                renderProductCard($p); ?></div>
                     </div>
                     <div class="tab-pane fade" id="tab-featured">
                         <h4>歐印嚴選</h4>
                         <div class="row g-4"><?php foreach ($featureds as $p)
-                            renderProductCard($p); ?></div>
+                            if ($p['isActive'] == 1)
+                                renderProductCard($p); ?></div>
                     </div>
                 </div>
             </div>
