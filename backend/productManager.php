@@ -17,6 +17,7 @@
                             <th>商品名稱</th>
                             <th>價格</th>
                             <th>庫存</th>
+                            <th>上架</th>
                             <th>操作</th>
                         </tr>
                     </thead>
@@ -35,12 +36,11 @@
                             echo "<tr>
                                 <td>{$product['ProductID']}</td>
                                 <td><img src='$imgSrc' alt='產品圖片' style='max-width: 50px; max-height: 50px;'></td>
-                                <td>{$product['ProductName']}</td>
+                                <td style='max-width: 20rem;'>{$product['ProductName']}</td>
                                 <td>{$priceDisplay}</td>
                                 <td>{$product['TotalStock']}</td>
-                                <td>
-                                    <button class='btn btn-sm btn-outline-warning edit-product' data-product-id='{$product['ProductID']}'>編輯</button>
-                                </td>
+                                <td> " . ($product['isActive'] ? '上架' : '下架') . "</td>
+                                <td> <button class='btn btn-sm btn-outline-warning edit-product' data-product-id='{$product['ProductID']}'>編輯</button></td>
                             </tr>";
                         }
                         ?>
@@ -80,6 +80,17 @@
                         <label for="productDescription" class="form-label">商品敘述</label>
                         <textarea class="form-control" id="productDescription" name="productDescription"
                             rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">上架狀態</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="isActive" id="active1" value="1">
+                            <label class="form-check-label" for="active1">上架</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="isActive" id="active0" value="0" checked>
+                            <label class="form-check-label" for="active0">下架</label>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label for="mainImage" class="form-label">主要圖片</label>
@@ -172,6 +183,16 @@
                         <label for="edit-productDescription" class="form-label">商品敘述</label>
                         <textarea class="form-control" id="edit-productDescription" name="productDescription"
                             rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">上架狀態</label>
+                        <div class="form-check form-switch">
+                            <input type="hidden" name="isActive" value="0">
+                            <input class="form-check-input" type="checkbox" role="switch" id="edit-isActive"
+                                name="isActive" value="1" <?php echo isset($product['isActive']) && $product['isActive'] == 1 ? 'checked' : ''; ?>
+                                onchange="this.previousElementSibling.value=this.checked?1:0">
+                            <label class="form-check-label" for="edit-isActive">上架</label>
+                        </div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">目前主要圖片</label>
@@ -484,8 +505,8 @@
                 "edit-currentGalleryImages"
             );
             galleryContainer.innerHTML = "";
-            product.galleryImages.forEach((img) => {
-                galleryContainer.innerHTML += `<img src="${img}" alt="相簿圖片" style="max-width: 100px; max-height: 100px; margin-right: 5px;">`;
+            product.galleryImages.forEach(image => {
+                galleryContainer.innerHTML += `<img src="${image.url}" alt="相簿圖片" style="max-width: 100px; max-height: 100px; margin-right: 5px;">`;
             });
 
             // 清空尺寸容器
@@ -652,40 +673,40 @@
             // 重置尺寸容器到初始狀態
             const sizeContainer = document.getElementById("edit-sizeContainer");
             sizeContainer.innerHTML = `
-        <div class="size-section mb-3">
-            <label class="form-label">尺寸與價格</label>
-            <div class="row g-2 mb-2">
-                <div class="col">
-                    <input type="text" class="form-control" name="edit_sizes[]" placeholder="尺寸">
-                </div>
-                <div class="col">
-                    <input type="text" class="form-control" name="edit_sizeDescriptions[]" placeholder="尺寸描述">
-                </div>
-                <div class="col">
-                    <input type="number" class="form-control" name="edit_prices[]" placeholder="價格" required>
-                </div>
-                <div class="col-auto">
-                    <button type="button" class="btn btn-danger remove-size">移除尺寸</button>
-                </div>
-            </div>
-            <div class="color-stock-container mt-2">
-                <div class="color-stock mb-2">
-                    <div class="row g-2">
+                <div class="size-section mb-3">
+                    <label class="form-label">尺寸與價格</label>
+                    <div class="row g-2 mb-2">
                         <div class="col">
-                            <input type="text" class="form-control" name="edit_colors[0][]" placeholder="顏色" required>
+                            <input type="text" class="form-control" name="edit_sizes[]" placeholder="尺寸">
                         </div>
                         <div class="col">
-                            <input type="number" class="form-control" name="edit_stocks[0][]" placeholder="庫存" required>
+                            <input type="text" class="form-control" name="edit_sizeDescriptions[]" placeholder="尺寸描述">
+                        </div>
+                        <div class="col">
+                            <input type="number" class="form-control" name="edit_prices[]" placeholder="價格" required>
                         </div>
                         <div class="col-auto">
-                            <button type="button" class="btn btn-primary add-color-stock">新增顏色</button>
-                            <button type="button" class="btn btn-danger remove-color-stock">移除</button>
+                            <button type="button" class="btn btn-danger remove-size">移除尺寸</button>
+                        </div>
+                    </div>
+                    <div class="color-stock-container mt-2">
+                        <div class="color-stock mb-2">
+                            <div class="row g-2">
+                                <div class="col">
+                                    <input type="text" class="form-control" name="edit_colors[0][]" placeholder="顏色" required>
+                                </div>
+                                <div class="col">
+                                    <input type="number" class="form-control" name="edit_stocks[0][]" placeholder="庫存" required>
+                                </div>
+                                <div class="col-auto">
+                                    <button type="button" class="btn btn-primary add-color-stock">新增顏色</button>
+                                    <button type="button" class="btn btn-danger remove-color-stock">移除</button>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
-            </div>
-        </div>
-    `;
+            `;
 
             // 重新綁定事件
             bindEditModalEvents();

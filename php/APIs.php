@@ -134,12 +134,13 @@ function getProducts()
                 p.ProductName,
                 p.Type,
                 p.Introdution as Description,
+                p.isActive,
                 MIN(o.Price) as MinPrice,
                 MAX(o.Price) as MaxPrice,
                 SUM(o.Stock) as TotalStock
             FROM Product p
             LEFT JOIN Options o ON p.ProductID = o.ProductID
-            GROUP BY p.ProductID, p.ProductName, p.Type, p.Introdution
+            GROUP BY p.ProductID, p.ProductName, p.Type, p.Introdution, p.isActive
             ORDER BY p.ProductID";
 
     $result = $conn->query($sql);

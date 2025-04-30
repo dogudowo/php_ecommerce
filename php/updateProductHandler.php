@@ -16,6 +16,7 @@ $productId = (int) $_POST['productId'];
 $productName = $_POST['productName'];
 $productType = $_POST['productType'];
 $productDescription = $_POST['productDescription'] ?? '';
+$isActive = $_POST['isActive'] ?? 1;
 $sizes = $_POST['edit_sizes'] ?? [];
 $prices = $_POST['edit_prices'] ?? [];
 $optionIds = $_POST['edit_optionIds'] ?? [];
@@ -29,8 +30,8 @@ $conn->begin_transaction();
 
 try {
     // 更新產品基本資訊
-    $stmt = $conn->prepare("UPDATE Product SET ProductName = ?, Type = ?, Introdution = ? WHERE ProductID = ?");
-    $stmt->bind_param("sssi", $productName, $productType, $productDescription, $productId);
+    $stmt = $conn->prepare("UPDATE Product SET ProductName = ?, Type = ?, Introdution = ?, isActive = ? WHERE ProductID = ?");
+    $stmt->bind_param("sssii", $productName, $productType, $productDescription, $isActive, $productId);
     $stmt->execute();
 
     // 處理產品選項
