@@ -46,11 +46,13 @@ $isAdmin = isset($_SESSION['user_role']) && $_SESSION['user_role'] === 'admin';
                 <li class="nav-item " role="presentation">
                     <button class="nav-link active" id="legendwalker-tab" data-bs-toggle="pill"
                         data-bs-target="#legendwalkerContent" type="button" role="tab"
-                        aria-controls="legendwalkerContent" aria-selected="true">LegendWalker</button>
+                        aria-controls="legendwalkerContent" aria-selected="true"
+                        style="border-radius: 20px;">LegendWalker</button>
                 </li>
                 <li class="nav-item" role="presentation">
                     <button class="nav-link" id="haugas-tab" data-bs-toggle="pill" data-bs-target="#haugasContent"
-                        type="button" role="tab" aria-controls="haugasContent" aria-selected="false">Haugas</button>
+                        type="button" role="tab" aria-controls="haugasContent" aria-selected="false"
+                        style="border-radius: 20px;">Haugas</button>
                 </li>
             </ul>
             <div class="tab-content my-3">

@@ -29,17 +29,19 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="shopping-tab" data-bs-toggle="pill"
                     data-bs-target="#shoppingContent" type="button" role="tab" aria-controls="shoppingContent"
-                    aria-selected="true">
+                    aria-selected="true" style="border-radius: 20px;">
                     購物說明
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="qa-tab" data-bs-toggle="pill" data-bs-target="#qaContent" type="button"
-                    role="tab" aria-controls="qaContent" aria-selected="false">購物Q&A</button>
+                    role="tab" aria-controls="qaContent" aria-selected="false"
+                    style="border-radius: 20px;">購物Q&A</button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="process-tab" data-bs-toggle="pill" data-bs-target="#processContent"
-                    type="button" role="tab" aria-controls="processContent" aria-selected="false">
+                    type="button" role="tab" aria-controls="processContent" aria-selected="false"
+                    style="border-radius: 20px;">
                     購物流程
                 </button>
             </li>

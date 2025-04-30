@@ -20,8 +20,9 @@
     </div>
 
     <div class="container text-center">
-        <a class="btn btn-success" href="imgs/repair/AllenRepairPrice0609.jpg">維修價格表</a>
-        <a class="btn btn-success" href="src/KeyReport.doc">鑰匙價格表</a>
+        <a class="btn btn-outline-success" style="border-radius: 20px;"
+            href="imgs/repair/AllenRepairPrice0609.jpg">維修價格表</a>
+        <a class="btn btn-outline-success" style="border-radius: 20px;" href="src/KeyReport.doc">鑰匙價格表</a>
     </div>
 
     <div class="container">
