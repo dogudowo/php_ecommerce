@@ -189,19 +189,19 @@ function renderProductCard(array $product)
                     </div>
                     <div class="tab-pane fade" id="tab-accessories">
                         <h4>行李箱配件</h4>
-                        <div class="row g-4"><?php foreach ($accessories as $p)
+                        <div class="row g-4" id="accessories-container"><?php foreach ($accessories as $p)
                             if ($p['isActive'] == 1)
                                 renderProductCard($p); ?></div>
                     </div>
                     <div class="tab-pane fade" id="tab-travel">
                         <h4>旅遊周邊</h4>
-                        <div class="row g-4"><?php foreach ($travels as $p)
+                        <div class="row g-4" id="travel-container"><?php foreach ($travels as $p)
                             if ($p['isActive'] == 1)
                                 renderProductCard($p); ?></div>
                     </div>
                     <div class="tab-pane fade" id="tab-featured">
                         <h4>歐印嚴選</h4>
-                        <div class="row g-4"><?php foreach ($featureds as $p)
+                        <div class="row g-4" id="featured-container"><?php foreach ($featureds as $p)
                             if ($p['isActive'] == 1)
                                 renderProductCard($p); ?></div>
                     </div>
@@ -250,18 +250,32 @@ function renderProductCard(array $product)
             });
 
             // 无商品提示
-            const container = document.getElementById('luggage-container');
-            let emptyAlert = container.querySelector('.no-products-alert');
-            if (visibleCount === 0) {
-                if (!emptyAlert) {
-                    emptyAlert = document.createElement('div');
-                    emptyAlert.className = 'no-products-alert alert alert-info text-center mt-4';
-                    emptyAlert.innerHTML = '⚠️ 目前没有符合筛选条件的商品，请尝试其他筛选组合';
-                    container.appendChild(emptyAlert);
+            function showEmptyAlert(containerId) {
+                const container = document.getElementById(containerId);
+                if (!container) return;
+
+                let emptyAlert = container.querySelector('.no-products-alert');
+                const items = container.querySelectorAll('.product-item');
+                const visibleItems = Array.from(items).filter(item =>
+                    !item.classList.contains('visually-hidden') && !item.hidden
+                );
+
+                if (visibleItems.length === 0) {
+                    if (!emptyAlert) {
+                        emptyAlert = document.createElement('div');
+                        emptyAlert.className = 'no-products-alert alert alert-info text-center mt-4';
+                        emptyAlert.innerHTML = '⚠️ 目前没有符合筛选条件的商品，请尝试其他筛选组合';
+                        container.appendChild(emptyAlert);
+                    }
+                } else if (emptyAlert) {
+                    emptyAlert.remove();
                 }
-            } else if (emptyAlert) {
-                emptyAlert.remove();
             }
+
+            showEmptyAlert('luggage-container');
+            showEmptyAlert('accessories-container');
+            showEmptyAlert('travel-container');
+            showEmptyAlert('featured-container');
         }
 
         sizeSelect.addEventListener('change', applyFilters);
