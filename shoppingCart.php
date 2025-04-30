@@ -26,13 +26,13 @@ foreach ($cartItems as $item) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>購物車 - 歐印精品</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/webStruct.css">
 </head>
 
 <body>
     <?php include "header.php"; ?>
 
-    <div class="container my-5">
+    <div class="container my-5  flex-grow-1 pt-5">
         <h2 class="mb-4">我的購物車</h2>
 
         <?php if (empty($cartItems)): ?>

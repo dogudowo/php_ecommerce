@@ -26,6 +26,7 @@ $product['success'] = true;
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet"
         integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
     <link rel="icon" href="imgs/webimg.ico" type="image/x-icon">
+    <link rel="stylesheet" href="css/webStruct.css">
     <style>
         html,
         body {
@@ -39,7 +40,7 @@ $product['success'] = true;
 
 <body>
     <?php include "header.php"; ?>
-    <div class="container text-center border-bottom border-black my-3">
+    <div class="container text-center border-bottom border-black my-3  flex-grow-1 pt-5">
         <img src="imgs/title.png" alt="歐印精品" img-fluid>
         <h1 class="h1"><?php echo $product['ProductName']; ?></h1>
     </div>

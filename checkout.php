@@ -38,12 +38,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>結帳 - 歐印精品</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/webStruct.css">
 </head>
 
 <body>
     <?php include "header.php"; ?>
 
-    <div class="container my-5">
+    <div class="container my-5 flex-grow-1 pt-5">
         <h2 class="mb-4">結帳</h2>
 
         <?php if (isset($error)): ?>

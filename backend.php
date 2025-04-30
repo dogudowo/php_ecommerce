@@ -17,6 +17,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
         integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <link rel="stylesheet" href="css/navPillsStyles.css">
+    <link rel="stylesheet" href="css/webStruct.css">
     <link rel="icon" href="imgs/webimg.ico" type="image/x-icon">
     <title>歐印精品-後台管理</title>
 </head>
@@ -24,7 +25,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true || $_SESSI
 <body>
     <?php include "header.php"; ?>
 
-    <div class="container mt-4">
+    <div class="container mt-5  flex-grow-1 pt-5"> <!-- 增加pt-4來補償fixed header的高度 -->
         <!-- <div class="text-center border-bottom border-black pb-3 mb-4">
             <img src="imgs/title.png" alt="歐印精品" class="img-fluid">
             <h1 class="h1">後台管理系統</h1>

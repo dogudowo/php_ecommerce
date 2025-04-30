@@ -20,10 +20,9 @@ if (isset($_SESSION['logged_in']) && $_SESSION['logged_in'] === true && $_SESSIO
 }
 ?>
 
-<div class="sticky-top bg-white m-0">
+<div class="fixed-top bg-white m-0 border-bottom border-2">
     <nav class="container position-relative">
-        <div
-            class="d-flex flex-wrap align-items-center justify-content-between justify-content-lg-between py-2 mb-3 m-0 border-bottom border-2">
+        <div class="d-flex flex-wrap align-items-center justify-content-between justify-content-lg-between py-2 m-0">
             <button class="btn d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasNavHeader"
                 aria-controls="offcanvasNavHeader" aria-expanded="false">
                 <span class="navbar-toggler-icon">

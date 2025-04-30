@@ -29,9 +29,11 @@ foreach ($allProducts as $p) {
 function renderProductCard(array $product)
 {
     $sizes = array_column($product['details']['sizeOptions'] ?? [], 'size');
+    $filteredSizes = array_filter($sizes, fn($s) => $s != -1); // ✅ 提前處理尺寸
+
     $sizeClass = '';
-    if (!empty($sizes)) {
-        $max = max($sizes);
+    if (!empty($filteredSizes)) {
+        $max = max($filteredSizes);
         if ($max > 28)
             $sizeClass = 'large';
         elseif ($max >= 25)
@@ -41,20 +43,21 @@ function renderProductCard(array $product)
         else
             $sizeClass = 'cabin';
     }
+
     $img = "imgs/products/{$product['ProductID']}/main.jpg";
     ?>
-    <div class="col-lg-4 col-md-6 mb-3 d-flex justify-content-center product-item" data-size="<?= $sizeClass ?>"
-        data-material="<?= htmlspecialchars($product['Type'], ENT_QUOTES) ?>">
+    <div class="col-lg-3 col-md-4 mb-3 d-flex justify-content-center product-item" data-size="<?= $sizeClass ?>"
+        data-material="<?= htmlspecialchars($product['Type'], ENT_QUOTES) ?>"
+        data-sizes="<?= implode(',', $filteredSizes) ?>">
         <div class="card" style="width:100%; max-width:320px; border-radius:20px; transition:transform .2s;"
             onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
-            <!-- 點擊區域 -->
             <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>" class="text-decoration-none text-black">
                 <img src="<?= $img ?>" class="card-img-top" style="border-radius:20px 20px 0 0; object-fit:cover;"
                     alt="<?= htmlspecialchars($product['ProductName'], ENT_QUOTES) ?>">
                 <div class="card-body pb-0 mb-2">
                     <h5 class="card-title mb-1"><?= htmlspecialchars($product['ProductName'], ENT_QUOTES) ?></h5>
-                    <?php if (!empty($sizes) || !($sizes = -1)): ?>
-                        <p class="card-text mb-0">尺寸：<?= implode(', ', $sizes) ?> 吋</p>
+                    <?php if (!empty($filteredSizes)): ?>
+                        <p class="card-text mb-0">尺寸：<?= implode(', ', $filteredSizes) ?> 吋</p>
                     <?php endif; ?>
                     <p class="mb-0">
                         價格：
@@ -67,7 +70,6 @@ function renderProductCard(array $product)
                     </p>
                 </div>
             </a>
-            <!-- 卡片底部按鈕 -->
             <div class="card-footer bg-transparent border-0 text-center pb-3">
                 <a href="productDetail.php?product_id=<?= $product['ProductID'] ?>" class="btn btn-success"
                     style="border-radius:20px; width:80%;">
@@ -86,9 +88,9 @@ function renderProductCard(array $product)
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>歐印精品-首頁</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="css/navPillsStyles.css">
+    <link rel="stylesheet" href="css/webStruct.css">
     <style>
         .card {
             transition: box-shadow .3s;
@@ -98,12 +100,14 @@ function renderProductCard(array $product)
             box-shadow: 0 0 7px rgba(0, 0, 0, 0.5);
         }
     </style>
+    <link rel="icon" href="imgs/webimg.ico" type="image/x-icon">
+    <title>歐印精品-首頁</title>
 </head>
 
 <body>
     <?php include 'header.php'; ?>
     <!-- Carousel -->
-    <div class="containe-fluid">
+    <div class="containe-fluid flex-grow-1" style="padding-top: 4.5rem;">
         <?php
         $dir = 'imgs/carousel/';
         $imgs = glob($dir . '*.{jpg,jpeg,png,gif}', GLOB_BRACE);
@@ -133,7 +137,7 @@ function renderProductCard(array $product)
 
     <!-- Products & Filters -->
     <div class="container-fluid mt-3 px-3 mx-auto">
-        <div class="row col-lg-8 col-12 mx-auto">
+        <div class="row col-lg-9 col-12 mx-auto">
             <ul class="nav nav-pills mb-4 justify-content-center gap-4 fs-6" id="product-tabs">
                 <li class="nav-item">
                     <a class="nav-link active" style="border-radius:20px;" href="#" data-bs-toggle="pill"
@@ -152,7 +156,7 @@ function renderProductCard(array $product)
                         data-bs-target="#tab-featured">歐印精選</a>
                 </li>
             </ul>
-            <div class="col-md-9">
+            <div class="">
                 <div class="tab-content">
                     <div class="tab-pane fade show active" id="tab-luggage">
                         <h4>全部行李箱</h4>
@@ -217,9 +221,23 @@ function renderProductCard(array $product)
             productItems.forEach(item => {
                 const itemSize = item.dataset.size;
                 const itemMaterial = item.dataset.material;
-                const shouldShow = (sizeVal === 'all' || itemSize === sizeVal)
-                    && (materialVal === 'all' || itemMaterial === materialVal);
-                const container = item.closest('.col-md-3') || item.closest('.col-lg-4') || item;
+                const sizes = item.dataset.sizes ? item.dataset.sizes.split(',').filter(s => s !== '') : [];
+
+                const sizeMatch = sizeVal === 'all' ||
+                    sizes.some(size => {
+                        const numSize = parseInt(size);
+                        if (isNaN(numSize) || numSize === -1) return false;
+
+                        if (sizeVal === 'large') return numSize > 28;
+                        if (sizeVal === 'medium') return numSize >= 25 && numSize <= 28;
+                        if (sizeVal === 'small') return numSize >= 21 && numSize < 25;
+                        if (sizeVal === 'cabin') return numSize < 21;
+                        return false;
+                    });
+
+                const shouldShow = sizeMatch &&
+                    (materialVal === 'all' || itemMaterial === materialVal);
+                const container = item.closest('.col-md-3') || item.closest('.col-lg-3') || item;
                 if (container) {
                     container.classList.toggle('visually-hidden', !shouldShow);
                     container.hidden = false;
