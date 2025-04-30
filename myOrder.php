@@ -31,6 +31,11 @@ $orders = getMemberOrders($memberId);
             overflow-x: hidden;
             overflow-y: scroll;
         }
+
+        /* 新增以下樣式 */
+        #messageModal {
+            z-index: 1060 !important;
+        }
     </style>
     <title>歐印精品-我的訂單</title>
 </head>
@@ -42,12 +47,14 @@ $orders = getMemberOrders($memberId);
         <h1 class="h1">我的訂單</h1>
     </div>
 
-    <div class="container my-5">
+    <div class="container ">
         <div class="row">
             <div class="col-12 mb-4">
                 <div class="card">
-                    <div class="card-header bg-light">
-                        <h3>會員資訊</h3>
+                    <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                        <h3 class="mb-0">會員資訊</h3>
+                        <button class="btn btn-primary" data-bs-toggle="modal"
+                            data-bs-target="#editMemberModal">編輯會員資料</button>
                     </div>
                     <div class="card-body">
                         <?php
@@ -63,6 +70,10 @@ $orders = getMemberOrders($memberId);
                             <?php echo htmlspecialchars($currentMember['phonenum']); ?></p>
                         <p class="mb-0"><strong>電子郵件：</strong>
                             <?php echo htmlspecialchars($currentMember['memberemail']); ?></p>
+                        <p class="mb-0"><strong>地址：</strong>
+                            <?php echo htmlspecialchars($currentMember['City']);
+                            echo htmlspecialchars($currentMember['Address']); ?>
+                        </p>
                         <p class="mb-0"><strong>訂單數量：</strong>
                             <?php echo htmlspecialchars($currentMember['order_count']); ?></p>
                     </div>
@@ -159,15 +170,64 @@ $orders = getMemberOrders($memberId);
         </div>
     </div>
 
+    <!-- 新增編輯會員資料Modal -->
+    <div class="modal fade" id="editMemberModal" tabindex="-1" aria-labelledby="editMemberModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editMemberModalLabel">編輯會員資料</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="memberEditForm">
+                        <div class="mb-3">
+                            <label class="form-label">姓名</label>
+                            <input type="text" class="form-control" name="name"
+                                value="<?php echo htmlspecialchars($currentMember['membername']); ?>">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">電話</label>
+                            <input type="text" class="form-control" name="phone"
+                                value="<?php echo htmlspecialchars($currentMember['phonenum']); ?>">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">電子郵件</label>
+                            <input type="email" class="form-control" name="email"
+                                value="<?php echo htmlspecialchars($currentMember['memberemail']); ?>">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">城市</label>
+                            <input type="text" class="form-control" name="city"
+                                value="<?php echo htmlspecialchars($currentMember['City']); ?>">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">地址</label>
+                            <input type="text" class="form-control" name="address"
+                                value="<?php echo htmlspecialchars($currentMember['Address']); ?>">
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveMemberChanges">儲存變更</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <?php include "footer.php"; ?>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"></script>
     <script>
         // 初始化所有 Modal
         const messageModalEl = document.getElementById('messageModal');
         const paymentConfirmModalEl = document.getElementById('paymentConfirmModal');
+        const editMemberModalEl = document.getElementById('editMemberModal');
+        const editMemberModal = new bootstrap.Modal(editMemberModalEl);
 
         let messageModal = null;
         let paymentConfirmModal = null;
+        let currentOrderId = null;
 
         if (messageModalEl) {
             messageModal = new bootstrap.Modal(messageModalEl);
@@ -175,8 +235,6 @@ $orders = getMemberOrders($memberId);
         if (paymentConfirmModalEl) {
             paymentConfirmModal = new bootstrap.Modal(paymentConfirmModalEl);
         }
-
-        let currentOrderId = null;
 
         // 處理再買一次按鈕
         document.querySelectorAll('.reorder-btn').forEach(button => {
@@ -213,7 +271,7 @@ $orders = getMemberOrders($memberId);
         // 處理付款按鈕
         document.querySelectorAll('.payment-btn').forEach(button => {
             button.addEventListener('click', function () {
-                console.log('付款按钮被点击');
+                console.log('付款按鈕被點擊');
                 currentOrderId = this.getAttribute('data-order-id');
                 const orderAmount = this.getAttribute('data-order-amount');
 
@@ -250,7 +308,7 @@ $orders = getMemberOrders($memberId);
                             location.reload();
                         }, { once: true });
                     } else {
-                        document.getElementById('modalMessage').textContent = '付款處理失敗: ' + data.message;
+                        document.getElementById('modalMessage').textContent = '更新失敗: ' + data.message;
                         messageModal.show();
                     }
                 })
@@ -259,6 +317,76 @@ $orders = getMemberOrders($memberId);
                     paymentConfirmModal.hide();
                     document.getElementById('modalMessage').textContent = '發生錯誤，請稍後再試';
                     messageModal.show();
+                });
+        });
+
+        // 新增處理會員資料更新的代碼
+        document.getElementById('saveMemberChanges').addEventListener('click', function () {
+            const form = document.getElementById('memberEditForm');
+            const formData = new FormData(form);
+            const editMemberModal = bootstrap.Modal.getInstance(document.getElementById('editMemberModal'));
+
+            const data = {
+                memberId: <?php echo $_SESSION['user_id']; ?>,
+                name: formData.get('name'),
+                phone: formData.get('phone'),
+                email: formData.get('email'),
+                city: formData.get('city'),
+                address: formData.get('address'),
+                isAdmin: <?php echo $_SESSION['user_role'] === 'admin' ? '1' : '0'; ?>
+            };
+
+            // 必填欄位驗證
+            if (!data.name || !data.phone || !data.email) {
+                document.getElementById('modalMessage').textContent = '請填寫所有必填欄位';
+                messageModal.show();
+                return;
+            }
+
+            fetch('php/APIs.php?action=updateMember', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(data)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        editMemberModal.hide();
+                        document.getElementById('modalMessage').textContent = '會員資料更新成功！';
+                        messageModal.show();
+                        document.getElementById('messageModal').addEventListener('hidden.bs.modal', function () {
+                            location.reload();
+                        }, { once: true });
+                    } else if (data.message === '沒有資料被更新，請檢查會員ID') {
+                        editMemberModal.hide();
+                    } else {
+                        // 先隱藏編輯Modal
+                        editMemberModal.hide();
+
+                        // 顯示錯誤訊息Modal
+                        document.getElementById('modalMessage').textContent = '更新失敗：' + (data.message || '未知錯誤');
+                        messageModal.show();
+
+                        // 當訊息Modal關閉時，重新顯示編輯Modal
+                        document.getElementById('messageModal').addEventListener('hidden.bs.modal', function () {
+                            editMemberModal.show();
+                        }, { once: true });
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    // 同樣先隱藏編輯Modal
+                    editMemberModal.hide();
+
+                    document.getElementById('modalMessage').textContent = '發生錯誤，請稍後再試';
+                    messageModal.show();
+
+                    // 當訊息Modal關閉時，重新顯示編輯Modal
+                    document.getElementById('messageModal').addEventListener('hidden.bs.modal', function () {
+                        editMemberModal.show();
+                    }, { once: true });
                 });
         });
     </script>

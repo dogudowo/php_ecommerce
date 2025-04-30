@@ -1,5 +1,4 @@
 <?php
-// 確保引用此檔案的程式碼使用正確的路徑，例如：require_once 'php/getMember.php';
 require_once __DIR__ . '/db_connect.php';
 
 function getDbConnection(&$conn, &$closeConn)
@@ -53,6 +52,30 @@ function getMembers($conn = null)
         $conn->close();
     }
     return $members;
+}
+
+function getMember($memberId, $conn = null)
+{
+    getDbConnection($conn, $closeConn);
+
+    $stmt = $conn->prepare("SELECT MemberID, Name as membername, Phone as phonenum, Email as memberemail, City, Address, IsAdmin FROM Member WHERE MemberID = ?");
+    $stmt->bind_param("i", $memberId);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 0) {
+        if ($closeConn) {
+            $conn->close();
+        }
+        return null;
+    }
+
+    $member = $result->fetch_assoc();
+
+    if ($closeConn) {
+        $conn->close();
+    }
+    return $member;
 }
 //增加商品
 function addProduct($productName, $productType, $mainImage, $galleryImages, $sizes, $sizeDescriptions, $colors, $stocks, $prices, $productDescription = '')
@@ -659,7 +682,7 @@ function getOrderDetails($orderId, $conn = null)
     $items = [];
     while ($row = $result->fetch_assoc()) {
         // 獲取商品圖片
-        $productDir = "imgs/products/" . $row['ProductName'];
+        $productDir = "imgs/products/" . $row['ProductID'];
         $row['image'] = $productDir . "/main.jpg";
         $items[] = $row;
     }
@@ -904,7 +927,93 @@ function generateReceipt($orderId)
     file_put_contents(__DIR__ . '/receipts/ORD-' . $orderId . '.html', $receipt);
     return $receipt;
 }
+function updateMember($memberId, $name, $phone, $email, $city, $address, $isAdmin = null)
+{
+    $conn = db_connect();
+    $conn->begin_transaction();
 
+    try {
+        // 檢查手機號碼是否已被其他會員使用
+        $stmt = $conn->prepare("SELECT MemberID FROM Member WHERE Phone = ? AND MemberID != ?");
+        $stmt->bind_param("si", $phone, $memberId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            throw new Exception("該手機號碼已被其他會員使用");
+        }
+
+        // 檢查電子郵件是否已被其他會員使用
+        $stmt = $conn->prepare("SELECT MemberID FROM Member WHERE Email = ? AND MemberID != ?");
+        $stmt->bind_param("si", $email, $memberId);
+        $stmt->execute();
+        $result = $stmt->get_result();
+
+        if ($result->num_rows > 0) {
+            throw new Exception("該電子郵件已被其他會員使用");
+        }
+
+        // 準備SQL語句
+        $sql = "UPDATE Member SET 
+                Name = ?, 
+                Phone = ?, 
+                Email = ?, 
+                City = ?, 
+                Address = ?";
+
+        $params = [$name, $phone, $email, $city, $address];
+        $types = "sssss";
+
+        // 如果是管理員且要修改身份
+        if ($isAdmin !== null && $_SESSION['role'] === 'admin') {
+            $sql .= ", IsAdmin = ?";
+            $params[] = $isAdmin;
+            $types .= "i";
+        }
+
+        $sql .= " WHERE MemberID = ?";
+        $params[] = $memberId;
+        $types .= "i";
+
+        $stmt = $conn->prepare($sql);
+        $stmt->bind_param($types, ...$params);
+        $stmt->execute();
+
+        // 檢查是否有資料被更新或只有身份變化
+        if ($stmt->affected_rows === 0 && $isAdmin !== null) {
+            // 檢查當前會員身份是否與更新值不同
+            $checkStmt = $conn->prepare("SELECT IsAdmin FROM Member WHERE MemberID = ?");
+            $checkStmt->bind_param("i", $memberId);
+            $checkStmt->execute();
+            $checkResult = $checkStmt->get_result();
+
+            if ($checkResult->num_rows > 0) {
+                $currentAdmin = $checkResult->fetch_assoc()['IsAdmin'];
+                if ($currentAdmin != $isAdmin) {
+                    // 只有身份變化，強制更新
+                    $updateStmt = $conn->prepare("UPDATE Member SET IsAdmin = ? WHERE MemberID = ?");
+                    $updateStmt->bind_param("ii", $isAdmin, $memberId);
+                    $updateStmt->execute();
+
+                    if ($updateStmt->affected_rows > 0) {
+                        $conn->commit();
+                        return ['success' => true];
+                    }
+                }
+            }
+
+        }
+
+        $conn->commit();
+        return ['success' => true];
+    } catch (Exception $e) {
+        $conn->rollback();
+        error_log("更新會員資料失敗：" . $e->getMessage());
+        return ['success' => false, 'message' => $e->getMessage()];
+    } finally {
+        $conn->close();
+    }
+}
 // 处理AJAX请求
 if (isset($_GET['action'])) {
     header('Content-Type: application/json');
@@ -954,6 +1063,36 @@ if (isset($_GET['action'])) {
             } else {
                 echo json_encode(['success' => false, 'message' => '找不到訂單詳情']);
             }
+            break;
+        case 'updateMember':
+            $data = json_decode(file_get_contents('php://input'), true);
+            $result = updateMember(
+                $data['memberId'],
+                $data['name'],
+                $data['phone'],
+                $data['email'],
+                $data['city'],
+                $data['address'],
+                $data['isAdmin'] ?? null // ✅ 補上這一行
+            );
+            echo json_encode($result);
+            break;
+        case 'getMember':
+            if (isset($_GET['memberId'])) {
+                $memberId = (int) $_GET['memberId'];
+                $member = getMember($memberId);
+                if ($member) {
+                    header('Content-Type: application/json');
+                    echo json_encode($member);
+                } else {
+                    header('HTTP/1.1 404 Not Found');
+                    echo json_encode(['error' => true, 'message' => 'Member not found']);
+                }
+            }
+            break;
+        case 'getMembers':
+            $members = getMembers();
+            echo json_encode($members);
             break;
         default:
             echo json_encode(['success' => false, 'message' => '無效的操作']);
