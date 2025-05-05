@@ -21,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $phone = trim($_POST['phone'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    require_once __DIR__ . '/php/APIs.php';
+    require_once __DIR__ . '/api/login.php';
     $authResult = authenticateUser($phone, $password);
 
     if ($authResult['success']) {
@@ -44,78 +44,56 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<!DOCTYPE html>
-<html lang="zh-TW">
+<?php include __DIR__ . "/fixedFile/header.php"; ?>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
-    <link rel="icon" href="imgs/webimg.ico" type="image/x-icon">
-    <link rel="stylesheet" href="css/navPillsStyles.css">
-    <link rel="stylesheet" href="css/webStruct.css">
-    <title>歐印精品-會員登入</title>
-</head>
+<div class="container text-center border-bottom border-black">
+    <img src="imgs/title.png" alt="歐印精品" class="img-fluid">
+    <h1 class="h1">會員登入</h1>
+</div>
 
-<body>
-    <?php include "header.php"; ?>
+<main class="container-sm col-12 col-md-6 col-lg-3 mx-auto my-5">
+    <?php if (!empty($error_message)): ?>
+        <div class="alert alert-danger" role="alert">
+            <?php echo htmlspecialchars($error_message); ?>
+        </div>
+    <?php endif; ?>
 
-    <div class="container text-center border-bottom border-black my-3  flex-grow-1 pt-5">
-        <img src="imgs/title.png" alt="歐印精品" class="img-fluid">
-        <h1 class="h1">會員登入</h1>
-    </div>
+    <?php if (!empty($success_message)): ?>
+        <div class="alert alert-success" role="alert">
+            <?php echo htmlspecialchars($success_message); ?>
+        </div>
+    <?php endif; ?>
 
-    <main class="container-sm col-12 col-md-6 col-lg-3 mx-auto my-5">
-        <?php if (!empty($error_message)): ?>
-            <div class="alert alert-danger" role="alert">
-                <?php echo htmlspecialchars($error_message); ?>
-            </div>
-        <?php endif; ?>
+    <form method="post" action="login.php">
+        <h1 class="h3 mb-3 fw-normal text-center">請登入</h1>
 
-        <?php if (!empty($success_message)): ?>
-            <div class="alert alert-success" role="alert">
-                <?php echo htmlspecialchars($success_message); ?>
-            </div>
-        <?php endif; ?>
+        <div class="form-floating mb-3 ">
+            <input type="tel" class="form-control rounded-bottom-0" id="phone" name="phone" placeholder="輸入電話號碼"
+                required pattern="[0-9]{10}"
+                value="<?php echo isset($_GET['phone']) ? htmlspecialchars($_GET['phone']) : '' ?>">
+            <label for="phone">手機號碼</label>
+        </div>
 
-        <form method="post" action="login.php">
-            <h1 class="h3 mb-3 fw-normal text-center">請登入</h1>
+        <div class="form-floating mb-3 ">
+            <input type="password" class="form-control rounded-top-0" id="password" name="password" placeholder="輸入密碼"
+                required>
+            <label for="password">密碼</label>
+        </div>
 
-            <div class="form-floating mb-3 ">
-                <input type="tel" class="form-control rounded-bottom-0" id="phone" name="phone" placeholder="輸入電話號碼"
-                    required pattern="[0-9]{10}"
-                    value="<?php echo isset($_GET['phone']) ? htmlspecialchars($_GET['phone']) : '' ?>">
-                <label for="phone">手機號碼</label>
-            </div>
+        <div class="checkbox mb-3">
+            <label>
+                <input type="checkbox" value="remember-me"> 記住我
+            </label>
+        </div>
 
-            <div class="form-floating mb-3 ">
-                <input type="password" class="form-control rounded-top-0" id="password" name="password"
-                    placeholder="輸入密碼" required>
-                <label for="password">密碼</label>
-            </div>
+        <button class="w-100 btn btn-lg btn-success" type="submit">登入</button>
 
-            <div class="checkbox mb-3">
-                <label>
-                    <input type="checkbox" value="remember-me"> 記住我
-                </label>
-            </div>
+        <p class="mt-3 text-center">
+            <a href="register.php" class="text-decoration-none">註冊會員</a>
+        </p>
 
-            <button class="w-100 btn btn-lg btn-success" type="submit">登入</button>
+        <p class="mt-5 mb-3 text-muted text-center">&copy; 2025 歐印精品</p>
+    </form>
+</main>
 
-            <p class="mt-3 text-center">
-                <a href="register.php" class="text-decoration-none">註冊會員</a>
-            </p>
-
-            <p class="mt-5 mb-3 text-muted text-center">&copy; 2025 歐印精品</p>
-        </form>
-    </main>
-
-    <?php include "footer.php"; ?>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
-        crossorigin="anonymous"></script>
-</body>
-
-</html>
+<?php include __DIR__ . "/fixedFile/footer.php"; ?>

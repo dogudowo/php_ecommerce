@@ -1,3 +1,5 @@
+config.php
+temp.html
 .DS_Store
-php/config.php
-explane.txt
+project_structure.md
+project_rules.md

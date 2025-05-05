@@ -21,6 +21,15 @@ if (ini_get("session.use_cookies")) {
 // 銷毀 session
 session_destroy();
 
-// 重定向到首頁
-header('Location: index.php');
-exit;
+// 加入header
+include __DIR__ . "/fixedFile/header.php";
+?>
+
+<script>
+    window.location.href = "index.php";
+</script>
+
+<?php
+// 加入footer
+include __DIR__ . "/fixedFile/footer.php";
+?>

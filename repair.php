@@ -1,25 +1,12 @@
-<!DOCTYPE html>
-<html lang="en">
+<?php require_once 'fixedFile/header.php'; ?>
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/css/bootstrap.min.css" rel="stylesheet"
-        integrity="sha384-F3w7mX95PdgyTmZZMECAngseQB83DfGTowi0iMjiWaeVhAn4FJkqJByhZMI3AhiU" crossorigin="anonymous">
-    <link rel="stylesheet" href="css/navPillsStyles.css">
-    <link rel="icon" href="imgs/webimg.ico" type="image/x-icon">
-    <link rel="stylesheet" href="css/webStruct.css">
-    <title>歐印精品-保固維修</title>
-</head>
-
-<body>
-    <?php include "header.php"; ?>
-    <div class="container text-center border-bottom border-black my-3  flex-grow-1 pt-5">
+<div class="container">
+    <div class="container text-center border-bottom border-black">
         <img src="imgs/title.png" alt="歐印精品" img-fluid>
         <h1 class="h1">保固維修</h1>
     </div>
 
-    <div class="container text-center">
+    <div class="container text-center mt-3">
         <a class="btn btn-outline-success" style="border-radius: 20px;"
             href="imgs/repair/AllenRepairPrice0609.jpg">維修價格表</a>
         <a class="btn btn-outline-success" style="border-radius: 20px;" href="src/KeyReport.doc">鑰匙價格表</a>
@@ -66,11 +53,6 @@
             </div>
         </div>
     </div>
+</div>
 
-    <?php include "footer.php"; ?>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"
-        integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
-        crossorigin="anonymous"></script>
-</body>
-
-</html>
+<?php require_once 'fixedFile/footer.php'; ?>
