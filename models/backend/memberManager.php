@@ -326,12 +326,8 @@ try {
                                 <div class="col-md-8">${member.Phone}</div>
                             </div>
                             <div class="row mb-2">
-                                <div class="col-md-4"><strong>城市：</strong></div>
-                                <div class="col-md-8">${member.City}</div>
-                            </div>
-                            <div class="row mb-2">
                                 <div class="col-md-4"><strong>地址：</strong></div>
-                                <div class="col-md-8">${member.Address}</div>
+                                <div class="col-md-8">${member.City}${member.Address}</div>
                             </div>
                             <div class="row mb-2">
                                 <div class="col-md-4"><strong>會員類型：</strong></div>
