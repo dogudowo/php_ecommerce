@@ -7,62 +7,8 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
     exit;
 }
 
-// 引入數據庫連接
-require_once __DIR__ . '/../../api/db.php';
-
-// 獲取所有會員
-function getAllMembers()
-{
-    $pdo = getDBConnection();
-    try {
-        $stmt = $pdo->prepare("SELECT m.*, 
-                              (SELECT COUNT(*) FROM Orders WHERE MembersID = m.MemberID) as OrderCount 
-                              FROM Member m 
-                              ORDER BY m.MemberID");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        error_log("Error fetching members: " . $e->getMessage());
-        return [];
-    }
-}
-
-// 獲取會員詳情
-function getMemberDetails($memberId)
-{
-    $pdo = getDBConnection();
-    try {
-        // 獲取會員基本信息
-        $stmt = $pdo->prepare("SELECT * FROM Member WHERE MemberID = ?");
-        $stmt->execute([$memberId]);
-        $member = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$member) {
-            return null;
-        }
-
-        // 獲取會員訂單
-        $stmt = $pdo->prepare("SELECT o.OrderID, o.OrderDate, o.Status, 
-                              COUNT(oi.OptionID) as ItemCount, 
-                              SUM(op.Price * oi.Quantity) as TotalAmount 
-                              FROM Orders o 
-                              JOIN OrderItem oi ON o.OrderID = oi.OrderID 
-                              JOIN Options op ON oi.OptionID = op.OptionID 
-                              WHERE o.MembersID = ? 
-                              GROUP BY o.OrderID 
-                              ORDER BY o.OrderDate DESC");
-        $stmt->execute([$memberId]);
-        $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        return [
-            'member' => $member,
-            'orders' => $orders
-        ];
-    } catch (PDOException $e) {
-        error_log("Error fetching member details: " . $e->getMessage());
-        return null;
-    }
-}
+// 引入會員功能
+require_once __DIR__ . '/functions/member/memberFunction.php';
 
 // 嘗試獲取會員列表
 try {
@@ -95,13 +41,28 @@ try {
                     <label for="filterCity" class="form-label">城市</label>
                     <select class="form-select" id="filterCity">
                         <option value="">全部城市</option>
-                        <option value="台北市">台北市</option>
+                        <option value="基隆市">基隆市</option>
                         <option value="新北市">新北市</option>
+                        <option value="台北市">台北市</option>
                         <option value="桃園市">桃園市</option>
+                        <option value="新竹縣">新竹縣</option>
+                        <option value="新竹市">新竹市</option>
+                        <option value="苗栗縣">苗栗縣</option>
                         <option value="台中市">台中市</option>
+                        <option value="彰化縣">彰化縣</option>
+                        <option value="南投縣">南投縣</option>
+                        <option value="雲林縣">雲林縣</option>
+                        <option value="嘉義縣">嘉義縣</option>
+                        <option value="嘉義市">嘉義市</option>
                         <option value="台南市">台南市</option>
                         <option value="高雄市">高雄市</option>
-                        <!-- 其他城市選項 -->
+                        <option value="屏東縣">屏東縣</option>
+                        <option value="宜蘭縣">宜蘭縣</option>
+                        <option value="花蓮縣">花蓮縣</option>
+                        <option value="台東縣">台東縣</option>
+                        <option value="金門縣">金門縣</option>
+                        <option value="連江縣">連江縣</option>
+                        <option value="澎湖縣">澎湖縣</option>
                     </select>
                 </div>
                 <div class="col-md-4">
@@ -109,7 +70,8 @@ try {
                     <select class="form-select" id="filterAdmin">
                         <option value="">全部類型</option>
                         <option value="0">一般會員</option>
-                        <option value="1">管理員</option>
+                        <option value="1">員工</option>
+                        <option value="2">管理員</option>
                     </select>
                 </div>
                 <div class="col-md-4">
@@ -144,7 +106,7 @@ try {
                             </tr>
                         <?php else: ?>
                             <?php foreach ($members as $member): ?>
-                                <tr>
+                                <tr data-member-id="<?php echo htmlspecialchars($member['MemberID']); ?>">
                                     <td><?php echo htmlspecialchars($member['MemberID']); ?></td>
                                     <td><?php echo htmlspecialchars($member['Name']); ?></td>
                                     <td><?php echo htmlspecialchars($member['Email']); ?></td>
@@ -153,6 +115,8 @@ try {
                                     <td><?php echo htmlspecialchars($member['OrderCount']); ?></td>
                                     <td>
                                         <?php if ($member['IsAdmin'] == 1): ?>
+                                            <span class="badge bg-success">員工</span>
+                                        <?php elseif ($member['IsAdmin'] == 2): ?>
                                             <span class="badge bg-primary">管理員</span>
                                         <?php else: ?>
                                             <span class="badge bg-secondary">一般會員</span>
@@ -168,7 +132,7 @@ try {
                                                 data-id="<?php echo htmlspecialchars($member['MemberID']); ?>">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <?php if ($member['IsAdmin'] == 0): ?>
+                                            <?php if ($member['IsAdmin'] == 0 || $member['IsAdmin'] == 1): ?>
                                                 <button type="button" class="btn btn-sm btn-outline-danger delete-member"
                                                     data-id="<?php echo htmlspecialchars($member['MemberID']); ?>">
                                                     <i class="bi bi-trash"></i>
@@ -203,9 +167,6 @@ try {
                         aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i>會員詳情功能正在開發中，敬請期待。
-                    </div>
                     <!-- 會員詳情內容將在這裡動態加載 -->
                     <div id="memberDetailContent"></div>
                 </div>
@@ -244,13 +205,28 @@ try {
                         <div class="mb-3">
                             <label for="editCity" class="form-label">城市</label>
                             <select class="form-select" id="editCity" required>
-                                <option value="台北市">台北市</option>
+                                <option value="基隆市">基隆市</option>
                                 <option value="新北市">新北市</option>
+                                <option value="台北市">台北市</option>
                                 <option value="桃園市">桃園市</option>
+                                <option value="新竹縣">新竹縣</option>
+                                <option value="新竹市">新竹市</option>
+                                <option value="苗栗縣">苗栗縣</option>
                                 <option value="台中市">台中市</option>
+                                <option value="彰化縣">彰化縣</option>
+                                <option value="南投縣">南投縣</option>
+                                <option value="雲林縣">雲林縣</option>
+                                <option value="嘉義縣">嘉義縣</option>
+                                <option value="嘉義市">嘉義市</option>
                                 <option value="台南市">台南市</option>
                                 <option value="高雄市">高雄市</option>
-                                <!-- 其他城市選項 -->
+                                <option value="屏東縣">屏東縣</option>
+                                <option value="宜蘭縣">宜蘭縣</option>
+                                <option value="花蓮縣">花蓮縣</option>
+                                <option value="台東縣">台東縣</option>
+                                <option value="金門縣">金門縣</option>
+                                <option value="連江縣">連江縣</option>
+                                <option value="澎湖縣">澎湖縣</option>
                             </select>
                         </div>
                         <div class="mb-3">
@@ -258,10 +234,12 @@ try {
                             <input type="text" class="form-control" id="editAddress" required>
                         </div>
                         <div class="mb-3">
-                            <div class="form-check form-switch">
-                                <input class="form-check-input" type="checkbox" id="editIsAdmin">
-                                <label class="form-check-label" for="editIsAdmin">設為管理員</label>
-                            </div>
+                            <label for="editMemberType" class="form-label">會員類型</label>
+                            <select class="form-select" id="editMemberType" required>
+                                <option value="0">一般會員</option>
+                                <option value="1">員工</option>
+                                <option value="2">管理員</option>
+                            </select>
                         </div>
                     </form>
                 </div>
@@ -269,6 +247,28 @@ try {
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button type="button" class="btn btn-primary" id="saveMember">保存更改</button>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- 刪除會員確認模態框 -->
+<div class="modal fade" id="deleteMemberModal" tabindex="-1" aria-labelledby="deleteMemberModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title" id="deleteMemberModalLabel">確認刪除會員</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                    aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>您確定要刪除此會員嗎？此操作將同時刪除該會員的所有相關資料，包括訂單、購物車項目等，且無法恢復。</p>
+                <input type="hidden" id="deleteMemberId">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteMember">確認刪除</button>
             </div>
         </div>
     </div>
@@ -282,102 +282,397 @@ try {
 
     function filterMembers() {
         console.log('篩選會員功能尚未實現');
-        // 實際篩選功能將在後續開發中實現
     }
 
     // 查看會員詳情
     document.querySelectorAll('.view-member').forEach(button => {
-        button.addEventListener('click', function () {
+        button.addEventListener('click', async function () {
             const memberId = this.getAttribute('data-id');
             console.log('查看會員詳情：', memberId);
-            // 實際查看功能將在後續開發中實現
 
-            // 顯示模態框
-            const modal = new bootstrap.Modal(document.getElementById('memberDetailModal'));
-            modal.show();
+            try {
+                // 使用AJAX獲取會員詳細資料
+                const response = await fetch(`models/backend/functions/member/getMemberDetails.php?id=${memberId}`);
+                if (!response.ok) throw new Error('獲取會員資料失敗');
+
+                const data = await response.json();
+
+                if (!data.success) {
+                    throw new Error(data.message || '獲取會員資料失敗');
+                }
+
+                const member = data.member;
+
+                // 填充會員詳情內容
+                const detailContent = document.getElementById('memberDetailContent');
+                detailContent.innerHTML = `
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h5 class="card-title">基本資料</h5>
+                            <div class="row mb-2">
+                                <div class="col-md-4"><strong>會員ID：</strong></div>
+                                <div class="col-md-8">${member.MemberID}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4"><strong>姓名：</strong></div>
+                                <div class="col-md-8">${member.Name}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4"><strong>Email：</strong></div>
+                                <div class="col-md-8">${member.Email}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4"><strong>電話：</strong></div>
+                                <div class="col-md-8">${member.Phone}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4"><strong>城市：</strong></div>
+                                <div class="col-md-8">${member.City}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4"><strong>地址：</strong></div>
+                                <div class="col-md-8">${member.Address}</div>
+                            </div>
+                            <div class="row mb-2">
+                                <div class="col-md-4"><strong>會員類型：</strong></div>
+                                <div class="col-md-8">
+                                    ${member.IsAdmin == 0 ? '<span class="badge bg-secondary">一般會員</span>' :
+                        member.IsAdmin == 1 ? '<span class="badge bg-success">員工</span>' :
+                            '<span class="badge bg-primary">管理員</span>'}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                // 移除提示信息
+                const alertInfo = document.querySelector('#memberDetailModal .alert-info');
+                if (alertInfo) {
+                    alertInfo.remove();
+                }
+
+                // 顯示模態框
+                const modal = new bootstrap.Modal(document.getElementById('memberDetailModal'));
+                modal.show();
+            } catch (error) {
+                console.error('Error:', error);
+                // 使用Bootstrap的Toast顯示錯誤
+                const toastContainer = document.createElement('div');
+                toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '11';
+
+                toastContainer.innerHTML = `
+                    <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi bi-exclamation-circle me-2"></i>獲取會員資料失敗！
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(toastContainer);
+                const toastElement = toastContainer.querySelector('.toast');
+                const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+                toast.show();
+
+                // 3秒後移除 Toast 元素
+                setTimeout(() => {
+                    document.body.removeChild(toastContainer);
+                }, 3500);
+            }
         });
     });
 
     // 編輯會員資料
     document.querySelectorAll('.edit-member').forEach(button => {
-        button.addEventListener('click', function () {
+        button.addEventListener('click', async function () {
             const memberId = this.getAttribute('data-id');
             console.log('編輯會員資料：', memberId);
 
-            // 設置會員ID
-            document.getElementById('editMemberId').value = memberId;
+            try {
+                // 使用AJAX獲取會員詳細資料
+                const response = await fetch(`models/backend/functions/member/getMemberDetails.php?id=${memberId}`);
+                if (!response.ok) throw new Error('獲取會員資料失敗');
 
-            // 這裡應該從服務器獲取會員資料並填充表單
-            // 暫時使用模擬數據
-            document.getElementById('editName').value = '測試會員';
-            document.getElementById('editEmail').value = 'test@example.com';
-            document.getElementById('editPhone').value = '0912345678';
-            document.getElementById('editCity').value = '台北市';
-            document.getElementById('editAddress').value = '測試地址123號';
-            document.getElementById('editIsAdmin').checked = false;
+                const data = await response.json();
+                const member = data.member;
 
-            // 顯示模態框
-            const modal = new bootstrap.Modal(document.getElementById('editMemberModal'));
-            modal.show();
+                // 填充模態框
+                document.getElementById('editMemberId').value = memberId;
+                document.getElementById('editName').value = member.Name;
+                document.getElementById('editEmail').value = member.Email;
+                document.getElementById('editPhone').value = member.Phone;
+                document.getElementById('editCity').value = member.City;
+                document.getElementById('editAddress').value = member.Address;
+                document.getElementById('editMemberType').value = member.IsAdmin;
+
+                // 顯示模態框
+                const modal = new bootstrap.Modal(document.getElementById('editMemberModal'));
+                modal.show();
+            } catch (error) {
+                console.error('Error:', error);
+                // 使用Bootstrap的Toast顯示錯誤
+                const toastContainer = document.createElement('div');
+                toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '11';
+
+                toastContainer.innerHTML = `
+                    <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi bi-exclamation-circle me-2"></i>獲取會員資料失敗！
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(toastContainer);
+                const toastElement = toastContainer.querySelector('.toast');
+                const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+                toast.show();
+
+                // 3秒後移除 Toast 元素
+                setTimeout(() => {
+                    document.body.removeChild(toastContainer);
+                }, 3500);
+            }
         });
     });
 
     // 保存會員資料
-    document.getElementById('saveMember').addEventListener('click', function () {
+    document.getElementById('saveMember').addEventListener('click', async function () {
         const memberId = document.getElementById('editMemberId').value;
         const name = document.getElementById('editName').value;
         const email = document.getElementById('editEmail').value;
         const phone = document.getElementById('editPhone').value;
         const city = document.getElementById('editCity').value;
         const address = document.getElementById('editAddress').value;
-        const isAdmin = document.getElementById('editIsAdmin').checked ? 1 : 0;
+        const isAdmin = document.getElementById('editMemberType').value;
 
         console.log('保存會員資料：', memberId, name, email, phone, city, address, isAdmin);
-        // 實際保存功能將在後續開發中實現
 
-        // 關閉模態框
-        const modal = bootstrap.Modal.getInstance(document.getElementById('editMemberModal'));
-        modal.hide();
+        try {
+            // 使用AJAX保存會員資料
+            const response = await fetch('models/backend/functions/member/updateMember.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    memberId: memberId,
+                    name: name,
+                    email: email,
+                    phone: phone,
+                    city: city,
+                    address: address,
+                    isAdmin: isAdmin
+                })
+            });
 
-        // 顯示成功提示
-        const toastContainer = document.createElement('div');
-        toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
-        toastContainer.style.zIndex = '11';
+            const data = await response.json();
 
-        toastContainer.innerHTML = `
-            <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i class="bi bi-check-circle me-2"></i>會員資料已成功更新！
+            // 關閉模態框
+            const modal = bootstrap.Modal.getInstance(document.getElementById('editMemberModal'));
+            modal.hide();
+
+            // 顯示成功或失敗提示
+            const toastContainer = document.createElement('div');
+            toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '11';
+
+            if (data.success) {
+                toastContainer.innerHTML = `
+                    <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi bi-check-circle me-2"></i>會員資料已成功更新！
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                `;
+
+                // 更新表格中的會員資料
+                const memberRow = document.querySelector(`tr[data-member-id="${memberId}"]`);
+                if (memberRow) {
+                    memberRow.querySelector('td:nth-child(2)').textContent = name;
+                    memberRow.querySelector('td:nth-child(3)').textContent = email;
+                    memberRow.querySelector('td:nth-child(4)').textContent = phone;
+                    memberRow.querySelector('td:nth-child(5)').textContent = city;
+
+                    // 更新會員類型標籤
+                    const typeCell = memberRow.querySelector('td:nth-child(7)');
+                    if (isAdmin == 0) {
+                        typeCell.innerHTML = '<span class="badge bg-secondary">一般會員</span>';
+                    } else if (isAdmin == 1) {
+                        typeCell.innerHTML = '<span class="badge bg-success">員工</span>';
+                    } else {
+                        typeCell.innerHTML = '<span class="badge bg-primary">管理員</span>';
+                    }
+                }
+            } else {
+                toastContainer.innerHTML = `
+                    <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi bi-exclamation-circle me-2"></i>${data.message || '更新會員資料失敗！'}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.body.appendChild(toastContainer);
+            const toastElement = toastContainer.querySelector('.toast');
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
+
+            // 3秒後移除 Toast 元素
+            setTimeout(() => {
+                document.body.removeChild(toastContainer);
+            }, 3500);
+        } catch (error) {
+            console.error('Error:', error);
+            // 顯示錯誤提示
+            const toastContainer = document.createElement('div');
+            toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '11';
+
+            toastContainer.innerHTML = `
+                <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi bi-exclamation-circle me-2"></i>系統錯誤，請稍後再試！
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        document.body.appendChild(toastContainer);
-        const toastElement = toastContainer.querySelector('.toast');
-        const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
-        toast.show();
+            document.body.appendChild(toastContainer);
+            const toastElement = toastContainer.querySelector('.toast');
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
 
-        // 3秒後移除 Toast 元素
-        setTimeout(() => {
-            document.body.removeChild(toastContainer);
-        }, 3500);
+            // 3秒後移除 Toast 元素
+            setTimeout(() => {
+                document.body.removeChild(toastContainer);
+            }, 3500);
+        }
     });
+
+    // 會員資料更新成功後，更新表格中的會員資料
+    function updateMemberRowInTable(memberId, name, email, phone, city, isAdmin) {
+        // 找到對應的表格行
+        const row = document.querySelector(`tr[data-member-id="${memberId}"]`);
+        if (row) {
+            // 更新表格中的會員資料
+            row.querySelector('td:nth-child(2)').textContent = name;
+            row.querySelector('td:nth-child(3)').textContent = email;
+            row.querySelector('td:nth-child(4)').textContent = phone;
+            row.querySelector('td:nth-child(5)').textContent = city;
+
+            // 更新會員類型標籤
+            const typeCell = row.querySelector('td:nth-child(7)');
+            let typeLabel = '';
+            if (isAdmin === '2') {
+                typeLabel = '<span class="badge bg-primary">管理員</span>';
+            } else if (isAdmin === '1') {
+                typeLabel = '<span class="badge bg-success">員工</span>';
+            } else {
+                typeLabel = '<span class="badge bg-secondary">一般會員</span>';
+            }
+            typeCell.innerHTML = typeLabel;
+        }
+    }
 
     // 刪除會員
     document.querySelectorAll('.delete-member').forEach(button => {
         button.addEventListener('click', function () {
             const memberId = this.getAttribute('data-id');
-            console.log('刪除會員：', memberId);
+            document.getElementById('deleteMemberId').value = memberId;
 
-            // 顯示確認對話框
-            if (confirm('確定要刪除此會員嗎？此操作無法撤銷。')) {
-                // 實際刪除功能將在後續開發中實現
-                alert('刪除功能正在開發中');
-            }
+            // 顯示確認刪除模態框
+            const modal = new bootstrap.Modal(document.getElementById('deleteMemberModal'));
+            modal.show();
         });
+    });
+
+    // 確認刪除會員
+    document.getElementById('confirmDeleteMember').addEventListener('click', async function () {
+        const memberId = document.getElementById('deleteMemberId').value;
+        console.log('刪除會員：', memberId);
+
+        try {
+            // 使用AJAX刪除會員資料
+            const response = await fetch('models/backend/functions/member/deleteMember.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    memberId: memberId
+                })
+            });
+
+            const data = await response.json();
+
+            // 關閉模態框
+            const modal = bootstrap.Modal.getInstance(document.getElementById('deleteMemberModal'));
+            modal.hide();
+
+            // 顯示成功或失敗提示
+            const toastContainer = document.createElement('div');
+            toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '11';
+
+            if (data.success) {
+                toastContainer.innerHTML = `
+                    <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi bi-check-circle me-2"></i>會員已成功刪除！
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+
+                // 從表格中移除該會員行
+                const memberRow = document.querySelector(`tr[data-member-id="${memberId}"]`);
+                if (memberRow) {
+                    memberRow.remove();
+                }
+            } else {
+                toastContainer.innerHTML = `
+                    <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi bi-exclamation-circle me-2"></i>${data.message || '刪除會員失敗！'}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.body.appendChild(toastContainer);
+            const toastElement = toastContainer.querySelector('.toast');
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
+
+            // 3秒後移除 Toast 元素
+            setTimeout(() => {
+                document.body.removeChild(toastContainer);
+            }, 3500);
+
+        } catch (error) {
+            console.error('Error:', error);
+        }
     });
 
     // 匯出會員資料
