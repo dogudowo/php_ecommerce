@@ -132,7 +132,7 @@ try {
                                                 data-id="<?php echo htmlspecialchars($member['MemberID']); ?>">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
-                                            <?php if ($member['IsAdmin'] == 0 || $member['IsAdmin'] == 1): ?>
+                                            <?php if (($member['IsAdmin'] == 0) || ($_SESSION['user_role'] == 'admin' && $member['IsAdmin'] == 1)): ?>
                                                 <button type="button" class="btn btn-sm btn-outline-danger delete-member"
                                                     data-id="<?php echo htmlspecialchars($member['MemberID']); ?>">
                                                     <i class="bi bi-trash"></i>

@@ -29,6 +29,18 @@ try {
     $stmt = $pdo->prepare("DELETE FROM CartItem WHERE MemberID = ?");
     $stmt->execute([$memberId]);
 
+    // 1.1 檢查並刪除cart表中的相關記錄（如果存在）
+    try {
+        $stmt = $pdo->prepare("DELETE FROM cart WHERE MemberID = ?");
+        $stmt->execute([$memberId]);
+    } catch (PDOException $e) {
+        // 如果cart表不存在，忽略錯誤
+        if (strpos($e->getMessage(), "Table 'd1256977.cart' doesn't exist") === false) {
+            // 如果是其他錯誤，則拋出
+            throw $e;
+        }
+    }
+
     // 2. 獲取該會員的所有訂單ID
     $stmt = $pdo->prepare("SELECT OrderID FROM Orders WHERE MembersID = ?");
     $stmt->execute([$memberId]);
