@@ -45,7 +45,15 @@ $orders = getMemberOrders($memberId);     // 來自 order.php  （已使用 PDO�
                 </div>
                 <div class="card-body">
                     <h4><?= h($currentMember['membername']) ?></h4>
-                    <p class="mb-0"><strong>身份：</strong><?= $currentMember['role'] == 0 ? '一般會員' : '管理員' ?></p>
+                    <p class="mb-0"><strong>身份：</strong><?php 
+                    if ($currentMember['role'] == 0) {
+                        echo '一般會員';
+                    } elseif ($currentMember['role'] == 1) {
+                        echo '員工';
+                    } else {
+                        echo '管理員';
+                    }
+                    ?></p>
                     <p class="mb-0"><strong>手機號碼：</strong><?= h($currentMember['phonenum']) ?></p>
                     <p class="mb-0"><strong>電子郵件：</strong><?= h($currentMember['memberemail']) ?></p>
                     <p class="mb-0"><strong>地址：</strong><?= h($currentMember['City'] . $currentMember['Address']) ?></p>
