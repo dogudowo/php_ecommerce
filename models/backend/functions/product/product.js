@@ -459,7 +459,7 @@ $(document).ready(function () {
         try {
             // 獲取商品詳情
             const res = await fetch(
-                `/new_test/api/product.php?action=getProduct&id=${productId}`
+                `api/product.php?action=getProduct&id=${productId}`
             );
             const result = await res.json();
 
@@ -499,7 +499,7 @@ $(document).ready(function () {
             if (product.galleryImages && product.galleryImages.length > 0) {
                 product.galleryImages.forEach((img) => {
                     const $img = $("<img>")
-                        .attr("src", `/new_test/${img.url}`)
+                        .attr("src", `${img.url}`)
                         .addClass("img-thumbnail")
                         .css({ width: "100px", height: "100px", margin: "4px" })
                         .attr("draggable", true);
