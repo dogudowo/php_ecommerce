@@ -73,6 +73,12 @@ define('INCLUDED_FROM_ADMIN', true);
                                         type="button" role="tab" aria-controls="repairs" aria-selected="true">
                                         <i class="bi bi-tools me-2"></i> 維修訂單管理
                                     </button>
+                                    <button
+                                        class="nav-link <?php echo (isset($_GET['page']) && $_GET['page'] === 'carouselManager') ? 'active' : ''; ?>"
+                                        id="v-pills-carousel-tab" data-bs-toggle="pill" data-bs-target="#carousel"
+                                        type="button" role="tab" aria-controls="carousel" aria-selected="true">
+                                        <i class="bi bi-images me-2"></i> 輪播圖管理
+                                    </button>
                                 </div>
                             </div>
 
@@ -124,6 +130,10 @@ define('INCLUDED_FROM_ADMIN', true);
                     <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
                         <?php include "models/backend/systemSettings.php"; ?>
                     </div>
+                    <!-- 輪播圖編輯 -->
+                    <div class="tab-pane fade" id="carousel" role="tabpanel" aria-labelledby="v-pills-carousel-tab">
+                        <?php include "models/backend/carouselManager.php"; ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -141,7 +151,7 @@ define('INCLUDED_FROM_ADMIN', true);
         // 前台管理標籤被點擊時
         document.getElementById('frontend-tab').addEventListener('click', function () {
             // 隱藏後台管理相關的標籤頁
-            document.querySelectorAll('#members, #settings').forEach(function (el) {
+            document.querySelectorAll('#members, #settings', '#carousel').forEach(function (el) {
                 el.classList.remove('show', 'active');
             });
 

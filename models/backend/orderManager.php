@@ -23,7 +23,7 @@ function getAllOrders()
                               JOIN OrderItem oi ON o.OrderID = oi.OrderID 
                               JOIN Options op ON oi.OptionID = op.OptionID 
                               GROUP BY o.OrderID 
-                              ORDER BY o.OrderDate DESC");
+                              ORDER BY o.OrderID DESC");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (PDOException $e) {
@@ -195,9 +195,9 @@ try {
                                 <tr>
                                     <td><?php echo htmlspecialchars($order['OrderID']); ?></td>
                                     <td><?php echo htmlspecialchars($order['MemberName']); ?></td>
-                                    <td><?php echo htmlspecialchars(date('Y-m-d H:i', strtotime($order['OrderDate']))); ?></td>
+                                    <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($order['OrderDate']))); ?></td>
                                     <td><?php echo htmlspecialchars($order['ItemCount']); ?></td>
-                                    <td>$<?php echo htmlspecialchars(number_format($order['TotalAmount'], 2)); ?></td>
+                                    <td>$<?php echo htmlspecialchars(number_format($order['TotalAmount'], 0)); ?></td>
                                     <td>
                                         <span class="badge <?php echo getOrderStatusClass($order['Status']); ?>">
                                             <?php echo htmlspecialchars($statusList[$order['Status']] ?? $order['Status']); ?>
