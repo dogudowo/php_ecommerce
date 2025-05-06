@@ -6,4 +6,5 @@ config:
 		echo "config.php created from template"; \
 	else \
 		echo "config.php already exists, skipping"; \
+		echo "Check backend orderMenager.php image url"
 	fi

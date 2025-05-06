@@ -12,6 +12,18 @@ if (basename($_SERVER['PHP_SELF']) === basename(__FILE__)) {
 $method = $_SERVER['REQUEST_METHOD'];
 $action = $_GET['action'] ?? null;
 
+// 獲取訂單詳情
+if ($method === 'GET' && $action === 'getOrderDetails') {
+    if (!isset($_GET['orderId'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => '缺少 orderId 參數']);
+        exit;
+    }
+    $orderDetails = getOrderDetails((int) $_GET['orderId']);
+    echo json_encode(['success' => true, 'data' => $orderDetails]);
+    exit;
+}
+
 if ($method === 'GET' && $action === 'getMemberOrders') {
     if (!isset($_GET['memberId'])) {
         http_response_code(400);

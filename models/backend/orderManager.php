@@ -7,114 +7,8 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
     exit;
 }
 
-// 引入數據庫連接
-require_once __DIR__ . '/../../api/db.php';
-
-// 獲取所有訂單
-function getAllOrders()
-{
-    $pdo = getDBConnection();
-    try {
-        $stmt = $pdo->prepare("SELECT o.OrderID, o.OrderDate, o.Status, m.Name as MemberName, 
-                              COUNT(oi.OptionID) as ItemCount, 
-                              SUM(op.Price * oi.Quantity) as TotalAmount 
-                              FROM Orders o 
-                              JOIN Member m ON o.MembersID = m.MemberID 
-                              JOIN OrderItem oi ON o.OrderID = oi.OrderID 
-                              JOIN Options op ON oi.OptionID = op.OptionID 
-                              GROUP BY o.OrderID 
-                              ORDER BY o.OrderID DESC");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        error_log("Error fetching orders: " . $e->getMessage());
-        return [];
-    }
-}
-
-// 獲取訂單詳情
-function getOrderDetails($orderId)
-{
-    global $pdo;
-    try {
-        // 獲取訂單基本信息
-        $stmt = $pdo->prepare("SELECT o.*, m.Name as MemberName, m.Email, m.Phone, m.City, m.Address 
-                              FROM Orders o 
-                              JOIN Member m ON o.MembersID = m.MemberID 
-                              WHERE o.OrderID = ?");
-        $stmt->execute([$orderId]);
-        $order = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        if (!$order) {
-            return null;
-        }
-
-        // 獲取訂單項目
-        $stmt = $pdo->prepare("SELECT oi.*, op.Color, op.Size, op.SizeDescription, op.Price, 
-                              p.ProductName, p.Type 
-                              FROM OrderItem oi 
-                              JOIN Options op ON oi.OptionID = op.OptionID 
-                              JOIN Product p ON op.ProductID = p.ProductID 
-                              WHERE oi.OrderID = ?");
-        $stmt->execute([$orderId]);
-        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-        // 獲取付款信息
-        $stmt = $pdo->prepare("SELECT r.* 
-                              FROM Receipt r 
-                              WHERE r.OrderID = ?");
-        $stmt->execute([$orderId]);
-        $receipt = $stmt->fetch(PDO::FETCH_ASSOC);
-
-        return [
-            'order' => $order,
-            'items' => $items,
-            'receipt' => $receipt
-        ];
-    } catch (PDOException $e) {
-        error_log("Error fetching order details: " . $e->getMessage());
-        return null;
-    }
-}
-
-// 更新訂單狀態
-function updateOrderStatus($orderId, $status)
-{
-    global $pdo;
-    try {
-        $stmt = $pdo->prepare("UPDATE Orders SET Status = ? WHERE OrderID = ?");
-        $result = $stmt->execute([$status, $orderId]);
-        return $result;
-    } catch (PDOException $e) {
-        error_log("Error updating order status: " . $e->getMessage());
-        return false;
-    }
-}
-
-// 獲取訂單狀態列表
-function getOrderStatusList()
-{
-    return [
-        'Completed' => '已完成',
-        'Pending' => '處理中',
-        'Shipping' => '運送中',
-        'Cancel' => '已取消',
-        'abnormal' => '異常'
-    ];
-}
-
-// 獲取訂單狀態樣式
-function getOrderStatusClass($status)
-{
-    return match ($status) {
-        'Completed' => 'bg-success',
-        'Pending' => 'bg-info text-dark',
-        'Shipping' => 'bg-primary',
-        'Cancel' => 'bg-warning',
-        'abnormal' => 'bg-danger',
-        default => 'bg-secondary'
-    };
-}
+// 引入訂單管理函數
+require_once __DIR__ . '/functions/order/orderFunctions.php';
 
 // 嘗試獲取訂單列表
 try {
@@ -285,10 +179,7 @@ try {
                                 <?php endforeach; ?>
                             </select>
                         </div>
-                        <div class="mb-3">
-                            <label for="statusNote" class="form-label">備註</label>
-                            <textarea class="form-control" id="statusNote" rows="3" placeholder="可選填寫狀態更新備註"></textarea>
-                        </div>
+                        <!-- 移除備註輸入框 -->
                     </form>
                 </div>
                 <div class="modal-footer">
@@ -301,6 +192,18 @@ try {
 </div>
 
 <script>
+    // 使用PHP函數獲取訂單詳情
+    async function getOrderDetailsFromBackend(orderId) {
+        try {
+            const response = await fetch('models/backend/functions/order/orderFunctions.php?orderId=' + orderId);
+            const data = await response.json();
+            return data.success ? data.data : null;
+        } catch (error) {
+            console.error('獲取訂單詳情錯誤：', error);
+            return null;
+        }
+    }
+
     // 訂單篩選功能
     document.getElementById('filterStatus').addEventListener('change', filterOrders);
     document.getElementById('filterDateFrom').addEventListener('change', filterOrders);
@@ -309,21 +212,173 @@ try {
 
     function filterOrders() {
         console.log('篩選訂單功能尚未實現');
-        // 實際篩選功能將在後續開發中實現
     }
 
     // 查看訂單詳情
     document.querySelectorAll('.view-order').forEach(button => {
-        button.addEventListener('click', function () {
+        button.addEventListener('click', async function () {
             const orderId = this.getAttribute('data-id');
             console.log('查看訂單詳情：', orderId);
-            // 實際查看功能將在後續開發中實現
 
-            // 顯示模態框
-            const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
-            modal.show();
+            try {
+                // 顯示載入中提示
+                document.getElementById('orderDetailContent').innerHTML = `
+                    <div class="d-flex justify-content-center">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">載入中...</span>
+                        </div>
+                    </div>
+                `;
+
+                // 顯示模態框
+                const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+                modal.show();
+
+                // 獲取訂單詳情 - 使用後端函數直接獲取
+                const orderId = this.getAttribute('data-id');
+                const orderDetails = await getOrderDetailsFromBackend(orderId);
+
+                // 渲染訂單詳情
+                if (orderDetails) {
+                    // 移除提示信息
+                    document.querySelector('#orderDetailModal .alert-info').style.display = 'none';
+
+                    // 渲染訂單詳情
+                    renderOrderDetails(orderDetails);
+                } else {
+                    document.getElementById('orderDetailContent').innerHTML = `
+                        <div class="alert alert-danger">
+                            <i class="bi bi-exclamation-triangle me-2"></i>獲取訂單詳情失敗
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('獲取訂單詳情錯誤：', error);
+                document.getElementById('orderDetailContent').innerHTML = `
+                    <div class="alert alert-danger">
+                        <i class="bi bi-exclamation-triangle me-2"></i>系統錯誤，請稍後再試
+                    </div>
+                `;
+                // 顯示具體錯誤信息（僅在開發環境）
+                if (error.message) {
+                    console.error('錯誤詳情：', error.message);
+                }
+            }
         });
     });
+
+    // 渲染訂單詳情
+    function renderOrderDetails(orderData) {
+        // 獲取訂單數據
+        const { order_id, member_name, order_date, items, total_amount, status, statusClass, statusText } = orderData;
+
+        // 格式化日期
+        const formattedDate = new Date(order_date).toLocaleDateString('zh-TW');
+
+        // 構建訂單詳情HTML
+        let html = `
+            <div class="row mb-4">
+                <div class="col-md-6">
+                    <h5 class="border-bottom pb-2">訂單信息</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th>訂單編號：</th>
+                            <td>${order_id}</td>
+                        </tr>
+                        <tr>
+                            <th>會員名稱：</th>
+                            <td>${member_name}</td>
+                        </tr>
+                        <tr>
+                            <th>訂單日期：</th>
+                            <td>${formattedDate}</td>
+                        </tr>
+                        <tr>
+                            <th>訂單狀態：</th>
+                            <td>
+                                <span class="badge ${statusClass}">
+                                    ${statusText}
+                                </span>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <h5 class="border-bottom pb-2">訂單商品</h5>
+            <div class="table-responsive mb-4">
+                <table class="table table-bordered table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>商品圖片</th>
+                            <th>商品名稱</th>
+                            <th>顏色</th>
+                            <th>尺寸</th>
+                            <th>單價</th>
+                            <th>數量</th>
+                            <th>小計</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+        `;
+
+        // 添加商品行
+        items.forEach(item => {
+            html += `
+                <tr>
+                    <td>
+                        <img src="../../${item.image}" alt="${item.ProductName}" class="img-thumbnail" style="max-width: 80px;">
+                    </td>
+                    <td>${item.ProductName}</td>
+                    <td>${item.Color}</td>
+                    <td>${item.Size}${item.SizeDescription ? ` (${item.SizeDescription})` : ''}</td>
+                    <td>$${Number(item.Price).toLocaleString()}</td>
+                    <td>${item.Quantity}</td>
+                    <td>$${Number(item.Subtotal).toLocaleString()}</td>
+                </tr>
+            `;
+        });
+
+        // 添加總計行
+        html += `
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="6" class="text-end">總計：</th>
+                            <th>$${Number(total_amount).toLocaleString()}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        `;
+
+        // 更新模態框內容
+        document.getElementById('orderDetailContent').innerHTML = html;
+    }
+
+    // 獲取訂單狀態名稱
+    function getOrderStatusName(status) {
+        const statusList = {
+            'Completed': '已完成',
+            'Pending': '處理中',
+            'Shipping': '運送中',
+            'Cancel': '已取消',
+            'abnormal': '異常'
+        };
+        return statusList[status] || status;
+    }
+
+    // 獲取訂單狀態樣式
+    function getOrderStatusClass(status) {
+        const statusClasses = {
+            'Completed': 'bg-success',
+            'Pending': 'bg-info text-dark',
+            'Shipping': 'bg-primary',
+            'Cancel': 'bg-warning',
+            'abnormal': 'bg-danger'
+        };
+        return statusClasses[status] || 'bg-secondary';
+    }
 
     // 更新訂單狀態
     document.querySelectorAll('.update-status').forEach(button => {
@@ -343,43 +398,123 @@ try {
     });
 
     // 保存訂單狀態更新
-    document.getElementById('saveStatus').addEventListener('click', function () {
+    document.getElementById('saveStatus').addEventListener('click', async function () {
         const orderId = document.getElementById('updateOrderId').value;
         const status = document.getElementById('orderStatus').value;
-        const note = document.getElementById('statusNote').value;
 
-        console.log('保存訂單狀態更新：', orderId, status, note);
-        // 實際保存功能將在後續開發中實現
+        console.log('保存訂單狀態更新：', orderId, status);
 
-        // 關閉模態框
-        const modal = bootstrap.Modal.getInstance(document.getElementById('updateStatusModal'));
-        modal.hide();
+        // 顯示載入中提示
+        const saveButton = document.getElementById('saveStatus');
+        const originalText = saveButton.innerHTML;
+        saveButton.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 處理中...';
+        saveButton.disabled = true;
 
-        // 顯示成功提示
-        const toastContainer = document.createElement('div');
-        toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
-        toastContainer.style.zIndex = '11';
+        try {
+            // 使用 fetch API 發送 POST 請求
+            const response = await fetch('models/backend/functions/order/orderFunctions.php', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    orderId: orderId,
+                    status: status
+                })
+            });
 
-        toastContainer.innerHTML = `
-            <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                <div class="d-flex">
-                    <div class="toast-body">
-                        <i class="bi bi-check-circle me-2"></i>訂單狀態已成功更新！
+            const result = await response.json();
+
+            // 關閉模態框
+            const modal = bootstrap.Modal.getInstance(document.getElementById('updateStatusModal'));
+            modal.hide();
+
+            // 顯示結果提示
+            const toastContainer = document.createElement('div');
+            toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '11';
+
+            if (result.success) {
+                // 更新成功
+                toastContainer.innerHTML = `
+                    <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi bi-check-circle me-2"></i>${result.message || '訂單狀態已成功更新！'}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
                     </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                `;
+
+                // 更新頁面上的訂單狀態顯示
+                // 找到對應的訂單行並更新狀態
+                const orderRow = document.querySelector(`button.update-status[data-id="${orderId}"]`).closest('tr');
+                if (orderRow) {
+                    const statusCell = orderRow.querySelector('td:nth-child(6)');
+                    const statusClass = getOrderStatusClass(status);
+                    const statusText = getOrderStatusName(status);
+                    statusCell.innerHTML = `<span class="badge ${statusClass}">${statusText}</span>`;
+
+                    // 更新按鈕的 data-status 屬性
+                    orderRow.querySelector('button.update-status').setAttribute('data-status', status);
+                }
+            } else {
+                // 更新失敗
+                toastContainer.innerHTML = `
+                    <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi bi-exclamation-triangle me-2"></i>${result.message || '更新訂單狀態失敗！'}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            document.body.appendChild(toastContainer);
+            const toastElement = toastContainer.querySelector('.toast');
+            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            toast.show();
+
+            // 3秒後移除 Toast 元素
+            setTimeout(() => {
+                document.body.removeChild(toastContainer);
+            }, 3500);
+
+        } catch (error) {
+            console.error('更新訂單狀態錯誤：', error);
+
+            // 顯示錯誤提示
+            const errorToast = document.createElement('div');
+            errorToast.className = 'position-fixed bottom-0 end-0 p-3';
+            errorToast.style.zIndex = '11';
+            errorToast.innerHTML = `
+                <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi bi-exclamation-triangle me-2"></i>系統錯誤，請稍後再試
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
                 </div>
-            </div>
-        `;
+            `;
 
-        document.body.appendChild(toastContainer);
-        const toastElement = toastContainer.querySelector('.toast');
-        const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
-        toast.show();
+            document.body.appendChild(errorToast);
+            const errorToastElement = errorToast.querySelector('.toast');
+            const errorToastInstance = new bootstrap.Toast(errorToastElement, { delay: 3000 });
+            errorToastInstance.show();
 
-        // 3秒後移除 Toast 元素
-        setTimeout(() => {
-            document.body.removeChild(toastContainer);
-        }, 3500);
+            // 3秒後移除 Toast 元素
+            setTimeout(() => {
+                document.body.removeChild(errorToast);
+            }, 3500);
+        } finally {
+            // 恢復按鈕狀態
+            saveButton.innerHTML = originalText;
+            saveButton.disabled = false;
+        }
     });
 
     // 列印訂單
