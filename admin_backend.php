@@ -76,7 +76,7 @@ define('INCLUDED_FROM_ADMIN', true);
                                     <button
                                         class="nav-link <?php echo (isset($_GET['page']) && $_GET['page'] === 'carouselManager') ? 'active' : ''; ?>"
                                         id="v-pills-carousel-tab" data-bs-toggle="pill" data-bs-target="#carousel"
-                                        type="button" role="tab" aria-controls="carousel" aria-selected="true">
+                                        type="button" role="tab" aria-controls="carousel" aria-selected="false">
                                         <i class="bi bi-images me-2"></i> 輪播圖管理
                                     </button>
                                 </div>
@@ -148,10 +148,15 @@ define('INCLUDED_FROM_ADMIN', true);
             el.classList.remove('show', 'active');
         });
 
+        // 根據URL參數決定是否顯示輪播圖管理標籤頁
+        if (!(window.location.search.includes('page=carouselManager'))) {
+            document.getElementById('carousel').classList.remove('show', 'active');
+        }
+
         // 前台管理標籤被點擊時
         document.getElementById('frontend-tab').addEventListener('click', function () {
             // 隱藏後台管理相關的標籤頁
-            document.querySelectorAll('#members, #settings', '#carousel').forEach(function (el) {
+            document.querySelectorAll('#members, #settings').forEach(function (el) {
                 el.classList.remove('show', 'active');
             });
 
@@ -160,12 +165,13 @@ define('INCLUDED_FROM_ADMIN', true);
             document.getElementById('v-pills-products-tab').classList.add('active');
             document.getElementById('v-pills-members-tab').classList.remove('active');
             document.getElementById('v-pills-settings-tab').classList.remove('active');
+            document.getElementById('v-pills-carousel-tab').classList.remove('active');
         });
 
         // 後台管理標籤被點擊時
         document.getElementById('backend-tab').addEventListener('click', function () {
             // 隱藏前台管理相關的標籤頁
-            document.querySelectorAll('#products, #orders, #repairs').forEach(function (el) {
+            document.querySelectorAll('#products, #orders, #repairs, #carousel').forEach(function (el) {
                 el.classList.remove('show', 'active');
             });
 
@@ -175,7 +181,26 @@ define('INCLUDED_FROM_ADMIN', true);
             document.getElementById('v-pills-products-tab').classList.remove('active');
             document.getElementById('v-pills-orders-tab').classList.remove('active');
             document.getElementById('v-pills-repairs-tab').classList.remove('active');
+            document.getElementById('v-pills-carousel-tab').classList.remove('active');
         });
+
+        // 確保輪播圖管理標籤頁在URL參數為carouselManager時顯示
+        if (window.location.search.includes('page=carouselManager')) {
+            document.querySelectorAll('#products, #orders, #repairs, #members, #settings').forEach(function (el) {
+                el.classList.remove('show', 'active');
+            });
+            document.getElementById('carousel').classList.add('show', 'active');
+            document.getElementById('v-pills-carousel-tab').classList.add('active');
+            document.getElementById('v-pills-products-tab').classList.remove('active');
+            document.getElementById('v-pills-orders-tab').classList.remove('active');
+            document.getElementById('v-pills-repairs-tab').classList.remove('active');
+            document.getElementById('v-pills-members-tab').classList.remove('active');
+            document.getElementById('v-pills-settings-tab').classList.remove('active');
+            document.getElementById('frontend-content').classList.add('show', 'active');
+            document.getElementById('backend-content').classList.remove('show', 'active');
+            document.getElementById('frontend-tab').classList.add('active');
+            document.getElementById('backend-tab').classList.remove('active');
+        }
     });
 </script>
 <?php require_once 'fixedFile/footer.php'; ?>
