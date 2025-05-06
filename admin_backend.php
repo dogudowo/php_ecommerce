@@ -51,7 +51,7 @@ define('INCLUDED_FROM_ADMIN', true);
                         <!-- 標籤內容 -->
                         <div class="tab-content" id="adminTabsContent">
                             <!-- 前台管理 -->
-                            <div class="tab-pane fade show active" id="frontend-content" role="tabpanel"
+                            <div class="tab-pane  show active" id="frontend-content" role="tabpanel"
                                 aria-labelledby="frontend-tab">
                                 <style>
                                     .nav-pills .nav-link {
@@ -95,8 +95,7 @@ define('INCLUDED_FROM_ADMIN', true);
                             </div>
 
                             <!-- 後台管理 -->
-                            <div class="tab-pane fade" id="backend-content" role="tabpanel"
-                                aria-labelledby="backend-tab">
+                            <div class="tab-pane " id="backend-content" role="tabpanel" aria-labelledby="backend-tab">
                                 <div class="nav flex-column nav-pills gap-2 mt-2" id="v-pills-backend-tab"
                                     role="tablist" aria-orientation="vertical">
                                     <button
