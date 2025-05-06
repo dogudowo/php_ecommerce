@@ -53,6 +53,12 @@ define('INCLUDED_FROM_ADMIN', true);
                             <!-- 前台管理 -->
                             <div class="tab-pane fade show active" id="frontend-content" role="tabpanel"
                                 aria-labelledby="frontend-tab">
+                                <style>
+                                    .nav-pills .nav-link {
+                                        text-align: left;
+                                        padding-left: 2rem;
+                                    }
+                                </style>
                                 <div class="nav flex-column nav-pills gap-2 mt-2" id="v-pills-tab" role="tablist"
                                     aria-orientation="vertical">
                                     <button
@@ -60,6 +66,30 @@ define('INCLUDED_FROM_ADMIN', true);
                                         id="v-pills-carousel-tab" data-bs-toggle="pill" data-bs-target="#carousel"
                                         type="button" role="tab" aria-controls="carousel" aria-selected="false">
                                         <i class="bi bi-images me-2"></i> 輪播圖管理
+                                    </button>
+                                    <button
+                                        class="nav-link <?php echo (isset($_GET['page']) && $_GET['page'] === 'brandManager') ? 'active' : ''; ?>"
+                                        id="v-pills-brand-tab" data-bs-toggle="pill" data-bs-target="#brand"
+                                        type="button" role="tab" aria-controls="brand" aria-selected="false">
+                                        <i class="bi bi-award me-2"></i> 品牌介紹頁面管理
+                                    </button>
+                                    <button
+                                        class="nav-link <?php echo (isset($_GET['page']) && $_GET['page'] === 'instructionManager') ? 'active' : ''; ?>"
+                                        id="v-pills-instruction-tab" data-bs-toggle="pill" data-bs-target="#instruction"
+                                        type="button" role="tab" aria-controls="instruction" aria-selected="false">
+                                        <i class="bi bi-info-circle me-2"></i> 購物說明頁面管理
+                                    </button>
+                                    <button
+                                        class="nav-link <?php echo (isset($_GET['page']) && $_GET['page'] === 'repairManager') ? 'active' : ''; ?>"
+                                        id="v-pills-repair-page-tab" data-bs-toggle="pill" data-bs-target="#repair-page"
+                                        type="button" role="tab" aria-controls="repair-page" aria-selected="false">
+                                        <i class="bi bi-tools me-2"></i> 維修頁面管理
+                                    </button>
+                                    <button
+                                        class="nav-link <?php echo (isset($_GET['page']) && $_GET['page'] === 'aboutManager') ? 'active' : ''; ?>"
+                                        id="v-pills-about-tab" data-bs-toggle="pill" data-bs-target="#about"
+                                        type="button" role="tab" aria-controls="about" aria-selected="false">
+                                        <i class="bi bi-building me-2"></i> 關於我們頁面管理
                                     </button>
                                 </div>
                             </div>
@@ -134,6 +164,24 @@ define('INCLUDED_FROM_ADMIN', true);
                     <div class="tab-pane fade" id="carousel" role="tabpanel" aria-labelledby="v-pills-carousel-tab">
                         <?php include "models/backend/carouselManager.php"; ?>
                     </div>
+                    <!-- 維修頁面管理 -->
+                    <div class="tab-pane fade" id="repair-page" role="tabpanel"
+                        aria-labelledby="v-pills-repair-page-tab">
+                        <?php include "models/backend/repairManager.php"; ?>
+                    </div>
+                    <!-- 購物說明頁面管理 -->
+                    <div class="tab-pane fade" id="instruction" role="tabpanel"
+                        aria-labelledby="v-pills-instruction-tab">
+                        <?php include "models/backend/instructionManager.php"; ?>
+                    </div>
+                    <!-- 品牌介紹頁面管理 -->
+                    <div class="tab-pane fade" id="brand" role="tabpanel" aria-labelledby="v-pills-brand-tab">
+                        <?php include "models/backend/brandManager.php"; ?>
+                    </div>
+                    <!-- 關於我們頁面管理 -->
+                    <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="v-pills-about-tab">
+                        <?php include "models/backend/aboutManager.php"; ?>
+                    </div>
                 </div>
             </div>
         </div>
@@ -168,21 +216,43 @@ define('INCLUDED_FROM_ADMIN', true);
                 el.classList.remove('show', 'active');
             });
 
-            // 顯示前台管理的標籤頁（輪播圖管理）
+            // 顯示前台管理的標籤頁（預設顯示輪播圖管理）
             document.getElementById('carousel').classList.add('show', 'active');
             document.getElementById('v-pills-carousel-tab').classList.add('active');
+
+            // 移除後台管理標籤的激活狀態
             document.getElementById('v-pills-members-tab').classList.remove('active');
             document.getElementById('v-pills-settings-tab').classList.remove('active');
             document.getElementById('v-pills-products-tab').classList.remove('active');
             document.getElementById('v-pills-orders-tab').classList.remove('active');
             document.getElementById('v-pills-repairs-tab').classList.remove('active');
+
+            // 移除其他前台管理標籤頁的激活狀態（除了輪播圖管理）
+            document.getElementById('v-pills-repair-page-tab').classList.remove('active');
+            document.getElementById('v-pills-instruction-tab').classList.remove('active');
+            document.getElementById('v-pills-brand-tab').classList.remove('active');
+            document.getElementById('v-pills-about-tab').classList.remove('active');
+            document.getElementById('repair-page').classList.remove('show', 'active');
+            document.getElementById('instruction').classList.remove('show', 'active');
+            document.getElementById('brand').classList.remove('show', 'active');
+            document.getElementById('about').classList.remove('show', 'active');
         });
 
         // 後台管理標籤被點擊時
         document.getElementById('backend-tab').addEventListener('click', function () {
-            // 隱藏前台管理相關的標籤頁
+            // 隱藏所有前台管理相關的標籤頁
             document.getElementById('carousel').classList.remove('show', 'active');
+            document.getElementById('repair-page').classList.remove('show', 'active');
+            document.getElementById('instruction').classList.remove('show', 'active');
+            document.getElementById('brand').classList.remove('show', 'active');
+            document.getElementById('about').classList.remove('show', 'active');
+
+            // 移除所有前台管理標籤的激活狀態
             document.getElementById('v-pills-carousel-tab').classList.remove('active');
+            document.getElementById('v-pills-repair-page-tab').classList.remove('active');
+            document.getElementById('v-pills-instruction-tab').classList.remove('active');
+            document.getElementById('v-pills-brand-tab').classList.remove('active');
+            document.getElementById('v-pills-about-tab').classList.remove('active');
 
             // 顯示後台管理的第一個標籤頁（商品管理）
             document.getElementById('products').classList.add('show', 'active');
@@ -193,18 +263,47 @@ define('INCLUDED_FROM_ADMIN', true);
             document.getElementById('v-pills-repairs-tab').classList.remove('active');
         });
 
-        // 確保輪播圖管理標籤頁在URL參數為carouselManager時顯示
-        if (window.location.search.includes('page=carouselManager')) {
+        // 確保前台管理標籤頁在相應URL參數時顯示
+        if (window.location.search.includes('page=carouselManager') ||
+            window.location.search.includes('page=repairManager') ||
+            window.location.search.includes('page=instructionManager') ||
+            window.location.search.includes('page=brandManager') ||
+            window.location.search.includes('page=aboutManager')) {
+
+            // 隱藏所有後台管理標籤頁
             document.querySelectorAll('#products, #orders, #repairs, #members, #settings').forEach(function (el) {
                 el.classList.remove('show', 'active');
             });
-            document.getElementById('carousel').classList.add('show', 'active');
-            document.getElementById('v-pills-carousel-tab').classList.add('active');
-            document.getElementById('v-pills-products-tab').classList.remove('active');
-            document.getElementById('v-pills-orders-tab').classList.remove('active');
-            document.getElementById('v-pills-repairs-tab').classList.remove('active');
-            document.getElementById('v-pills-members-tab').classList.remove('active');
-            document.getElementById('v-pills-settings-tab').classList.remove('active');
+
+            // 隱藏所有前台管理標籤頁
+            document.querySelectorAll('#carousel, #repair-page, #instruction, #brand, #about').forEach(function (el) {
+                el.classList.remove('show', 'active');
+            });
+
+            // 移除所有標籤的激活狀態
+            document.querySelectorAll('#v-pills-carousel-tab, #v-pills-repair-page-tab, #v-pills-instruction-tab, #v-pills-brand-tab, #v-pills-about-tab, #v-pills-products-tab, #v-pills-orders-tab, #v-pills-repairs-tab, #v-pills-members-tab, #v-pills-settings-tab').forEach(function (el) {
+                el.classList.remove('active');
+            });
+
+            // 根據URL參數顯示相應的標籤頁
+            if (window.location.search.includes('page=carouselManager')) {
+                document.getElementById('carousel').classList.add('show', 'active');
+                document.getElementById('v-pills-carousel-tab').classList.add('active');
+            } else if (window.location.search.includes('page=repairManager')) {
+                document.getElementById('repair-page').classList.add('show', 'active');
+                document.getElementById('v-pills-repair-page-tab').classList.add('active');
+            } else if (window.location.search.includes('page=instructionManager')) {
+                document.getElementById('instruction').classList.add('show', 'active');
+                document.getElementById('v-pills-instruction-tab').classList.add('active');
+            } else if (window.location.search.includes('page=brandManager')) {
+                document.getElementById('brand').classList.add('show', 'active');
+                document.getElementById('v-pills-brand-tab').classList.add('active');
+            } else if (window.location.search.includes('page=aboutManager')) {
+                document.getElementById('about').classList.add('show', 'active');
+                document.getElementById('v-pills-about-tab').classList.add('active');
+            }
+
+            // 激活前台管理標籤，取消激活後台管理標籤
             document.getElementById('frontend-content').classList.add('show', 'active');
             document.getElementById('backend-content').classList.remove('show', 'active');
             document.getElementById('frontend-tab').classList.add('active');
@@ -215,7 +314,17 @@ define('INCLUDED_FROM_ADMIN', true);
         if (window.location.search.includes('page=productManager') ||
             window.location.search.includes('page=orderManager') ||
             window.location.search.includes('page=repairManager')) {
-            document.getElementById('carousel').classList.remove('show', 'active');
+            // 隱藏所有前台管理標籤頁
+            document.querySelectorAll('#carousel, #repair-page, #instruction, #brand, #about').forEach(function (el) {
+                el.classList.remove('show', 'active');
+            });
+
+            // 移除所有前台管理標籤的激活狀態
+            document.querySelectorAll('#v-pills-carousel-tab, #v-pills-repair-page-tab, #v-pills-instruction-tab, #v-pills-brand-tab, #v-pills-about-tab').forEach(function (el) {
+                el.classList.remove('active');
+            });
+
+            // 激活後台管理標籤，取消激活前台管理標籤
             document.getElementById('frontend-content').classList.remove('show', 'active');
             document.getElementById('backend-content').classList.add('show', 'active');
             document.getElementById('frontend-tab').classList.remove('active');
