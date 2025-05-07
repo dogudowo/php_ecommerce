@@ -79,22 +79,27 @@ class InstructionHandler
             return false;
         }
 
-        // 處理圖片上傳
+        // 處理圖片上傳，使用固定的文件名替換舊圖片
         $targetDir = __DIR__ . '/../../../../imgs/instruction/';
-        $targetFile = $targetDir . basename($newImage['name']);
+        $targetFile = $targetDir . $type . '.jpg'; // 使用固定的文件名：buyContext.jpg 或 order.jpg
 
         // 檢查是否為圖片
-        $imageFileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
         if (!getimagesize($newImage['tmp_name'])) {
             return false;
         }
 
-        // 允許的檔案格式
+        // 檢查文件格式
+        $imageFileType = strtolower(pathinfo($newImage['name'], PATHINFO_EXTENSION));
         if ($imageFileType != "jpg" && $imageFileType != "jpeg") {
             return false;
         }
 
-        // 嘗試上傳檔案
+        // 如果舊圖片存在，先刪除它
+        if (file_exists($targetFile)) {
+            unlink($targetFile);
+        }
+
+        // 嘗試上傳新圖片
         if (move_uploaded_file($newImage['tmp_name'], $targetFile)) {
             return true;
         }

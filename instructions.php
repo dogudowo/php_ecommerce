@@ -32,7 +32,7 @@ require_once __DIR__ . '/fixedFile/header.php';
         <div class="tab-pane fade show active text-center" id="shoppingContent" role="tabpanel"
             aria-labelledby="shopping-tab">
             <!-- 購物說明內容 -->
-            <img src="imgs/shopping/buyContext.jpg" class="img-fluid" />
+            <img src="imgs/instruction/buyContext.jpg" class="img-fluid" />
         </div>
         <div class="tab-pane fade" id="qaContent" role="tabpanel" aria-labelledby="qa-tab">
             <!-- 購物Q&A內容 -->
@@ -61,7 +61,7 @@ require_once __DIR__ . '/fixedFile/header.php';
             </div>
         </div>
         <div class="tab-pane fade text-center" id="processContent" role="tabpanel" aria-labelledby="process-tab">
-            <img src="imgs/shopping/order.jpg" alt="" class="img-fulid" />
+            <img src="imgs/instruction/order.jpg" alt="" class="img-fulid" />
         </div>
     </div>
 </div>
