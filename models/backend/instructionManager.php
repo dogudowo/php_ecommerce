@@ -293,9 +293,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
 
     // 初始載入
     document.addEventListener('DOMContentLoaded', () => {
-        console.log('DOMContentLoaded 事件觸發');
         loadQAList();
-
         /* 事件委派：監聽整個 deleteConfirmModal，而不是單一按鈕 */
         document
             .getElementById('deleteConfirmModal')
@@ -303,7 +301,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
                 // 只處理真正點到 #confirmDeleteBtn 的情況
                 if (!e.target.matches('#confirmDeleteBtn')) return;
 
-                console.log('成功按下刪除按鈕');
                 const id = document.getElementById('deleteItemId').value;
 
                 try {
