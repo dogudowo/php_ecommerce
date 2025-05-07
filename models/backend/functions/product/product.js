@@ -511,14 +511,12 @@ $(document).ready(function () {
             $("#sizePriceContainer").empty();
             if (product.sizeOptions && product.sizeOptions.length > 0) {
                 product.sizeOptions.forEach((sizeOption) => {
-                    // —— 把下面這段加在這裡 ——
-
                     // 解析顏色陣列：把後端回傳的 "Colors" 字串拆成陣列
                     const colorLabels = sizeOption.Colors
                         ? sizeOption.Colors.split(",")
                         : [];
 
-                    // 建立尺寸區塊（保留你原本的 HTML 結構）
+                    // 建立尺寸區塊
                     const $sizeBlock = $(`
                         <div class="card mb-3 size-price-block">
                           <div class="card-body">
@@ -557,7 +555,7 @@ $(document).ready(function () {
                         </div>
                     `);
 
-                    // (3) 填充顏色與庫存
+                    // 填充顏色與庫存
                     const $colorContainer = $sizeBlock.find(
                         ".color-stock-container"
                     );
@@ -565,16 +563,19 @@ $(document).ready(function () {
                         Array.isArray(sizeOption.colors) &&
                         sizeOption.colors.length
                     ) {
+                        // 為每個顏色選項創建一行
                         sizeOption.colors.forEach((colorOption, idx) => {
+                            // 使用對應的顏色標籤，如果索引超出範圍則使用空字符串
+                            const colorLabel =
+                                idx < colorLabels.length
+                                    ? colorLabels[idx].trim()
+                                    : "";
+
                             const $colorRow = $(`
                                 <div class="mb-2 color-row">
                                   <div class="row g-2">
                                     <div class="col-md-6">
-                                      <input type="text" class="form-control color-input" placeholder="顏色描述" value="${
-                                          colorOption.Color ||
-                                          sizeOption.Colors ||
-                                          ""
-                                      }">
+                                      <input type="text" class="form-control color-input" placeholder="顏色描述" value="${colorLabel}">
                                     </div>
                                     <div class="col-md-4">
                                       <input type="number" class="form-control stock-input" placeholder="庫存" value="${
@@ -618,10 +619,8 @@ $(document).ready(function () {
                         .find(".remove-color-btn")
                         .prop("disabled", remaining <= 1);
 
-                    // (4) 把尺寸區塊加回容器
+                    // 把尺寸區塊加回容器
                     $("#sizePriceContainer").append($sizeBlock);
-
-                    // —— 這裡結束 ——
                 });
             } else {
                 // 如果沒有任何尺寸，先觸發「新增尺寸」按鈕
