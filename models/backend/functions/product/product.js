@@ -719,31 +719,6 @@ $(document).ready(function () {
         }
     }
 
-    function renderPagination(current, total, type, status, search) {
-        const $pg = $(".pagination").empty();
-        const makeLink = (p, text, disabled) =>
-            `<li class="page-item ${
-                disabled ? "disabled" : ""
-            }"><a class="page-link" href="?page=${p}&type=${encodeURIComponent(
-                type
-            )}&status=${encodeURIComponent(status)}&search=${encodeURIComponent(
-                search
-            )}">${text}</a></li>`;
-        $pg.append(makeLink(current - 1, "上一頁", current <= 1));
-        for (let i = 1; i <= total; i++) {
-            $pg.append(
-                `<li class="page-item ${
-                    i === current ? "active" : ""
-                }"><a class="page-link" href="?page=${i}&type=${encodeURIComponent(
-                    type
-                )}&status=${encodeURIComponent(
-                    status
-                )}&search=${encodeURIComponent(search)}">${i}</a></li>`
-            );
-        }
-        $pg.append(makeLink(current + 1, "下一頁", current >= total));
-    }
-
     // 儲存商品（示範 Toast）
     $("#saveProduct").on("click", function () {
         const toastHtml = `

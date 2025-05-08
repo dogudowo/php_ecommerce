@@ -165,11 +165,6 @@ try {
                     </tbody>
                 </table>
             </div>
-
-            <?php require_once __DIR__ . '/functions/pagination.php';
-
-            // 使用分頁功能
-            $pagination = generatePagination($currentPage, $totalPages, $filterParams); ?>
         </div>
     </div>
 

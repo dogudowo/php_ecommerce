@@ -119,14 +119,7 @@ try {
                 </table>
             </div>
 
-            <?php require_once __DIR__ . '/functions/pagination.php';
-            $filterParams = [
-                'type' => $type,
-                'status' => $status,
-                'search' => $search
-            ];
-            $pagination = generatePagination($currentPage, $totalPages, $filterParams);
-            echo $pagination; ?>
+
 
         </div>
     </div>
