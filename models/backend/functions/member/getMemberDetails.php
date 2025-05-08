@@ -1,41 +1,42 @@
 <?php
-require_once __DIR__ . '/memberFunction.php';
-
 header('Content-Type: application/json');
+require_once __DIR__ . '/../../../../api/db.php';
 
-// 檢查請求方法
-if ($_SERVER['REQUEST_METHOD'] !== 'GET') {
-    http_response_code(405);
-    echo json_encode(['success' => false, 'message' => '不支援的請求方法']);
-    exit;
-}
+$response = ['success' => false, 'member' => null, 'message' => ''];
 
-// 檢查是否提供會員ID
 if (!isset($_GET['id']) || empty($_GET['id'])) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => '缺少會員ID']);
+    $response['message'] = '未提供會員ID。';
+    echo json_encode($response);
     exit;
 }
 
-$memberId = intval($_GET['id']);
+$memberId = $_GET['id'];
 
 try {
-    // 使用 memberFunction.php 中的 getMemberDetails 函數獲取會員資料
-    $member = getMemberDetails($memberId);
+    $pdo = getDbConnection();
+    $sql = "SELECT MemberID, Name, Email, Phone, City, Address, IsAdmin 
+            FROM Member 
+            WHERE MemberID = :memberId";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindParam(':memberId', $memberId, PDO::PARAM_INT);
+    $stmt->execute();
 
-    if ($member === null) {
-        http_response_code(404);
-        echo json_encode(['success' => false, 'message' => '找不到會員資料']);
-        exit;
+    $member = $stmt->fetch(PDO::FETCH_ASSOC);
+
+    if ($member) {
+        $response['success'] = true;
+        $response['member'] = $member;
+    } else {
+        $response['message'] = '找不到指定的會員。';
     }
 
-    // 返回會員資料
-    echo json_encode(['success' => true, 'member' => $member]);
-    exit;
+} catch (PDOException $e) {
+    error_log("Database error in getMemberDetails.php: " . $e->getMessage());
+    $response['message'] = '資料庫錯誤，無法獲取會員詳細資料。';
 } catch (Exception $e) {
-    // 記錄錯誤
-    error_log('getMemberDetails.php', $e->getMessage());
-
-    http_response_code(500);
-    echo json_encode(['success' => false, 'message' => '系統錯誤，請稍後再試']);
+    error_log("General error in getMemberDetails.php: " . $e->getMessage());
+    $response['message'] = '發生未知錯誤，無法獲取會員詳細資料。';
 }
+
+echo json_encode($response);
+?>

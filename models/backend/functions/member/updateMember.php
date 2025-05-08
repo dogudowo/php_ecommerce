@@ -29,19 +29,6 @@ $city = isset($data['city']) ? trim($data['city']) : '';
 $address = isset($data['address']) ? trim($data['address']) : '';
 $isAdmin = isset($data['isAdmin']) ? intval($data['isAdmin']) : 0;
 
-// 基本驗證
-if (empty($name)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => '會員姓名不能為空']);
-    exit;
-}
-
-if (empty($email) || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-    http_response_code(400);
-    echo json_encode(['success' => false, 'message' => '無效的電子郵件地址']);
-    exit;
-}
-
 try {
     // 連接數據庫
     $db = getDBConnection();
@@ -56,9 +43,12 @@ try {
         exit;
     }
 
-    // 更新會員資料
-    $stmt = $db->prepare('UPDATE Member SET Name = ?, Email = ?, Phone = ?, City = ?, Address = ?, IsAdmin = ? WHERE MemberID = ?');
-    $result = $stmt->execute([$name, $email, $phone, $city, $address, $isAdmin, $memberId]);
+    // 更新會員資料 (只更新 IsAdmin)
+    $sql = "UPDATE Member SET IsAdmin = :isAdmin WHERE MemberID = :memberId";
+    $stmt = $db->prepare($sql);
+    $stmt->bindParam(':isAdmin', $isAdmin, PDO::PARAM_INT);
+    $stmt->bindParam(':memberId', $memberId, PDO::PARAM_INT);
+    $result = $stmt->execute();
 
     if ($result) {
         echo json_encode(['success' => true, 'message' => '會員資料已成功更新']);
