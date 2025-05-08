@@ -155,12 +155,13 @@ try {
                                 </div>
                                 <div class="mb-3">
                                     <label for="productIntro" class="form-label">商品介紹</label>
-                                    <textarea class="form-control" id="productIntro" rows="3" required></textarea>
+                                    <textarea class="form-control" id="productIntro" rows="5" required></textarea>
                                 </div>
                                 <div class="mb-3">
-                                    <div class="form-check form-switch d-flex align-items-center">
+                                    <div class="form-check form-switch d-flex align-items-center"
+                                        style="margin-left: 1rem;">
                                         <input class="form-check-input" type="checkbox" id="productActive"
-                                            style="transform: scale(1.5); margin-right: 1rem; margin-left: 1rem;">
+                                            style="transform: scale(1.5); margin-right: 1.5rem;">
                                         <label class="form-check-label" for="productActive"><span
                                                 id="statusText">下架</span></label>
                                     </div>
