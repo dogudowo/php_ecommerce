@@ -13,19 +13,9 @@ $type = isset($_GET['type']) ? trim($_GET['type']) : '';
 $status = isset($_GET['status']) ? trim($_GET['status']) : '';
 $search = isset($_GET['search']) ? trim($_GET['search']) : '';
 
-try {
-    $result = getAllProducts($page, 10, $type, $status, $search);
-    $products = $result['products'];
-    $totalPages = $result['totalPages'];
-    $currentPage = $result['currentPage'];
-    $productTypes = getProductTypes();
-} catch (Exception $e) {
-    error_log("Error in product manager: " . $e->getMessage());
-    $products = [];
-    $totalPages = 1;
-    $currentPage = 1;
-    $productTypes = [];
-}
+// 商品資料將由 product.js 中的 fetch 請求獲取
+$productTypes = [];
+$products = [];
 ?>
 
 <div class="container-fluid p-0">
@@ -84,43 +74,17 @@ try {
                             <th>操作</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php if (empty($products)): ?>
-                            <tr>
-                                <td colspan="6" class="text-center">暫無商品數據</td>
-                            </tr>
-                        <?php else:
-                            foreach ($products as $p): ?>
-                                <tr>
-                                    <td><?= htmlspecialchars($p['ProductID']) ?></td>
-                                    <td><?= htmlspecialchars($p['ProductName']) ?></td>
-                                    <td><?= htmlspecialchars($p['Type']) ?></td>
-                                    <td><?= htmlspecialchars($p['TotalStock']) ?></td>
-                                    <td>
-                                        <?php if ($p['isActive']): ?>
-                                            <span class="badge bg-success">上架</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-secondary">下架</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <button class="btn btn-sm btn-outline-primary edit-product"
-                                                data-id="<?= $p['ProductID'] ?>"><i class="bi bi-pencil"></i></button>
-                                            <button class="btn btn-sm btn-outline-danger delete-product"
-                                                data-id="<?= $p['ProductID'] ?>" title="刪除商品">
-                                                <i class="bi bi-trash"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; endif; ?>
+                    <tbody id="productTableBody">
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">載入中...</span>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
-
-
-
         </div>
     </div>
 
@@ -240,7 +204,7 @@ try {
                                                                         class="form-control stock-input"
                                                                         placeholder="庫存">
                                                                 </div>
-                                                                <div class="col-md-2">
+                                                                <div class="col-md-2 " style=" align-self: end;">
                                                                     <button type="button"
                                                                         class="btn btn-sm btn-outline-danger w-100 remove-color-btn"
                                                                         disabled>

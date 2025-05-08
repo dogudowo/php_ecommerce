@@ -1,300 +1,328 @@
-$(document).ready(function () {
-    // 刪除商品事件處理
-    $(document).on("click", ".delete-product", async function () {
-        const productId = $(this).data("id");
-        if (!productId) return;
+(function ($) {
+    const API_BASE = "api/backend/product.php";
+    const GET_URL = "models/backend/functions/product/getProducts.php";
+    const $body = $("body");
+    const $tableBody = $("#productTableBody");
+    const $addBtn = $("#addProduct");
+    const $modal = $("#addProductModal");
+    const $toastContainer = $(
+        '<div class="position-fixed bottom-0 end-0 p-3" />'
+    ).appendTo("body");
 
-        // 使用 Bootstrap 的 modal 來確認刪除
-        const confirmModal = new bootstrap.Modal(
-            $(
-                "<div class='modal fade' tabindex='-1'>" +
-                    "<div class='modal-dialog modal-dialog-centered'>" +
-                    "<div class='modal-content'>" +
-                    "<div class='modal-header bg-danger text-white'>" +
-                    "<h5 class='modal-title'>確認刪除</h5>" +
-                    "<button type='button' class='btn-close btn-close-white' data-bs-dismiss='modal' aria-label='Close'></button>" +
-                    "</div>" +
-                    "<div class='modal-body'>" +
-                    "<p>確定要刪除此商品嗎？此操作無法撤銷。</p>" +
-                    "</div>" +
-                    "<div class='modal-footer'>" +
-                    "<button type='button' class='btn btn-secondary' data-bs-dismiss='modal'>取消</button>" +
-                    "<button type='button' class='btn btn-danger' id='confirmDelete'>刪除</button>" +
-                    "</div>" +
-                    "</div>" +
-                    "</div>" +
-                    "</div>"
-            ).appendTo("body")[0]
-        );
-
-        confirmModal.show();
-
-        $("#confirmDelete").on("click", async function () {
-            try {
-                const result = await deleteProduct(productId);
-
-                if (result.success) {
-                    // 顯示成功訊息
-                    const toastHtml = `
-                        <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                          <div class="d-flex">
-                            <div class="toast-body"><i class="bi bi-check-circle me-2"></i>商品已成功刪除！</div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                          </div>
-                        </div>`;
-                    const $container = $(
-                        '<div class="position-fixed bottom-0 end-0 p-3">'
-                    )
-                        .append(toastHtml)
-                        .appendTo("body");
-                    const toast = new bootstrap.Toast(
-                        $container.find(".toast")[0],
-                        { delay: 3000 }
-                    );
-                    toast.show();
-                    toast._element.addEventListener("hidden.bs.toast", () =>
-                        $container.remove()
-                    );
-
-                    // 刷新商品列表
-                    filterProducts();
-                } else {
-                    throw new Error(result.message);
-                }
-            } catch (err) {
-                console.error("刪除商品錯誤:", err);
-
-                // 顯示錯誤訊息
-                const toastHtml = `
-                    <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                      <div class="d-flex">
-                        <div class="toast-body"><i class="bi bi-exclamation-triangle me-2"></i>刪除失敗：${
-                            err.message || "未知錯誤"
-                        }</div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                      </div>
-                    </div>`;
-                const $container = $(
-                    '<div class="position-fixed bottom-0 end-0 p-3">'
-                )
-                    .append(toastHtml)
-                    .appendTo("body");
-                const toast = new bootstrap.Toast(
-                    $container.find(".toast")[0],
-                    { delay: 5000 }
-                );
-                toast.show();
-                toast._element.addEventListener("hidden.bs.toast", () =>
-                    $container.remove()
-                );
-            } finally {
-                confirmModal.hide();
-                // 移除 modal 元素
-                setTimeout(() => {
-                    $(".modal").last().remove();
-                }, 300);
-            }
-        });
+    // 初始化
+    $(document).ready(() => {
+        loadProducts();
+        bindUIEvents();
     });
 
-    // 新增/更新商品
-    $("#addProduct").on("click", async function () {
+    // 載入商品列表
+    async function loadProducts() {
         try {
-            const formData = new FormData();
-            const isEditMode = $(this).data("edit-mode");
-            const productId = $(this).data("product-id");
-
-            // 設置操作類型
-            formData.append(
-                "action",
-                isEditMode ? "updateProduct" : "addProduct"
-            );
-            if (isEditMode) {
-                formData.append("productId", productId);
-            }
-
-            // 基本信息
-            formData.append("productName", $("#productName").val());
-            formData.append("productType", $("#productType").val());
-            formData.append("productIntro", $("#productIntro").val());
-            formData.append(
-                "productActive",
-                $("#productActive").is(":checked") ? "1" : "0"
-            );
-
-            // 主圖片
-            const mainFile = $("#mainImageInput")[0].files[0];
-            if (mainFile) formData.append("mainImage", mainFile);
-
-            // 詳細圖片
-            const galleryFiles = $("#galleryImageInput")[0].files;
-            for (let i = 0; i < galleryFiles.length; i++) {
-                formData.append("galleryImages[]", galleryFiles[i]);
-                // 確保圖片順序正確傳遞
-                formData.append(`galleryOrders[]`, i + 2); // 主圖片order=1，詳細圖片從2開始
-            }
-
-            // 尺寸與顏色
-            const sizes = [];
-            $(".size-price-block").each(function () {
-                const $blk = $(this);
-                const sizeData = {
-                    size: $blk.find(".size-input").val(),
-                    sizeDescription: $blk.find(".size-desc-input").val(),
-                    price: $blk.find(".price-input").val(),
-                    colors: [],
-                };
-                $blk.find(".color-stock-container .color-row").each(
-                    function () {
-                        const $row = $(this);
-                        const colorVal = $row.find(".color-input").val();
-                        if (colorVal && colorVal.trim()) {
-                            // 分割顏色描述，確保多個顏色分開顯示
-                            const colors = colorVal
-                                .split(",")
-                                .map((c) => c.trim())
-                                .filter((c) => c); // 過濾掉空值
-                            colors.forEach((c) => {
-                                sizeData.colors.push({
-                                    Color: c,
-                                    Stock: $row.find(".stock-input").val() || 0, // 預設庫存為0
-                                });
-                            });
-                            // 在編輯模式下，將顏色值設置回輸入框
-                            if (isEditMode) {
-                                $row.find(".color-input").val(
-                                    colorVal
-                                        .split(",")
-                                        .map((c) => c.trim())
-                                        .join(", ")
-                                );
-                            }
-                        }
-                    }
-                );
-                sizes.push(sizeData);
-            });
-            // 確保尺寸和顏色選項正確傳遞
-            formData.append("sizes", JSON.stringify(sizes));
-
-            let result;
-            if (isEditMode) {
-                // 使用更新商品函數
-                result = await updateProduct(formData);
-            } else {
-                // 使用添加商品函數
-                const res = await fetch(
-                    "/models/backend/functions/product/addProductHandler.php",
-                    {
-                        method: "POST",
-                        body: formData,
-                    }
-                );
-                result = await res.json();
-            }
-
-            if (result.success) {
-                // 顯示成功訊息
-                const toastHtml = `
-                    <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                      <div class="d-flex">
-                        <div class="toast-body"><i class="bi bi-check-circle me-2"></i>${
-                            isEditMode ? "商品已成功更新！" : "商品已成功新增！"
-                        }</div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                      </div>
-                    </div>`;
-                const $container = $(
-                    '<div class="position-fixed bottom-0 end-0 p-3">'
-                )
-                    .append(toastHtml)
-                    .appendTo("body");
-                const toast = new bootstrap.Toast(
-                    $container.find(".toast")[0],
-                    { delay: 3000 }
-                );
-                toast.show();
-                toast._element.addEventListener("hidden.bs.toast", () =>
-                    $container.remove()
-                );
-
-                // 關閉 Modal 並重置
-                $("#addProductModal").modal("hide");
-                resetProductForm();
-
-                // 刷新商品列表
-                filterProducts();
-            } else {
-                throw new Error(
-                    result.message ||
-                        (isEditMode ? "更新商品失敗" : "新增商品失敗")
-                );
-            }
-        } catch (err) {
-            const isEditMode = $(this).data("edit-mode");
-            console.error(isEditMode ? "更新商品錯誤:" : "新增商品錯誤:", err);
-
-            // 顯示錯誤訊息
-            const toastHtml = `
-                <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                  <div class="d-flex">
-                    <div class="toast-body"><i class="bi bi-exclamation-triangle me-2"></i>${
-                        err.message || "操作失敗"
-                    }</div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                  </div>
-                </div>`;
-            const $container = $(
-                '<div class="position-fixed bottom-0 end-0 p-3">'
-            )
-                .append(toastHtml)
-                .appendTo("body");
-            const toast = new bootstrap.Toast($container.find(".toast")[0], {
-                delay: 5000,
-            });
-            toast.show();
-            toast._element.addEventListener("hidden.bs.toast", () =>
-                $container.remove()
-            );
+            const res = await fetch(`${GET_URL}?action=getProducts`);
+            if (!res.ok) throw new Error(res.status);
+            const data = await res.json();
+            renderTable(data.products || []);
+        } catch (e) {
+            showError("載入商品失敗", e);
         }
-    });
-
-    // 重置商品表單
-    function resetProductForm() {
-        // 重置 Modal 標題和按鈕
-        $("#addProductModalLabel").text("新增商品");
-        $("#addProduct")
-            .text("新增商品")
-            .removeData("edit-mode")
-            .removeData("product-id");
-
-        // 清空表單數據
-        $("#productName").val("");
-        $("#productType").val("");
-        $("#productIntro").val("");
-        $("#productActive").prop("checked", false);
-        $("#statusText").text("下架");
-
-        // 重置圖片
-        $("#mainImagePreview").attr("src", "").hide();
-        $("#uploadMainImage").show();
-        $("#mainImageInput").val("");
-        $("#galleryImagesPreview").empty();
-        $("#galleryImageInput").val("");
-
-        // 重置尺寸和顏色選項
-        $("#sizePriceContainer").empty();
-        $("#addSizeRow").trigger("click");
     }
 
-    // Modal 關閉時重置表單
-    $("#addProductModal").on("hidden.bs.modal", function () {
-        resetProductForm();
-    });
+    // 綁定 UI 事件
+    function bindUIEvents() {
+        $body
+            .on("click", ".delete-product", handleDelete)
+            .on("click", ".edit-product", handleEdit)
+            .on("change", "#productActive", updateStatusText)
+            .on("click", "#addProduct", handleAddOrUpdate)
+            .on("click", "#addSizeRow", addSizeRow)
+            .on("click", ".remove-size-btn", removeSizeRow)
+            .on("click", ".add-color-btn", addColorRow)
+            .on("click", ".remove-color-btn", removeColorRow)
+            .on("click", "#uploadMainImage", () => $("#mainImageInput").click())
+            .on("change", "#mainImageInput", previewMainImage)
+            .on("click", "#addGalleryImage", () =>
+                $("#galleryImageInput").click()
+            )
+            .on("change", "#galleryImageInput", previewGalleryImages);
 
-    // 主圖片預覽
-    $("#uploadMainImage").on("click", () => $("#mainImageInput").click());
-    $("#mainImageInput").on("change", function (e) {
+        $("#filterType, #filterStatus").on("change", filterProducts);
+        $("#searchProduct").on("input", filterProducts);
+    }
+
+    // 渲染商品表格
+    function renderTable(products) {
+        $tableBody.empty();
+        if (!products.length) {
+            return $tableBody.append(
+                '<tr><td colspan="6" class="text-center">暫無商品資料</td></tr>'
+            );
+        }
+        products.forEach((p) => $tableBody.append(createRow(p)));
+    }
+
+    // 建立表格每列
+    function createRow(p) {
+        return `
+        <tr>
+          <td>${p.ProductID}</td>
+          <td>${p.ProductName}</td>
+          <td>${p.Type}</td>
+          <td>${p.TotalStock}</td>
+          <td><span class="badge bg-${
+              p.isActive == 1 ? "success" : "secondary"
+          }">${p.isActive == 1 ? "上架" : "下架"}</span></td>
+          <td>
+            <div class="btn-group">
+              <button class="btn btn-sm btn-outline-primary edit-product" data-id="${
+                  p.ProductID
+              }"><i class="bi bi-pencil"></i></button>
+              <button class="btn btn-sm btn-outline-danger delete-product" data-id="${
+                  p.ProductID
+              }"><i class="bi bi-trash"></i></button>
+            </div>
+          </td>
+        </tr>`;
+    }
+
+    // 顯示/隱藏狀態文字
+    function updateStatusText() {
+        $("#statusText").text($(this).is(":checked") ? "上架" : "下架");
+    }
+
+    // 刪除商品處理
+    async function handleDelete() {
+        const id = $(this).data("id");
+        if (!id || !confirm("確定要刪除此商品嗎？此操作無法撤銷。")) return;
+        try {
+            const fd = new FormData();
+            fd.append("action", "deleteProduct");
+            fd.append("productId", id);
+            const res = await fetch(API_BASE, { method: "POST", body: fd });
+            if (!res.ok) throw new Error(res.status);
+            const result = await res.json();
+            if (!result.success) throw new Error(result.message);
+            showToast("商品已成功刪除！", "success");
+            loadProducts();
+        } catch (e) {
+            showError("刪除失敗", e);
+        }
+    }
+
+    // 編輯商品處理
+    async function handleEdit() {
+        const id = $(this).data("id");
+        if (!id) return;
+        try {
+            const res = await fetch(`${GET_URL}?action=getProduct&id=${id}`);
+            if (!res.ok) throw new Error(res.status);
+            const { product } = await res.json();
+            fillForm(product);
+            new bootstrap.Modal($("#addProductModal")).show();
+        } catch (e) {
+            showError("獲取商品詳情失敗", e);
+        }
+    }
+
+    // 新增或更新商品
+    async function handleAddOrUpdate() {
+        const isEdit = !!$addBtn.data("edit-mode");
+        const fd = collectFormData(isEdit);
+        try {
+            const res = await fetch(API_BASE, { method: "POST", body: fd });
+            if (!res.ok) throw new Error(res.status);
+            const result = await res.json();
+            if (!result.success) throw new Error(result.message);
+            showToast(
+                isEdit ? "商品已成功更新！" : "商品已成功新增！",
+                "success"
+            );
+            $("#addProductModal").modal("hide");
+            resetForm();
+            loadProducts();
+        } catch (e) {
+            showError("操作失敗", e);
+        }
+    }
+
+    // 篩選商品
+    async function filterProducts() {
+        const params = new URLSearchParams();
+        const type = $("#filterType").val();
+        const status = $("#filterStatus").val();
+        const search = $("#searchProduct").val();
+        if (type) params.append("type", type);
+        if (status) params.append("status", status);
+        if (search) params.append("search", search);
+        try {
+            const res = await fetch(`${API_BASE}?action=filter&${params}`);
+            if (!res.ok) throw new Error(res.status);
+            const data = await res.json();
+            renderTable(data.products || []);
+        } catch (e) {
+            showError("篩選失敗", e);
+        }
+    }
+
+    // 填入表單資料
+    function fillForm(p) {
+        $("#addProductModalLabel").text("編輯商品");
+        $addBtn
+            .text("更新商品")
+            .data({ "edit-mode": true, "product-id": p.ProductID });
+        $("#productName").val(p.ProductName);
+        $("#productType").val(p.Type);
+        $("#productIntro").val(p.Introdution);
+        $("#productActive").prop("checked", p.isActive == 1);
+        $("#statusText").text(p.isActive == 1 ? "上架" : "下架");
+        if (p.mainImage) {
+            $("#mainImagePreview").attr("src", p.mainImage).show();
+            $("#uploadMainImage").hide();
+        } else {
+            $("#mainImagePreview").hide();
+            $("#uploadMainImage").show();
+        }
+
+        // 處理畫廊圖片
+        $("#galleryImagesPreview").empty();
+        if (p.galleryImage && p.galleryImage.length > 0) {
+            p.galleryImage.forEach((img) => {
+                $("<img>")
+                    .attr("src", img)
+                    .addClass("img-thumbnail")
+                    .css({ width: "100px", height: "100px", margin: "4px" })
+                    .appendTo("#galleryImagesPreview");
+            });
+        } else {
+            $("#galleryImagesPreview").html(
+                '<div class="text-muted">暫無詳細圖片</div>'
+            );
+        }
+        // 清空並填尺寸與顏色
+        $("#sizePriceContainer").empty();
+        if (p.sizeOptions && p.sizeOptions.length > 0) {
+            const groupedSizes = p.sizeOptions.reduce((acc, opt) => {
+                const key = `${opt.Size}-${opt.SizeDescription}-${opt.Price}`;
+                if (!acc[key]) {
+                    acc[key] = {
+                        Size: opt.Size,
+                        SizeDescription: opt.SizeDescription,
+                        Price: opt.Price,
+                        colors: [],
+                    };
+                }
+                acc[key].colors.push({ Color: opt.Color, Stock: opt.Stock });
+                return acc;
+            }, {});
+
+            Object.values(groupedSizes).forEach((sizeGroup) => {
+                let colorsHtml = "";
+                sizeGroup.colors.forEach((colorOpt, index) => {
+                    // 第一個顏色行顯示標籤，後續的不顯示
+                    const showLabels = index === 0;
+                    colorsHtml += createColorRowHtml(
+                        showLabels,
+                        colorOpt.Color,
+                        colorOpt.Stock,
+                        sizeGroup.colors.length === 1 && showLabels
+                    );
+                });
+
+                const sizePriceHtml = `
+                    <div class="card mb-3 size-price-block">
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">尺寸</label>
+                                    <input type="number" class="form-control size-input" placeholder="尺寸" value="${sizeGroup.Size}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">尺寸描述</label>
+                                    <input type="text" class="form-control size-desc-input" placeholder="尺寸描述" value="${sizeGroup.SizeDescription}">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">價格</label>
+                                    <input type="number" class="form-control price-input" placeholder="價格" value="${sizeGroup.Price}">
+                                </div>
+                                <div class="col-md-3 text-end">
+                                    <button type="button" class="btn btn-outline-danger remove-size-btn"><i class="bi bi-trash"></i> 刪除</button>
+                                </div>
+                            </div>
+                            <div class="mt-3">
+                                <button type="button" class="btn btn-outline-primary add-color-btn"><i class="bi bi-plus"></i> 添加顏色</button>
+                                <div class="color-stock-container mt-2">
+                                    ${colorsHtml}
+                                </div>
+                            </div>
+                        </div>
+                    </div>`;
+                $("#sizePriceContainer").append(sizePriceHtml);
+            });
+        } else {
+            addSizeRow(); // 如果沒有 sizeOptions，則添加一個空的
+        }
+    }
+
+    // 重置表單
+    function resetForm() {
+        $("#addProductModalLabel").text("新增商品");
+        $addBtn.text("新增商品").removeData("edit-mode product-id");
+        $("#addProductForm")[0].reset();
+        $("#statusText").text("下架");
+        $("#mainImagePreview").hide();
+        $("#uploadMainImage").show();
+        $("#galleryImagesPreview").empty();
+        $("#sizePriceContainer").empty();
+        addSizeRow();
+    }
+
+    // 收集表單資料
+    function collectFormData(isEdit) {
+        const fd = new FormData();
+        fd.append("action", isEdit ? "updateProduct" : "addProduct");
+        if (isEdit) fd.append("productId", $addBtn.data("product-id"));
+        fd.append("productName", $("#productName").val());
+        fd.append("productType", $("#productType").val());
+        fd.append("productIntro", $("#productIntro").val());
+        fd.append(
+            "productActive",
+            $("#productActive").is(":checked") ? "1" : "0"
+        );
+        const mainFile = $("#mainImageInput")[0].files[0];
+        if (mainFile) fd.append("mainImage", mainFile);
+        Array.from($("#galleryImageInput")[0].files).forEach((file, i) => {
+            fd.append("galleryImages[]", file);
+            fd.append("galleryOrders[]", i + 2);
+        });
+        const productOptions = [];
+        $(".size-price-block").each(function () {
+            const $sizeBlock = $(this);
+            const size = $sizeBlock.find(".size-input").val();
+            const sizeDescription = $sizeBlock.find(".size-desc-input").val();
+            const price = $sizeBlock.find(".price-input").val();
+
+            $sizeBlock.find(".color-row").each(function () {
+                const $colorBlock = $(this);
+                const color = $colorBlock.find(".color-input").val().trim();
+                const stock = $colorBlock.find(".stock-input").val() || 0;
+
+                if (size && color) {
+                    // 確保尺寸和顏色都有值
+                    productOptions.push({
+                        Size: size,
+                        SizeDescription: sizeDescription,
+                        Price: price,
+                        Color: color,
+                        Stock: stock,
+                    });
+                }
+            });
+        });
+        fd.append("sizes", JSON.stringify(productOptions)); // 後端接收的key仍為 "sizes"
+        return fd;
+    }
+
+    // 預覽主圖
+    function previewMainImage(e) {
         const file = e.target.files[0];
         if (!file) return;
         const reader = new FileReader();
@@ -303,495 +331,151 @@ $(document).ready(function () {
             $("#uploadMainImage").hide();
         };
         reader.readAsDataURL(file);
-    });
+    }
 
-    // 詳細圖片選擇
-    $("#addGalleryImage").on("click", () => $("#galleryImageInput").click());
-    $("#galleryImageInput").on("change", function (e) {
+    // 預覽畫廊圖
+    function previewGalleryImages(e) {
         const files = e.target.files;
-        const $preview = $("#galleryImagesPreview").empty();
-        for (let i = 0; i < files.length; i++) {
+        const $pv = $("#galleryImagesPreview").empty();
+        Array.from(files).forEach((f, i) => {
             const reader = new FileReader();
             reader.onload = (ev) => {
-                const $img = $("<img>")
+                $("<img>")
                     .attr("src", ev.target.result)
                     .addClass("img-thumbnail")
                     .css({ width: "100px", height: "100px", margin: "4px" })
                     .attr("draggable", true)
-                    .data("index", i);
-                $preview.append($img);
+                    .data("index", i)
+                    .appendTo($pv);
             };
-            reader.readAsDataURL(files[i]);
-        }
-        // 初始化拖曳排序
-        $preview.sortable({
+            reader.readAsDataURL(f);
+        });
+        $pv.sortable({
             items: "img",
-            stop: function (event, ui) {
-                // 更新圖片順序
-                const newOrder = [];
-                $preview.find("img").each(function (index) {
-                    newOrder.push($(this).data("index"));
-                });
-                // 重新排序files數組
-                const sortedFiles = [];
-                newOrder.forEach((index) => {
-                    sortedFiles.push(files[index]);
-                });
-                // 更新files數組
-                const dataTransfer = new DataTransfer();
-                sortedFiles.forEach((file) => dataTransfer.items.add(file));
-                e.target.files = dataTransfer.files;
+            stop: (evt, ui) => {
+                const order = $pv
+                    .find("img")
+                    .map((_, img) => $(img).data("index"))
+                    .get();
+                const dt = new DataTransfer();
+                order.forEach((idx) => dt.items.add(files[idx]));
+                e.target.files = dt.files;
             },
         });
-    });
+    }
 
-    // 動態新增／刪除尺寸區塊
-    $("#addSizeRow").on("click", function () {
-        const $tpl = $(`
+    // 動態新增尺寸區塊
+    function addSizeRow() {
+        const tpl = `
             <div class="card mb-3 size-price-block">
-              <div class="card-body">
-                <div class="row g-3">
-                  <div class="col-md-3">
-                    <label class="form-label">尺寸</label>
-                    <input type="number" class="form-control size-input" placeholder="尺寸">
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">尺寸描述</label>
-                    <input type="text" class="form-control size-desc-input" placeholder="尺寸描述">
-                  </div>
-                  <div class="col-md-3">
-                    <label class="form-label">價格</label>
-                    <input type="number" class="form-control price-input" placeholder="價格">
-                  </div>
-                  <div class="col-md-3 text-end">
-                    <button type="button" class="btn btn-outline-danger remove-size-btn">
-                      <i class="bi bi-trash"></i> 刪除
-                    </button>
-                  </div>
-                </div>
-                <div class="mt-3">
-                  <button type="button" class="btn btn-outline-primary add-color-btn">
-                    <i class="bi bi-plus"></i> 添加顏色
-                  </button>
-                  <div class="color-stock-container mt-2">
-                    <div class="mb-2 color-row">
-                      <div class="row g-2">
-                        <div class="col-md-6">
-                            <input type="text" class="form-control color-input" placeholder="顏色描述">
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <label class="form-label">尺寸</label>
+                            <input type="number" class="form-control size-input" placeholder="尺寸">
                         </div>
-                        <div class="col-md-4">
-                            <input type="number" class="form-control stock-input" placeholder="庫存">
+                        <div class="col-md-3">
+                            <label class="form-label">尺寸描述</label>
+                            <input type="text" class="form-control size-desc-input" placeholder="尺寸描述">
                         </div>
-                        <div class="col-md-2">
-                            <button type="button" class="btn btn-sm w-100 btn-outline-danger remove-color-btn" disabled>
-                            <i class="bi bi-trash"></i> 刪除
-                            </button>
+                        <div class="col-md-3">
+                            <label class="form-label">價格</label>
+                            <input type="number" class="form-control price-input" placeholder="價格">
                         </div>
-                      </div>
+                        <div class="col-md-3 text-end">
+                            <button type="button" class="btn btn-outline-danger remove-size-btn"><i class="bi bi-trash"></i> 刪除</button>
+                        </div>
                     </div>
-                  </div>
+                    <div class="row mt-3">
+                        <div class="col-12">
+                            <button type="button" class="btn btn-outline-primary add-color-btn"><i class="bi bi-plus"></i> 添加顏色</button>
+                            <div class="color-stock-container mt-3">
+                                ${createColorRowHtml(true, "", "", true)} 
+                            </div>
+                        </div>
+                    </div>
                 </div>
-              </div>
-            </div>
-        `);
-        $("#sizePriceContainer").append($tpl);
-    });
-
-    // 事件代理：刪除尺寸
-    $(document).on("click", ".remove-size-btn", function () {
-        if ($(".size-price-block").length > 1) {
-            $(this).closest(".size-price-block").remove();
-        }
-    });
-
-    // 新增顏色
-    $(document).on("click", ".add-color-btn", function () {
-        const $container = $(this).siblings(".color-stock-container");
-        const $row = $(`
-      <div class="mb-2 color-row">
-        <div class="row g-2">
-          <div class="col-md-6">
-            <input type="text" class="form-control color-input" placeholder="顏色描述">
-          </div>
-          <div class="col-md-4">
-            <input type="number" class="form-control stock-input" placeholder="庫存">
-          </div>
-          <div class="col-md-2">
-            <button type="button" class="btn btn-sm w-100 btn-outline-danger remove-color-btn">
-              <i class="bi bi-trash"></i> 刪除
-            </button>
-          </div>
-        </div>
-      </div>
-    `);
-        $container.append($row);
-
-        // 加完以後，看看到底有幾行，若超過 1 行就啟用所有刪除按鈕
-        const count = $container.children(".color-row").length;
-        $container.find(".remove-color-btn").prop("disabled", count <= 1);
-    });
-
-    // 刪除顏色
-    $(document).on("click", ".remove-color-btn", function () {
-        const $container = $(this).closest(".color-stock-container");
-        const $thisRow = $(this).closest(".color-row");
-
-        // 只有超過 1 行時才允許刪除
-        if ($container.children(".color-row").length > 1) {
-            $thisRow.remove();
-        }
-
-        // 刪除後重新計算剩餘行數，若只剩 1 行就 disable 所有刪除按鈕
-        const remaining = $container.children(".color-row").length;
-        $container.find(".remove-color-btn").prop("disabled", remaining <= 1);
-    });
-
-    // 上架狀態顯示文字
-    $("#productActive").on("change", function () {
-        $("#statusText").text($(this).is(":checked") ? "上架" : "下架");
-    });
-
-    // 編輯商品事件處理
-    $(document).on("click", ".edit-product", async function () {
-        const productId = $(this).data("id");
-        if (!productId) return;
-
-        try {
-            // 獲取商品詳情
-            const res = await fetch(
-                `api/product.php?action=getProduct&id=${productId}`
-            );
-            const result = await res.json();
-
-            if (!result.success) {
-                throw new Error(result.message || "獲取商品詳情失敗");
-            }
-
-            const product = result.product;
-
-            // 修改 Modal 標題和按鈕
-            $("#addProductModalLabel").text("編輯商品");
-            $("#addProduct")
-                .text("更新商品")
-                .data("edit-mode", true)
-                .data("product-id", productId);
-
-            // 填充表單數據
-            $("#productName").val(product.ProductName);
-            $("#productType").val(product.Type);
-            $("#productIntro").val(product.Introdution);
-            $("#productActive").prop("checked", product.isActive == 1);
-            $("#statusText").text(product.isActive == 1 ? "上架" : "下架");
-
-            // 顯示主圖片預覽
-            if (product.mainImage) {
-                $("#mainImagePreview")
-                    .attr("src", `${product.mainImage}`)
-                    .show();
-                $("#uploadMainImage").hide();
-            } else {
-                $("#mainImagePreview").hide();
-                $("#uploadMainImage").show();
-            }
-
-            // 清空並填充畫廊圖片
-            $("#galleryImagesPreview").empty();
-            if (product.galleryImages && product.galleryImages.length > 0) {
-                product.galleryImages.forEach((img) => {
-                    const $img = $("<img>")
-                        .attr("src", `${img.url}`)
-                        .addClass("img-thumbnail")
-                        .css({ width: "100px", height: "100px", margin: "4px" })
-                        .attr("draggable", true);
-                    $("#galleryImagesPreview").append($img);
-                });
-            }
-
-            // 清空並填充尺寸和顏色選項
-            $("#sizePriceContainer").empty();
-            if (product.sizeOptions && product.sizeOptions.length > 0) {
-                product.sizeOptions.forEach((sizeOption) => {
-                    // 解析顏色陣列：把後端回傳的 "Colors" 字串拆成陣列
-                    const colorLabels = sizeOption.Colors
-                        ? sizeOption.Colors.split(",")
-                        : [];
-
-                    // 建立尺寸區塊
-                    const $sizeBlock = $(`
-                        <div class="card mb-3 size-price-block">
-                          <div class="card-body">
-                            <div class="row g-3">
-                              <div class="col-md-3">
-                                <label class="form-label">尺寸</label>
-                                <input type="number" class="form-control size-input" placeholder="尺寸" value="${
-                                    sizeOption.Size
-                                }">
-                              </div>
-                              <div class="col-md-3">
-                                <label class="form-label">尺寸描述</label>
-                                <input type="text" class="form-control size-desc-input" placeholder="尺寸描述" value="${
-                                    sizeOption.SizeDescription || ""
-                                }">
-                              </div>
-                              <div class="col-md-3">
-                                <label class="form-label">價格</label>
-                                <input type="number" class="form-control price-input" placeholder="價格" value="${
-                                    sizeOption.Price
-                                }">
-                              </div>
-                              <div class="col-md-3 text-end">
-                                <button type="button" class="btn btn-outline-danger remove-size-btn">
-                                  <i class="bi bi-trash"></i> 刪除
-                                </button>
-                              </div>
-                            </div>
-                            <div class="mt-3">
-                              <button type="button" class="btn btn-outline-primary add-color-btn">
-                                <i class="bi bi-plus"></i> 添加顏色
-                              </button>
-                              <div class="color-stock-container mt-2"></div>
-                            </div>
-                          </div>
-                        </div>
-                    `);
-
-                    // 填充顏色與庫存
-                    const $colorContainer = $sizeBlock.find(
-                        ".color-stock-container"
-                    );
-                    if (
-                        Array.isArray(sizeOption.colors) &&
-                        sizeOption.colors.length
-                    ) {
-                        // 為每個顏色選項創建一行
-                        sizeOption.colors.forEach((colorOption, idx) => {
-                            // 使用對應的顏色標籤，如果索引超出範圍則使用空字符串
-                            const colorLabel =
-                                idx < colorLabels.length
-                                    ? colorLabels[idx].trim()
-                                    : "";
-
-                            const $colorRow = $(`
-                                <div class="mb-2 color-row">
-                                  <div class="row g-2">
-                                    <div class="col-md-6">
-                                      <input type="text" class="form-control color-input" placeholder="顏色描述" value="${colorLabel}">
-                                    </div>
-                                    <div class="col-md-4">
-                                      <input type="number" class="form-control stock-input" placeholder="庫存" value="${
-                                          colorOption.Stock || ""
-                                      }">
-                                    </div>
-                                    <div class="col-md-2">
-                                      <button type="button" class="btn btn-sm w-100 btn-outline-danger remove-color-btn">
-                                        <i class="bi bi-trash"></i> 刪除
-                                      </button>
-                                    </div>
-                                  </div>
-                                </div>
-                            `);
-                            $colorContainer.append($colorRow);
-                        });
-                    } else {
-                        // 最少保留一行空白
-                        $colorContainer.append(`
-                            <div class="mb-2 color-row">
-                              <div class="row g-2">
-                                <div class="col-md-6">
-                                  <input type="text" class="form-control color-input" placeholder="顏色描述">
-                                </div>
-                                <div class="col-md-4">
-                                  <input type="number" class="form-control stock-input" placeholder="庫存">
-                                </div>
-                                <div class="col-md-2">
-                                  <button type="button" class="btn btn-sm w-100 btn-outline-danger remove-color-btn" disabled>
-                                    <i class="bi bi-trash"></i> 刪除
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                        `);
-                    }
-                    // 更新刪除按鈕狀態
-                    const remaining =
-                        $colorContainer.children(".color-row").length;
-                    $colorContainer
-                        .find(".remove-color-btn")
-                        .prop("disabled", remaining <= 1);
-
-                    // 把尺寸區塊加回容器
-                    $("#sizePriceContainer").append($sizeBlock);
-                });
-            } else {
-                // 如果沒有任何尺寸，先觸發「新增尺寸」按鈕
-                $("#addSizeRow").trigger("click");
-            }
-
-            // 打開 Modal
-            const modal = new bootstrap.Modal($("#addProductModal"));
-            modal.show();
-        } catch (err) {
-            console.error("獲取商品詳情錯誤:", err);
-
-            // 顯示錯誤訊息
-            const toastHtml = `
-                <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                  <div class="d-flex">
-                    <div class="toast-body"><i class="bi bi-exclamation-triangle me-2"></i>獲取商品詳情失敗：${
-                        err.message || "未知錯誤"
-                    }</div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                  </div>
-                </div>`;
-            const $container = $(
-                '<div class="position-fixed bottom-0 end-0 p-3">'
-            )
-                .append(toastHtml)
-                .appendTo("body");
-            const toast = new bootstrap.Toast($container.find(".toast")[0], {
-                delay: 5000,
-            });
-            toast.show();
-            toast._element.addEventListener("hidden.bs.toast", () =>
-                $container.remove()
-            );
-        }
-    });
-
-    // 篩選商品
-    $("#filterType, #filterStatus").on("change", filterProducts);
-    $("#searchProduct").on("input", filterProducts);
-
-    async function filterProducts() {
-        const type = $("#filterType").val();
-        const status = $("#filterStatus").val();
-        const search = $("#searchProduct").val();
-        try {
-            const res = await fetch(
-                `/api/product.php?action=filter&type=${encodeURIComponent(
-                    type
-                )}&status=${encodeURIComponent(
-                    status
-                )}&search=${encodeURIComponent(search)}`
-            );
-            const data = await res.json();
-            if (!data.success) throw new Error(data.message);
-            const $tbody = $("table tbody").empty();
-            if (data.products.length === 0) {
-                return $tbody.append(
-                    '<tr><td colspan="6" class="text-center">暫無符合條件的商品</td></tr>'
-                );
-            }
-            data.products.forEach((p) => {
-                $tbody.append(`
-                    <tr>
-                      <td>${p.ProductID}</td>
-                      <td>${p.ProductName}</td>
-                      <td>${p.Type}</td>
-                      <td>${p.TotalStock}</td>
-                      <td>${
-                          p.isActive == 1
-                              ? '<span class="badge bg-success">上架</span>'
-                              : '<span class="badge bg-secondary">下架</span>'
-                      }</td>
-                      <td>
-                        <div class="btn-group">
-                          <button class="btn btn-sm btn-outline-primary edit-product" data-id="${
-                              p.ProductID
-                          }"><i class="bi bi-pencil"></i></button>
-                          <button class="btn btn-sm btn-outline-danger delete-product" data-id="${
-                              p.ProductID
-                          }" title="刪除商品"><i class="bi bi-trash"></i> 刪除</button>
-                        </div>
-                      </td>
-                    </tr>
-                `);
-            });
-            renderPagination(
-                data.currentPage,
-                data.totalPages,
-                type,
-                status,
-                search
-            );
-        } catch (err) {
-            console.error("篩選失敗:", err);
-        }
-    }
-
-    // 儲存商品（示範 Toast）
-    $("#saveProduct").on("click", function () {
-        const toastHtml = `
-            <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
-              <div class="d-flex">
-                <div class="toast-body"><i class="bi bi-check-circle me-2"></i>商品已成功保存！</div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-              </div>
             </div>`;
-        const $container = $('<div class="position-fixed bottom-0 end-0 p-3">')
-            .append(toastHtml)
-            .appendTo("body");
-        const toast = new bootstrap.Toast($container.find(".toast")[0], {
-            delay: 3000,
-        });
-        toast.show();
-        toast._element.addEventListener("hidden.bs.toast", () =>
-            $container.remove()
-        );
-        $("#addProductModal").modal("hide");
-    });
-});
-
-// 刪除商品函數
-async function deleteProduct(productId) {
-    try {
-        // 使用 FormData 來傳遞數據
-        const formData = new FormData();
-        formData.append("action", "delete");
-        formData.append("productId", productId);
-
-        // 發送請求到後端處理文件
-        const res = await fetch(
-            "models/backend/functions/product/deleteProductHandler.php",
-            {
-                method: "POST",
-                body: formData,
-            }
-        );
-        const result = await res.json();
-        return result;
-    } catch (error) {
-        console.error("刪除商品錯誤:", error);
-        return {
-            success: false,
-            message: error.message || "刪除商品時發生錯誤",
-        };
+        $("#sizePriceContainer").append(tpl);
     }
-}
 
-// 更新商品函數
-async function updateProduct(formData) {
-    try {
-        // 確保 formData 包含 action 參數
-        if (!formData.has("action")) {
-            formData.append("action", "updateProduct");
-        }
-
-        // 發送請求到後端處理文件
-        const res = await fetch(
-            "models/backend/functions/product/updateProductHandler.php",
-            {
-                method: "POST",
-                body: formData,
-            }
-        );
-        const result = await res.json();
-        return result;
-    } catch (error) {
-        console.error("更新商品錯誤:", error);
-        return {
-            success: false,
-            message: error.message || "更新商品時發生錯誤",
-        };
+    // 建立顏色行 HTML
+    function createColorRowHtml(
+        showLabels = true,
+        color = "",
+        stock = "",
+        disableRemove = false
+    ) {
+        const colorLabelHtml = showLabels
+            ? '<label class="form-label">顏色</label>'
+            : "";
+        const stockLabelHtml = showLabels
+            ? '<label class="form-label">庫存</label>'
+            : "";
+        return `
+            <div class="mb-2 color-row">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        ${colorLabelHtml}
+                        <input type="text" class="form-control color-input" placeholder="顏色描述" value="${color}">
+                    </div>
+                    <div class="col-md-4">
+                        ${stockLabelHtml}
+                        <input type="number" class="form-control stock-input" placeholder="庫存" value="${stock}">
+                    </div>
+                    <div class="col-md-2" style="align-self: end;">
+                        <button type="button" class="btn btn-sm w-100 btn-outline-danger remove-color-btn" ${
+                            disableRemove ? "disabled" : ""
+                        }><i class="bi bi-trash"></i> 刪除</button>
+                    </div>
+                </div>
+            </div>`;
     }
-}
+
+    // 移除尺寸區塊
+    function removeSizeRow() {
+        if ($(".size-price-block").length > 1)
+            $(this).closest(".size-price-block").remove();
+    }
+
+    // 新增顏色行
+    function addColorRow() {
+        const $ct = $(this).siblings(".color-stock-container");
+        // 新增的顏色行不顯示標籤，且可以刪除 (disableRemove = false)
+        $ct.append(createColorRowHtml(false, "", "", false));
+        // 更新所有該尺寸區塊內的刪除按鈕狀態
+        const $colorRows = $ct.find(".color-row");
+        $colorRows
+            .find(".remove-color-btn")
+            .prop("disabled", $colorRows.length <= 1);
+    }
+
+    // 移除顏色行
+    function removeColorRow() {
+        const $ct = $(this).closest(".color-stock-container");
+        if ($ct.children().length > 1) $(this).closest(".color-row").remove();
+        $ct.find(".remove-color-btn").prop(
+            "disabled",
+            $ct.children().length <= 1
+        );
+    }
+
+    // 顯示吐司
+    function showToast(msg, type) {
+        const $toast = $(
+            `<div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true"><div class="d-flex"><div class="toast-body"><i class="bi ${
+                type === "success"
+                    ? "bi-check-circle"
+                    : "bi-exclamation-triangle"
+            } me-2"></i>${msg}</div><button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>`
+        );
+        $toast.appendTo($toastContainer);
+        new bootstrap.Toast($toast[0], { delay: 3000 }).show();
+    }
+
+    // 顯示錯誤
+    function showError(title, err) {
+        console.error(title, err);
+        showToast(`${title}：${err.message || err}`, "danger");
+    }
+})(jQuery);

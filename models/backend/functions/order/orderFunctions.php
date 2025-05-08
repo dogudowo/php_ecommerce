@@ -23,28 +23,6 @@ if (basename($_SERVER['SCRIPT_NAME']) === 'orderFunctions.php') {
     }
 }
 
-// 獲取所有訂單
-function getAllOrders()
-{
-    $pdo = getDBConnection();
-    try {
-        $stmt = $pdo->prepare("SELECT o.OrderID, o.OrderDate, o.Status, m.Name as MemberName, 
-                              COUNT(oi.OptionID) as ItemCount, 
-                              SUM(op.Price * oi.Quantity) as TotalAmount 
-                              FROM Orders o 
-                              JOIN Member m ON o.MembersID = m.MemberID 
-                              JOIN OrderItem oi ON o.OrderID = oi.OrderID 
-                              JOIN Options op ON oi.OptionID = op.OptionID 
-                              GROUP BY o.OrderID 
-                              ORDER BY o.OrderID DESC");
-        $stmt->execute();
-        return $stmt->fetchAll(PDO::FETCH_ASSOC);
-    } catch (PDOException $e) {
-        error_log("Error fetching orders: " . $e->getMessage());
-        return [];
-    }
-}
-
 function findProductImageUrl(int $productId): string
 {
     // 伺服器上的實體路徑

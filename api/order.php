@@ -35,6 +35,18 @@ if ($method === 'GET' && $action === 'getMemberOrders') {
     exit;
 }
 
+// 篩選訂單
+if ($method === 'GET' && $action === 'filter') {
+    $status = $_GET['status'] ?? null;
+    $dateFrom = $_GET['dateFrom'] ?? null;
+    $dateTo = $_GET['dateTo'] ?? null;
+    $search = $_GET['search'] ?? null;
+
+    $orders = filterOrders($status, $dateFrom, $dateTo, $search);
+    echo json_encode(['success' => true, 'orders' => $orders]);
+    exit;
+}
+
 if ($method === 'POST' && $action === 'createOrder') {
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
     foreach (['memberId', 'name', 'phone', 'address'] as $key) {
@@ -129,6 +141,48 @@ function getStatusText(string $status): string
 
 /* =========  資料存取  ========= */
 
+
+function filterOrders(?string $status = null, ?string $dateFrom = null, ?string $dateTo = null, ?string $search = null, ?PDO $pdo = null): array
+{
+    $pdo = $pdo ?? db_connect();
+
+    $sql = "SELECT o.OrderID, m.Name AS MemberName, o.OrderDate, 
+                   COUNT(oi.OrderID) AS ItemCount, SUM(oi.Quantity * opt.Price) AS TotalAmount, o.Status
+            FROM Orders o
+            JOIN Member m ON o.MembersID = m.MemberID
+            LEFT JOIN OrderItem oi ON o.OrderID = oi.OrderID
+            LEFT JOIN Options opt ON oi.OptionID = opt.OptionID
+            WHERE 1=1";
+
+    $params = [];
+
+    if ($status) {
+        $sql .= " AND o.Status = :status";
+        $params['status'] = $status;
+    }
+
+    if ($dateFrom) {
+        $sql .= " AND o.OrderDate >= :dateFrom";
+        $params['dateFrom'] = $dateFrom;
+    }
+
+    if ($dateTo) {
+        $sql .= " AND o.OrderDate <= :dateTo";
+        $params['dateTo'] = $dateTo;
+    }
+
+    if ($search) {
+        $sql .= " AND (o.OrderID LIKE :search OR m.Name LIKE :search)";
+        $params['search'] = "%$search%";
+    }
+
+    $sql .= " GROUP BY o.OrderID";
+
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
+
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
 function getOrderDetails(int $orderId, ?PDO $pdo = null): array
 {

@@ -10,15 +10,8 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
 // 引入訂單管理函數
 require_once __DIR__ . '/functions/order/orderFunctions.php';
 
-// 嘗試獲取訂單列表
-try {
-    $orders = getAllOrders();
-    $statusList = getOrderStatusList();
-} catch (Exception $e) {
-    error_log("Error in order manager: " . $e->getMessage());
-    $orders = [];
-    $statusList = getOrderStatusList();
-}
+// 獲取訂單狀態列表
+$statusList = getOrderStatusList();
 ?>
 
 <div class="container-fluid p-0">
@@ -79,44 +72,14 @@ try {
                             <th>操作</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php if (empty($orders)): ?>
-                            <tr>
-                                <td colspan="7" class="text-center">暫無訂單數據</td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach ($orders as $order): ?>
-                                <tr>
-                                    <td><?php echo htmlspecialchars($order['OrderID']); ?></td>
-                                    <td><?php echo htmlspecialchars($order['MemberName']); ?></td>
-                                    <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($order['OrderDate']))); ?></td>
-                                    <td><?php echo htmlspecialchars($order['ItemCount']); ?></td>
-                                    <td>$<?php echo htmlspecialchars(number_format($order['TotalAmount'], 0)); ?></td>
-                                    <td>
-                                        <span class="badge <?php echo getOrderStatusClass($order['Status']); ?>">
-                                            <?php echo htmlspecialchars($statusList[$order['Status']] ?? $order['Status']); ?>
-                                        </span>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-outline-primary view-order"
-                                                data-id="<?php echo htmlspecialchars($order['OrderID']); ?>">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-success update-status"
-                                                data-id="<?php echo htmlspecialchars($order['OrderID']); ?>"
-                                                data-status="<?php echo htmlspecialchars($order['Status']); ?>">
-                                                <i class="bi bi-arrow-repeat"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-info print-order"
-                                                data-id="<?php echo htmlspecialchars($order['OrderID']); ?>">
-                                                <i class="bi bi-printer"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                    <tbody id="orderTableBody">
+                        <tr>
+                            <td colspan="7" class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">載入中...</span>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
@@ -188,6 +151,80 @@ try {
 </div>
 
 <script>
+    // 初始化載入訂單
+    $(document).ready(function () {
+        loadOrders();
+
+        // 篩選器事件
+        $('#filterStatus, #filterDateFrom, #filterDateTo, #searchOrder').on('change input', function () {
+            loadOrders();
+        });
+    });
+
+    // 載入訂單函數
+    async function loadOrders() {
+        try {
+            const status = $('#filterStatus').val();
+            const dateFrom = $('#filterDateFrom').val();
+            const dateTo = $('#filterDateTo').val();
+            const search = $('#searchOrder').val();
+
+            const params = new URLSearchParams();
+            if (status) params.append('status', status);
+            if (dateFrom) params.append('dateFrom', dateFrom);
+            if (dateTo) params.append('dateTo', dateTo);
+            if (search) params.append('search', search);
+
+            const response = await fetch(`api/order.php?action=filter&${params.toString()}`);
+            const data = await response.json();
+
+            if (!data.success) throw new Error(data.message);
+
+            const $tbody = $('#orderTableBody').empty();
+            if (data.orders.length === 0) {
+                $tbody.append('<tr><td colspan="7" class="text-center">暫無符合條件的訂單</td></tr>');
+                return;
+            }
+
+            data.orders.forEach((order) => {
+                $tbody.append(`
+                    <tr>
+                        <td>${order.OrderID}</td>
+                        <td>${order.MemberName}</td>
+                        <td>${order.OrderDate ? new Date(order.OrderDate).toLocaleDateString() : ''}</td>
+                        <td>${order.ItemCount}</td>
+                        <td>$${order.TotalAmount ? order.TotalAmount.toLocaleString() : 0}</td>
+                        <td>
+                            <span class="badge ${getOrderStatusClass(order.Status)}">
+                                ${order.Status}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-sm btn-outline-primary view-order"
+                                    data-id="${order.OrderID}">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-success update-status"
+                                    data-id="${order.OrderID}"
+                                    data-status="${order.Status}">
+                                    <i class="bi bi-arrow-repeat"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-info print-order"
+                                    data-id="${order.OrderID}">
+                                    <i class="bi bi-printer"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `);
+            });
+        } catch (error) {
+            console.error('載入訂單錯誤:', error);
+            $('#orderTableBody').html('<tr><td colspan="7" class="text-center text-danger">載入訂單失敗</td></tr>');
+        }
+    }
+
     // 使用PHP函數獲取訂單詳情
     async function getOrderDetailsFromBackend(orderId) {
         try {

@@ -9,14 +9,6 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
 
 // 引入會員功能
 require_once __DIR__ . '/functions/member/memberFunction.php';
-
-// 嘗試獲取會員列表
-try {
-    $members = getAllMembers();
-} catch (Exception $e) {
-    error_log("Error in member manager: " . $e->getMessage());
-    $members = [];
-}
 ?>
 
 <div class="container-fluid p-0">
@@ -99,50 +91,14 @@ try {
                             <th>操作</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <?php if (empty($members)): ?>
-                            <tr>
-                                <td colspan="8" class="text-center">暫無會員數據</td>
-                            </tr>
-                        <?php else: ?>
-                            <?php foreach ($members as $member): ?>
-                                <tr data-member-id="<?php echo htmlspecialchars($member['MemberID']); ?>">
-                                    <td><?php echo htmlspecialchars($member['MemberID']); ?></td>
-                                    <td><?php echo htmlspecialchars($member['Name']); ?></td>
-                                    <td><?php echo htmlspecialchars($member['Email']); ?></td>
-                                    <td><?php echo htmlspecialchars($member['Phone']); ?></td>
-                                    <td><?php echo htmlspecialchars($member['City']); ?></td>
-                                    <td><?php echo htmlspecialchars($member['OrderCount']); ?></td>
-                                    <td>
-                                        <?php if ($member['IsAdmin'] == 1): ?>
-                                            <span class="badge bg-success">員工</span>
-                                        <?php elseif ($member['IsAdmin'] == 2): ?>
-                                            <span class="badge bg-primary">管理員</span>
-                                        <?php else: ?>
-                                            <span class="badge bg-secondary">一般會員</span>
-                                        <?php endif; ?>
-                                    </td>
-                                    <td>
-                                        <div class="btn-group">
-                                            <button type="button" class="btn btn-sm btn-outline-primary view-member"
-                                                data-id="<?php echo htmlspecialchars($member['MemberID']); ?>">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            <button type="button" class="btn btn-sm btn-outline-warning edit-member"
-                                                data-id="<?php echo htmlspecialchars($member['MemberID']); ?>">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
-                                            <?php if (($member['IsAdmin'] == 0) || ($_SESSION['user_role'] == 'admin' && $member['IsAdmin'] == 1)): ?>
-                                                <button type="button" class="btn btn-sm btn-outline-danger delete-member"
-                                                    data-id="<?php echo htmlspecialchars($member['MemberID']); ?>">
-                                                    <i class="bi bi-trash"></i>
-                                                </button>
-                                            <?php endif; ?>
-                                        </div>
-                                    </td>
-                                </tr>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
+                    <tbody id="memberTableBody">
+                        <tr>
+                            <td colspan="8" class="text-center">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">載入中...</span>
+                                </div>
+                            </td>
+                        </tr>
                     </tbody>
                 </table>
             </div>
