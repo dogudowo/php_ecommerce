@@ -137,6 +137,12 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                 const result = await res.json();
                 showToast(result.success ? (result.message || '系統設置已成功更新！') : (result.message || '系統設置更新失敗。'),
                     result.success ? 'success' : 'danger');
+
+                if (result.success) {
+                    // 派發自定義事件通知 footer 更新
+                    const event = new CustomEvent('socialLinksUpdated');
+                    document.dispatchEvent(event);
+                }
             } catch (err) {
                 console.error(err);
                 showToast('保存系統設置時發生錯誤，請稍後再試。', 'danger');

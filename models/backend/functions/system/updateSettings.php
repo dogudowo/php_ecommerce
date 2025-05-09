@@ -1,8 +1,8 @@
 <?php
 header('Content-Type: application/json');
 
-// Define the path to the footer.php file
-$footerFilePath = __DIR__ . '/../../../../fixedFile/footer.php';
+// Define the path to the social_links.json file
+$socialLinksJsonPath = __DIR__ . '/../../../../fixedFile/social_links.json';
 
 // Function to send JSON response
 function sendJsonResponse($success, $message = '', $data = [])
@@ -11,41 +11,27 @@ function sendJsonResponse($success, $message = '', $data = [])
     exit;
 }
 
-// Function to extract social links from footer content
-function extractSocialLinks($content)
-{
-    $links = [];
-    // Regex to find href attribute within <a> tags with specific IDs
-    $patterns = [
-        'line' => '/<a[^>]*id=["\']lineLinkIcon["\'][^>]*href=["\']([^"\']+)["\']/i',
-        'facebook' => '/<a[^>]*id=["\']facebookLinkIcon["\'][^>]*href=["\']([^"\']+)["\']/i',
-        'instagram' => '/<a[^>]*id=["\']instagramLinkIcon["\'][^>]*href=["\']([^"\']+)["\']/i',
-        'youtube' => '/<a[^>]*id=["\']youtubeLinkIcon["\'][^>]*href=["\']([^"\']+)["\']/i',
-    ];
 
-    foreach ($patterns as $key => $pattern) {
-        if (preg_match($pattern, $content, $matches)) {
-            $links[$key] = htmlspecialchars_decode($matches[1], ENT_QUOTES);
-        }
-    }
-    return $links;
-}
 
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
     if (isset($_GET['action']) && $_GET['action'] === 'getSystemSettings') {
-        if (!file_exists($footerFilePath)) {
-            sendJsonResponse(false, 'footer.php 文件不存在。');
+        if (!file_exists($socialLinksJsonPath)) {
+            // If the JSON file doesn't exist, create it with default empty values
+            $defaultLinks = ['line' => '', 'facebook' => '', 'instagram' => '', 'youtube' => ''];
+            if (file_put_contents($socialLinksJsonPath, json_encode($defaultLinks, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) === false) {
+                sendJsonResponse(false, '無法建立 social_links.json 檔案。');
+            }
+            sendJsonResponse(true, 'social_links.json 不存在，已建立預設檔案。', $defaultLinks);
         }
-        $footerContent = file_get_contents($footerFilePath);
-        if ($footerContent === false) {
-            sendJsonResponse(false, '無法讀取 footer.php。');
+        $socialLinksJson = file_get_contents($socialLinksJsonPath);
+        if ($socialLinksJson === false) {
+            sendJsonResponse(false, '無法讀取 social_links.json。');
         }
-        $currentLinks = extractSocialLinks($footerContent);
-        if (empty($currentLinks)) {
-            sendJsonResponse(true, '無法從 footer.php 提取連結，將使用預設值。', ['line' => '', 'facebook' => '', 'instagram' => '', 'youtube' => '']);
-        } else {
-            sendJsonResponse(true, '成功獲取系統設定。', $currentLinks);
+        $currentLinks = json_decode($socialLinksJson, true);
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            sendJsonResponse(false, 'social_links.json 內容格式錯誤。');
         }
+        sendJsonResponse(true, '成功獲取系統設定。', $currentLinks);
     } else {
         sendJsonResponse(false, '無效的 GET 請求操作。');
     }
@@ -74,57 +60,30 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
-    if (!file_exists($footerFilePath)) {
-        sendJsonResponse(false, 'footer.php 文件不存在。');
+    // Ensure the config directory exists and is writable
+    $configDir = dirname($socialLinksJsonPath);
+    if (!is_dir($configDir)) {
+        if (!mkdir($configDir, 0755, true)) {
+            sendJsonResponse(false, '無法建立 config 目錄。');
+        }
     }
-
-    if (!is_writable($footerFilePath)) {
-        sendJsonResponse(false, 'footer.php 文件不可寫。請檢查文件權限。');
+    if (!is_writable($configDir)) {
+        sendJsonResponse(false, 'config 目錄不可寫。');
     }
-
-    $backupFilePath = $footerFilePath . '.bak.' . date('YmdHis');
-    if (!copy($footerFilePath, $backupFilePath)) {
-        error_log('無法創建 footer.php 的備份文件: ' . $backupFilePath);
-        // Not a fatal error for the user, but should be logged.
+    if (file_exists($socialLinksJsonPath) && !is_writable($socialLinksJsonPath)) {
+        sendJsonResponse(false, 'social_links.json 文件不可寫。請檢查文件權限。');
     }
 
     try {
-        $footerContent = file_get_contents($footerFilePath);
-        if ($footerContent === false) {
-            sendJsonResponse(false, '無法讀取 footer.php 文件內容。');
-        }
-
-        // Update links using regex, targeting the href attribute of <a> tags with specific IDs
-        $patterns = [
-            'line' => '/(<a[^>]*id=["\']lineLinkIcon["\'][^>]*href=["\'])([^"\']*)(["\'])/i',
-            'facebook' => '/(<a[^>]*id=["\']facebookLinkIcon["\'][^>]*href=["\'])([^"\']*)(["\'])/i',
-            'instagram' => '/(<a[^>]*id=["\']instagramLinkIcon["\'][^>]*href=["\'])([^"\']*)(["\'])/i',
-            'youtube' => '/(<a[^>]*id=["\']youtubeLinkIcon["\'][^>]*href=["\'])([^"\']*)(["\'])/i',
-        ];
-
-        foreach ($patterns as $key => $pattern) {
-            if (isset($socialLinks[$key])) {
-                $footerContent = preg_replace(
-                    $pattern,
-                    '$1' . htmlspecialchars($socialLinks[$key], ENT_QUOTES, 'UTF-8') . '$3',
-                    $footerContent
-                );
-            }
-        }
-
-        if (file_put_contents($footerFilePath, $footerContent) === false) {
-            if (file_exists($backupFilePath)) {
-                copy($backupFilePath, $footerFilePath); // Attempt to restore
-            }
-            sendJsonResponse(false, '無法寫入更新到 footer.php。');
+        // Write the new social links to social_links.json
+        $jsonData = json_encode($socialLinks, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
+        if (file_put_contents($socialLinksJsonPath, $jsonData) === false) {
+            sendJsonResponse(false, '無法寫入更新到 social_links.json。');
         }
         sendJsonResponse(true, '社群連結已成功更新！');
 
     } catch (Exception $e) {
-        if (file_exists($backupFilePath)) {
-            copy($backupFilePath, $footerFilePath); // Attempt to restore
-        }
-        error_log('更新 footer.php 時發生錯誤: ' . $e->getMessage());
+        error_log('更新 social_links.json 時發生錯誤: ' . $e->getMessage());
         sendJsonResponse(false, '更新社群連結時發生內部錯誤。');
     }
     exit;
