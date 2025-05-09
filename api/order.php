@@ -133,7 +133,7 @@ function getStatusText(string $status): string
     return [
         'Completed' => '已完成',
         'Pending' => '處理中',
-        'Shipping' => '運送中',
+        'Shipping' => '已送達',
         'Cancel' => '已取消',
         'abnormal' => '異常',
     ][$status] ?? $status;
@@ -270,8 +270,13 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                     <div class="text-center fw-bold fs-5 text-danger">總計 $<?= number_format($detail['total_amount']) ?></div>
                     <div class="d-flex align-items-center">
                         <?php if ($status === 'Pending'): ?>
-                            <button class="btn btn-success btn-sm" data-action="pay"
-                                data-order-id="<?= $order['OrderID'] ?>">付款</button>
+                            <?php if ($order['Status'] === 'Shipping'): ?>
+                                <button class="btn btn-success btn-sm" data-action="pay"
+                                    data-order-id="<?= $order['OrderID'] ?>">付款</button>
+                            <?php elseif ($order['Status'] === 'Pending'): ?>
+                                <button class="btn btn-secondary btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>"
+                                    disabled>付款</button>
+                            <?php endif; ?>
                         <?php else: ?>
                             <button class="btn btn-primary btn-sm me-2" data-action="reorder"
                                 data-order-id="<?= $order['OrderID'] ?>">再買一次</button>
@@ -310,7 +315,7 @@ function createOrder(int $memberId, string $name, string $phone, string $address
 
         // 3. 建立訂單(只包含必要欄位)
         $stmt = $pdo->prepare("
-            INSERT INTO Orders (OrderID, MembersID, Status, Note, OrderDate)
+            INSERT INTO Orders (OrderID, MembersID, Status, Notes, OrderDate)
             VALUES (:orderId, :memberId, 'Pending', :note, NOW())
         ");
         $stmt->execute([
