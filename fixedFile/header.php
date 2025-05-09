@@ -120,4 +120,4 @@
             </div>
         </div>
     </div>
-    <div class="container-fulid pt-5 mt-3 flex-grow-1">
+    <div class="container-fluid pt-5 mt-3 flex-grow-1 mx-auto" style="max-width: 1920px;">
