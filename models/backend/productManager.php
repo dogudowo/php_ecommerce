@@ -228,7 +228,7 @@ $products = [];
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button type="button" class="btn btn-primary" id="addProduct">新增商品</button>
+                    <button type="button" class="btn btn-primary" id="confirmAddProduct">新增商品</button>
                 </div>
             </div>
         </div>
