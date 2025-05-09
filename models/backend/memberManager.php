@@ -16,9 +16,6 @@ require_once __DIR__ . '/functions/member/memberFunction.php';
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3><i class="bi bi-people me-2"></i>會員管理</h3>
         <div>
-            <button type="button" class="btn btn-outline-primary me-2" id="exportMembers">
-                <i class="bi bi-file-earmark-excel me-2"></i>匯出會員資料
-            </button>
             <button type="button" class="btn btn-primary" id="refreshMembers">
                 <i class="bi bi-arrow-clockwise me-2"></i>刷新列表
             </button>
@@ -557,12 +554,6 @@ require_once __DIR__ . '/functions/member/memberFunction.php';
         }
     });
 
-    // 匯出會員資料
-    document.getElementById('exportMembers').addEventListener('click', function () {
-        console.log('匯出會員資料功能尚未實現');
-        // 實際匯出功能將在後續開發中實現
-        alert('匯出功能正在開發中');
-    });
 
     // 刷新會員列表
     document.getElementById('refreshMembers').addEventListener('click', function () {

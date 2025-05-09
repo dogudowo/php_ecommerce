@@ -19,9 +19,7 @@ $statusList = getOrderStatusList();
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3><i class="bi bi-cart-check me-2"></i>購買訂單管理</h3>
         <div>
-            <button type="button" class="btn btn-outline-primary me-2" id="exportOrders">
-                匯出訂單
-            </button>
+
         </div>
     </div>
 
@@ -104,12 +102,6 @@ $statusList = getOrderStatusList();
                     </div>
                     <!-- 訂單詳情內容將在這裡動態加載 -->
                     <div id="orderDetailContent"></div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
-                    <button type="button" class="btn btn-primary" id="printOrderDetail">
-                        <i class="bi bi-printer me-2"></i>列印訂單
-                    </button>
                 </div>
             </div>
         </div>
@@ -196,7 +188,7 @@ $statusList = getOrderStatusList();
                         <td>$${order.TotalAmount ? order.TotalAmount.toLocaleString() : 0}</td>
                         <td>
                             <span class="badge ${getOrderStatusClass(order.Status)}">
-                                ${order.Status}
+                                ${getOrderStatusName(order.Status)}
                             </span>
                         </td>
                         <td>
@@ -209,10 +201,6 @@ $statusList = getOrderStatusList();
                                     data-id="${order.OrderID}"
                                     data-status="${order.Status}">
                                     <i class="bi bi-arrow-repeat"></i>
-                                </button>
-                                <button type="button" class="btn btn-sm btn-outline-info print-order"
-                                    data-id="${order.OrderID}">
-                                    <i class="bi bi-printer"></i>
                                 </button>
                             </div>
                         </td>
@@ -548,23 +536,6 @@ $statusList = getOrderStatusList();
             saveButton.innerHTML = originalText;
             saveButton.disabled = false;
         }
-    });
-
-    // 列印訂單
-    document.querySelectorAll('.print-order').forEach(button => {
-        button.addEventListener('click', function () {
-            const orderId = this.getAttribute('data-id');
-            console.log('列印訂單：', orderId);
-            // 實際列印功能將在後續開發中實現
-            alert('列印功能正在開發中');
-        });
-    });
-
-    // 匯出訂單
-    document.getElementById('exportOrders').addEventListener('click', function () {
-        console.log('匯出訂單功能尚未實現');
-        // 實際匯出功能將在後續開發中實現
-        alert('匯出功能正在開發中');
     });
 
 </script>

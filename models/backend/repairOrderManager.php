@@ -75,9 +75,7 @@ try {
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3><i class="bi bi-tools me-2"></i>維修訂單管理</h3>
         <div>
-            <button type="button" class="btn btn-outline-primary me-2" id="exportRepairs">
-                匯出維修訂單
-            </button>
+
         </div>
     </div>
 
