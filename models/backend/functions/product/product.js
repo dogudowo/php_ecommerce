@@ -1,5 +1,5 @@
 (function ($) {
-    const API_BASE = "api/backend/product.php";
+    const API_BASE = "api/product.php";
     const GET_URL = "models/backend/functions/product/getProducts.php";
     const $body = $("body");
     const $tableBody = $("#productTableBody");
@@ -33,7 +33,7 @@
             .on("click", ".delete-product", handleDelete)
             .on("click", ".edit-product", handleEdit)
             .on("change", "#productActive", updateStatusText)
-            .on("click", "#addProduct", handleAddOrUpdate)
+            // .on("click", "#addProduct", handleAddOrUpdate) // 改由 modal 的按鈕觸發
             .on("click", "#addSizeRow", addSizeRow)
             .on("click", ".remove-size-btn", removeSizeRow)
             .on("click", ".add-color-btn", addColorRow)
@@ -47,6 +47,19 @@
 
         $("#filterType, #filterStatus").on("change", filterProducts);
         $("#searchProduct").on("input", filterProducts);
+
+        // 處理模態框的確認按鈕點擊事件
+        $("#confirmAddProduct").on("click", handleAddOrUpdate);
+
+        // 當點擊觸發新增商品模態框的按鈕時，重置表單
+        $('button[data-bs-target="#addProductModal"]').on("click", function () {
+            // 檢查是否是明確的「新增」操作，而不是編輯後的「更新」
+            // 可以通過檢查按鈕文字或一個特定的 data-attribute
+            // 這裡我們假設觸發新增的按鈕上沒有 edit-mode data
+            if (!$(this).data("edit-mode")) {
+                resetForm();
+            }
+        });
     }
 
     // 渲染商品表格
@@ -125,7 +138,8 @@
 
     // 新增或更新商品
     async function handleAddOrUpdate() {
-        const isEdit = !!$addBtn.data("edit-mode");
+        // isEdit 的判斷改為檢查 modal 內的按鈕狀態或 form 的狀態
+        const isEdit = !!$("#confirmAddProduct").data("edit-mode");
         const fd = collectFormData(isEdit);
         try {
             const res = await fetch(API_BASE, { method: "POST", body: fd });
@@ -136,8 +150,8 @@
                 isEdit ? "商品已成功更新！" : "商品已成功新增！",
                 "success"
             );
-            $("#addProductModal").modal("hide");
-            resetForm();
+            bootstrap.Modal.getInstance($("#addProductModal")[0]).hide(); // 使用 Bootstrap 5 的方式隱藏 modal
+            // resetForm(); // 在成功後重置表單，確保下次打開是乾淨的
             loadProducts();
         } catch (e) {
             showError("操作失敗", e);
@@ -165,8 +179,9 @@
 
     // 填入表單資料
     function fillForm(p) {
+        resetForm(); // 編輯前先重置表單，確保清空舊狀態
         $("#addProductModalLabel").text("編輯商品");
-        $addBtn
+        $("#confirmAddProduct") // 更新 modal 內的確認按鈕
             .text("更新商品")
             .data({ "edit-mode": true, "product-id": p.ProductID });
         $("#productName").val(p.ProductName);
@@ -265,21 +280,29 @@
     // 重置表單
     function resetForm() {
         $("#addProductModalLabel").text("新增商品");
-        $addBtn.text("新增商品").removeData("edit-mode product-id");
+        $("#confirmAddProduct") // 更新 modal 內的確認按鈕
+            .text("新增商品")
+            .removeData("edit-mode product-id");
         $("#addProductForm")[0].reset();
+        $("#productActive").prop("checked", false); // 明確設定未勾選
         $("#statusText").text("下架");
-        $("#mainImagePreview").hide();
+        $("#mainImagePreview").attr("src", "#").hide(); // 清空預覽圖片並隱藏
+        $("#mainImageInput").val(""); // 清空檔案選擇
         $("#uploadMainImage").show();
-        $("#galleryImagesPreview").empty();
+        $("#galleryImagesPreview")
+            .empty()
+            .html('<div class="text-muted">暫無詳細圖片</div>'); // 清空畫廊並顯示提示
+        $("#galleryImageInput").val(""); // 清空檔案選擇
         $("#sizePriceContainer").empty();
-        addSizeRow();
+        addSizeRow(); // 添加一個預設的空尺寸行
     }
 
     // 收集表單資料
     function collectFormData(isEdit) {
         const fd = new FormData();
         fd.append("action", isEdit ? "updateProduct" : "addProduct");
-        if (isEdit) fd.append("productId", $addBtn.data("product-id"));
+        if (isEdit)
+            fd.append("productId", $("#confirmAddProduct").data("product-id")); // 從 modal 確認按鈕獲取 product-id
         fd.append("productName", $("#productName").val());
         fd.append("productType", $("#productType").val());
         fd.append("productIntro", $("#productIntro").val());

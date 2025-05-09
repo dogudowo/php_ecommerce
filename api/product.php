@@ -362,8 +362,303 @@ function getProduct($productId)
     }
 }
 
+// 處理圖片上傳的輔助函數
+function handleImageUpload($fileInputName, $productId, $imageType = 'main', $galleryOrder = null)
+{
+    if (isset($_FILES[$fileInputName]) && $_FILES[$fileInputName]['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = __DIR__ . "/../imgs/products/{$productId}/";
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        $fileName = '';
+        $fileExtension = strtolower(pathinfo($_FILES[$fileInputName]['name'], PATHINFO_EXTENSION));
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif'];
+
+        if (!in_array($fileExtension, $allowedExtensions)) {
+            return ['success' => false, 'message' => '不支援的圖片格式。'];
+        }
+
+        if ($imageType === 'main') {
+            $fileName = "main.{$fileExtension}";
+            // 刪除舊的主圖片 (不同副檔名的情況)
+            foreach ($allowedExtensions as $ext) {
+                if (file_exists($uploadDir . "main.{$ext}") && "main.{$ext}" !== $fileName) {
+                    unlink($uploadDir . "main.{$ext}");
+                }
+            }
+        } elseif ($imageType === 'gallery' && $galleryOrder !== null) {
+            $fileName = "gallery-" . $galleryOrder . ".{$fileExtension}";
+            // 刪除舊的畫廊圖片 (相同順序但不同副檔名的情況)
+            foreach ($allowedExtensions as $ext) {
+                if (file_exists($uploadDir . "gallery-" . $galleryOrder . ".{$ext}") && "gallery-" . $galleryOrder . ".{$ext}" !== $fileName) {
+                    unlink($uploadDir . "gallery-" . $galleryOrder . ".{$ext}");
+                }
+            }
+        } else {
+            return ['success' => false, 'message' => '無效的圖片類型或順序。'];
+        }
+
+        $destination = $uploadDir . $fileName;
+        if (move_uploaded_file($_FILES[$fileInputName]['tmp_name'], $destination)) {
+            return ['success' => true, 'filePath' => "imgs/products/{$productId}/{$fileName}"];
+        } else {
+            return ['success' => false, 'message' => '圖片上傳失敗。'];
+        }
+    }
+    return ['success' => true, 'message' => '沒有提供圖片或上傳出錯。']; // 沒有檔案不是錯誤，除非是必須的
+}
+
+// 新增商品
+function addProduct($data, $files)
+{
+    $pdo = getDBConnection();
+    try {
+        $pdo->beginTransaction();
+
+        // 手動獲取新的 ProductID
+        $stmtMaxId = $pdo->query("SELECT MAX(ProductID) as max_id FROM Product");
+        $maxIdRow = $stmtMaxId->fetch(PDO::FETCH_ASSOC);
+        $productId = ($maxIdRow && $maxIdRow['max_id'] !== null) ? (int) $maxIdRow['max_id'] + 1 : 1;
+
+        $stmt = $pdo->prepare("INSERT INTO Product (ProductID, ProductName, Type, Introdution, isActive) VALUES (:id, :name, :type, :intro, :active)");
+        $stmt->execute([
+            ':id' => $productId,
+            ':name' => $data['productName'],
+            ':type' => $data['productType'],
+            ':intro' => $data['productIntro'],
+            ':active' => $data['productActive']
+        ]);
+        // $productId 已經手動設定，不再使用 lastInsertId()
+
+        // 處理主圖片上傳
+        if (isset($files['mainImage'])) {
+            handleImageUpload('mainImage', $productId, 'main');
+        }
+
+        // 處理畫廊圖片上傳
+        if (isset($files['galleryImages'])) {
+            $galleryImages = $files['galleryImages'];
+            $galleryOrders = $data['galleryOrders'] ?? []; // 從 POST 獲取順序
+            if (is_array($galleryImages['name'])) { // 多檔案上傳
+                for ($i = 0; $i < count($galleryImages['name']); $i++) {
+                    $_FILES['currentGalleryImage'] = [
+                        'name' => $galleryImages['name'][$i],
+                        'type' => $galleryImages['type'][$i],
+                        'tmp_name' => $galleryImages['tmp_name'][$i],
+                        'error' => $galleryImages['error'][$i],
+                        'size' => $galleryImages['size'][$i]
+                    ];
+                    // 使用 galleryOrders 陣列中的順序，如果存在且有效
+                    $order = isset($galleryOrders[$i]) ? (int) $galleryOrders[$i] : ($i + 1);
+                    handleImageUpload('currentGalleryImage', $productId, 'gallery', $order);
+                }
+            }
+        }
+
+        // 處理商品選項
+        if (isset($data['sizes'])) {
+            $options = json_decode($data['sizes'], true);
+            if (is_array($options)) {
+                // 手動獲取起始 OptionID
+                $stmtMaxOptId = $pdo->query("SELECT MAX(OptionID) as max_opt_id FROM Options");
+                $maxOptIdRow = $stmtMaxOptId->fetch(PDO::FETCH_ASSOC);
+                $currentOptionId = ($maxOptIdRow && $maxOptIdRow['max_opt_id'] !== null) ? (int) $maxOptIdRow['max_opt_id'] + 1 : 1;
+
+                $stmtOpt = $pdo->prepare("INSERT INTO Options (OptionID, ProductID, Size, SizeDescription, Price, Color, Stock) VALUES (:optid, :pid, :size, :desc, :price, :color, :stock)");
+                foreach ($options as $opt) {
+                    $stmtOpt->execute([
+                        ':optid' => $currentOptionId,
+                        ':pid' => $productId,
+                        ':size' => $opt['Size'],
+                        ':desc' => $opt['SizeDescription'],
+                        ':price' => $opt['Price'],
+                        ':color' => $opt['Color'],
+                        ':stock' => $opt['Stock']
+                    ]);
+                    $currentOptionId++; // 為下一個選項遞增ID
+                }
+            }
+        }
+
+        $pdo->commit();
+        return ['success' => true, 'message' => '商品新增成功', 'productId' => $productId];
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        error_log("Add product error: " . $e->getMessage());
+        return ['success' => false, 'message' => '新增商品失敗: ' . $e->getMessage()];
+    }
+}
+
+// 更新商品
+function updateProduct($data, $files)
+{
+    $pdo = getDBConnection();
+    try {
+        $pdo->beginTransaction();
+        $productId = $data['productId'];
+
+        $stmt = $pdo->prepare("UPDATE Product SET ProductName = :name, Type = :type, Introdution = :intro, isActive = :active WHERE ProductID = :id");
+        $stmt->execute([
+            ':id' => $productId,
+            ':name' => $data['productName'],
+            ':type' => $data['productType'],
+            ':intro' => $data['productIntro'],
+            ':active' => $data['productActive']
+        ]);
+
+        // 處理主圖片上傳
+        if (isset($files['mainImage']) && $files['mainImage']['error'] === UPLOAD_ERR_OK) {
+            handleImageUpload('mainImage', $productId, 'main');
+        }
+
+        // 處理畫廊圖片上傳 - 這部分需要更完善的邏輯來決定是新增、替換還是刪除舊圖片
+        // 簡化處理：如果上傳了新的畫廊圖片，先刪除舊的，再新增新的
+        if (isset($files['galleryImages']) && !empty($files['galleryImages']['name'][0])) {
+            // 刪除舊的畫廊圖片
+            $oldGalleryImages = glob(__DIR__ . "/../imgs/products/{$productId}/gallery-*.{jpg,jpeg,png,gif}", GLOB_BRACE);
+            foreach ($oldGalleryImages as $oldImage) {
+                unlink($oldImage);
+            }
+            // 上傳新的畫廊圖片
+            $galleryImages = $files['galleryImages'];
+            $galleryOrders = $data['galleryOrders'] ?? [];
+            if (is_array($galleryImages['name'])) {
+                for ($i = 0; $i < count($galleryImages['name']); $i++) {
+                    $_FILES['currentGalleryImage'] = [
+                        'name' => $galleryImages['name'][$i],
+                        'type' => $galleryImages['type'][$i],
+                        'tmp_name' => $galleryImages['tmp_name'][$i],
+                        'error' => $galleryImages['error'][$i],
+                        'size' => $galleryImages['size'][$i]
+                    ];
+                    $order = isset($galleryOrders[$i]) ? (int) $galleryOrders[$i] : ($i + 1);
+                    handleImageUpload('currentGalleryImage', $productId, 'gallery', $order);
+                }
+            }
+        }
+
+        // 更新商品選項：先刪除舊的，再新增新的
+        $stmtDelOpt = $pdo->prepare("DELETE FROM Options WHERE ProductID = :pid");
+        $stmtDelOpt->execute([':pid' => $productId]);
+
+        if (isset($data['sizes'])) {
+            $options = json_decode($data['sizes'], true);
+            if (is_array($options)) {
+                // 手動獲取起始 OptionID
+                $stmtMaxOptId = $pdo->query("SELECT MAX(OptionID) as max_opt_id FROM Options");
+                $maxOptIdRow = $stmtMaxOptId->fetch(PDO::FETCH_ASSOC);
+                $currentOptionId = ($maxOptIdRow && $maxOptIdRow['max_opt_id'] !== null) ? (int) $maxOptIdRow['max_opt_id'] + 1 : 1;
+
+                $stmtOpt = $pdo->prepare("INSERT INTO Options (OptionID, ProductID, Size, SizeDescription, Price, Color, Stock) VALUES (:optid, :pid, :size, :desc, :price, :color, :stock)");
+                foreach ($options as $opt) {
+                    $stmtOpt->execute([
+                        ':optid' => $currentOptionId,
+                        ':pid' => $productId,
+                        ':size' => $opt['Size'],
+                        ':desc' => $opt['SizeDescription'],
+                        ':price' => $opt['Price'],
+                        ':color' => $opt['Color'],
+                        ':stock' => $opt['Stock']
+                    ]);
+                    $currentOptionId++; // 為下一個選項遞增ID
+                }
+            }
+        }
+
+        $pdo->commit();
+        return ['success' => true, 'message' => '商品更新成功'];
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        error_log("Update product error: " . $e->getMessage());
+        return ['success' => false, 'message' => '更新商品失敗: ' . $e->getMessage()];
+    }
+}
+
+// 刪除商品
+function deleteProduct($productId)
+{
+    $pdo = getDBConnection();
+    try {
+        $pdo->beginTransaction();
+
+        // 刪除商品選項
+        $stmtOpt = $pdo->prepare("DELETE FROM Options WHERE ProductID = :pid");
+        $stmtOpt->execute([':pid' => $productId]);
+
+        // 刪除商品
+        $stmtProd = $pdo->prepare("DELETE FROM Product WHERE ProductID = :pid");
+        $stmtProd->execute([':pid' => $productId]);
+
+        // 刪除商品圖片目錄 (可選)
+        $productImageDir = __DIR__ . "/../imgs/products/{$productId}";
+        if (is_dir($productImageDir)) {
+            // 簡單遞迴刪除目錄函數
+            function deleteDir($dirPath)
+            {
+                if (!is_dir($dirPath)) {
+                    throw new InvalidArgumentException("$dirPath must be a directory");
+                }
+                if (substr($dirPath, strlen($dirPath) - 1, 1) != '/') {
+                    $dirPath .= '/';
+                }
+                $files = glob($dirPath . '*', GLOB_MARK);
+                foreach ($files as $file) {
+                    if (is_dir($file)) {
+                        deleteDir($file);
+                    } else {
+                        unlink($file);
+                    }
+                }
+                rmdir($dirPath);
+            }
+            try {
+                deleteDir($productImageDir);
+            } catch (Exception $e) {
+                error_log("Error deleting product image directory {$productImageDir}: " . $e->getMessage());
+                // 目錄刪除失敗不應阻止交易提交，但應記錄錯誤
+            }
+        }
+
+        $pdo->commit();
+        return ['success' => true, 'message' => '商品刪除成功'];
+    } catch (Exception $e) {
+        $pdo->rollBack();
+        error_log("Delete product error: " . $e->getMessage());
+        return ['success' => false, 'message' => '刪除商品失敗: ' . $e->getMessage()];
+    }
+}
+
 // API 端點處理
-if (isset($_GET['action'])) {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (!isset($_POST['action'])) {
+        echo json_encode(['success' => false, 'message' => '未指定操作']);
+        exit;
+    }
+    $action = $_POST['action'];
+    switch ($action) {
+        case 'addProduct':
+            // $_POST 包含表單欄位, $_FILES 包含上傳的檔案
+            $result = addProduct($_POST, $_FILES);
+            echo json_encode($result);
+            break;
+        case 'updateProduct':
+            $result = updateProduct($_POST, $_FILES);
+            echo json_encode($result);
+            break;
+        case 'deleteProduct': // 確保 action 名稱與前端一致
+            if (!isset($_POST['productId'])) {
+                echo json_encode(['success' => false, 'message' => '缺少商品ID']);
+                exit;
+            }
+            $result = deleteProduct((int) $_POST['productId']);
+            echo json_encode($result);
+            break;
+        default:
+            echo json_encode(['success' => false, 'message' => '無效的POST操作']);
+    }
+    exit;
+} elseif (isset($_GET['action'])) {
     $action = $_GET['action'];
     switch ($action) {
         case 'getProduct':
@@ -380,27 +675,10 @@ if (isset($_GET['action'])) {
             }
             break;
 
-        case 'updateProduct':
-            if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-                echo json_encode(['success' => false, 'message' => '請使用POST方法']);
-                exit;
-            }
+        // GET 請求的 updateProduct 和 delete 保持原樣或移除，因為我們現在用 POST
+        // case 'updateProduct': ... (此處的 GET 請求邏輯可以考慮移除或修改)
+        // case 'delete': ... (此處的 GET 請求邏輯可以考慮移除或修改)
 
-            // 這裡不再處理更新商品的邏輯，而是返回成功響應
-            // 實際的更新邏輯已經移到 product.js 中
-            echo json_encode(['success' => true]);
-            break;
-
-        case 'delete':
-            if (!isset($_GET['id'])) {
-                echo json_encode(['success' => false, 'message' => '缺少商品ID']);
-                exit;
-            }
-
-            // 這裡不再處理刪除商品的邏輯，而是返回成功響應
-            // 實際的刪除邏輯已經移到 product.js 中
-            echo json_encode(['success' => true]);
-            break;
 
         case 'getProducts':
             $type = $_GET['type'] ?? '';
