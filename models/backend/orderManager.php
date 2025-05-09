@@ -235,15 +235,14 @@ $statusList = getOrderStatusList();
         console.log('篩選訂單功能尚未實現');
     }
 
-    // 查看訂單詳情
-    document.querySelectorAll('.view-order').forEach(button => {
-        button.addEventListener('click', async function () {
-            const orderId = this.getAttribute('data-id');
-            console.log('查看訂單詳情：', orderId);
+    // 查看訂單詳情 (使用事件委派)
+    $(document).on('click', '.view-order', async function () {
+        const orderId = this.getAttribute('data-id');
+        console.log('查看訂單詳情：', orderId);
 
-            try {
-                // 顯示載入中提示
-                document.getElementById('orderDetailContent').innerHTML = `
+        try {
+            // 顯示載入中提示
+            document.getElementById('orderDetailContent').innerHTML = `
                     <div class="d-flex justify-content-center">
                         <div class="spinner-border text-primary" role="status">
                             <span class="visually-hidden">載入中...</span>
@@ -251,41 +250,40 @@ $statusList = getOrderStatusList();
                     </div>
                 `;
 
-                // 顯示模態框
-                const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
-                modal.show();
+            // 顯示模態框
+            const modal = new bootstrap.Modal(document.getElementById('orderDetailModal'));
+            modal.show();
 
-                // 獲取訂單詳情 - 使用後端函數直接獲取
-                const orderId = this.getAttribute('data-id');
-                const orderDetails = await getOrderDetailsFromBackend(orderId);
+            // 獲取訂單詳情 - 使用後端函數直接獲取
+            const orderId = this.getAttribute('data-id');
+            const orderDetails = await getOrderDetailsFromBackend(orderId);
+
+            // 渲染訂單詳情
+            if (orderDetails) {
+                // 移除提示信息
+                document.querySelector('#orderDetailModal .alert-info').style.display = 'none';
 
                 // 渲染訂單詳情
-                if (orderDetails) {
-                    // 移除提示信息
-                    document.querySelector('#orderDetailModal .alert-info').style.display = 'none';
-
-                    // 渲染訂單詳情
-                    renderOrderDetails(orderDetails);
-                } else {
-                    document.getElementById('orderDetailContent').innerHTML = `
+                renderOrderDetails(orderDetails);
+            } else {
+                document.getElementById('orderDetailContent').innerHTML = `
                         <div class="alert alert-danger">
                             <i class="bi bi-exclamation-triangle me-2"></i>獲取訂單詳情失敗
                         </div>
                     `;
-                }
-            } catch (error) {
-                console.error('獲取訂單詳情錯誤：', error);
-                document.getElementById('orderDetailContent').innerHTML = `
+            }
+        } catch (error) {
+            console.error('獲取訂單詳情錯誤：', error);
+            document.getElementById('orderDetailContent').innerHTML = `
                     <div class="alert alert-danger">
                         <i class="bi bi-exclamation-triangle me-2"></i>系統錯誤，請稍後再試
                     </div>
                 `;
-                // 顯示具體錯誤信息（僅在開發環境）
-                if (error.message) {
-                    console.error('錯誤詳情：', error.message);
-                }
+            // 顯示具體錯誤信息（僅在開發環境）
+            if (error.message) {
+                console.error('錯誤詳情：', error.message);
             }
-        });
+        }
     });
 
     // 渲染訂單詳情
@@ -401,21 +399,19 @@ $statusList = getOrderStatusList();
         return statusClasses[status] || 'bg-secondary';
     }
 
-    // 更新訂單狀態
-    document.querySelectorAll('.update-status').forEach(button => {
-        button.addEventListener('click', function () {
-            const orderId = this.getAttribute('data-id');
-            const currentStatus = this.getAttribute('data-status');
-            console.log('更新訂單狀態：', orderId, currentStatus);
+    // 更新訂單狀態 (使用事件委派)
+    $(document).on('click', '.update-status', function () {
+        const orderId = this.getAttribute('data-id');
+        const currentStatus = this.getAttribute('data-status');
+        console.log('更新訂單狀態：', orderId, currentStatus);
 
-            // 設置當前狀態
-            document.getElementById('updateOrderId').value = orderId;
-            document.getElementById('orderStatus').value = currentStatus;
+        // 設置當前狀態
+        document.getElementById('updateOrderId').value = orderId;
+        document.getElementById('orderStatus').value = currentStatus;
 
-            // 顯示模態框
-            const modal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
-            modal.show();
-        });
+        // 顯示模態框
+        const modal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
+        modal.show();
     });
 
     // 保存訂單狀態更新
