@@ -15,11 +15,6 @@ require_once __DIR__ . '/functions/member/memberFunction.php';
     <!-- 會員管理頁面標題 -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3><i class="bi bi-people me-2"></i>會員管理</h3>
-        <div>
-            <button type="button" class="btn btn-primary" id="refreshMembers">
-                <i class="bi bi-arrow-clockwise me-2"></i>刷新列表
-            </button>
-        </div>
     </div>
 
     <!-- 會員篩選區 -->
@@ -554,12 +549,6 @@ require_once __DIR__ . '/functions/member/memberFunction.php';
         }
     });
 
-
-    // 刷新會員列表
-    document.getElementById('refreshMembers').addEventListener('click', function () {
-        console.log('刷新會員列表');
-        loadMembers();
-    });
 
     // 載入會員列表函數
     async function loadMembers() {
