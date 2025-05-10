@@ -16,51 +16,54 @@ $brandInfo = BrandModel::getBrandInfo();
 
 <div class="container text-center my-3 border-bottom border-black d-flex-column justify-content-center">
     <?php foreach ($brandInfo['company_intro'] as $paragraph): ?>
-        <p class="px-2 text-start"><?= $paragraph ?></p>
+        <p class="px-2 text-start mx-0"><?= $paragraph ?></p>
     <?php endforeach; ?>
 </div>
 <div class="container text-center my-3 w-100">
     <h5>以下為歐印代理之品牌</h5>
-    <div class="container">
+    <div class="container m-0 p-0">
         <ul class="nav nav-pills justify-content-center gap-3" id="brandTab" role="tablist">
-            <?php foreach ($brandInfo['brands'] as $brandName => $brandData): ?>
+            <?php foreach ($brandInfo['brands'] as $brandId => $brandData): ?>
                 <li class="nav-item" role="presentation">
-                    <button class="nav-link <?= $brandName === 'LegendWalker' ? 'active' : '' ?>"
-                        id="<?= strtolower($brandName) ?>-tab" data-bs-toggle="pill"
-                        data-bs-target="#<?= strtolower($brandName) ?>Content" type="button" role="tab"
-                        aria-controls="<?= strtolower($brandName) ?>Content"
-                        aria-selected="<?= $brandName === 'LegendWalker' ? 'true' : 'false' ?>"
-                        style="border-radius: 20px;"><?= $brandName ?></button>
+                    <button class="nav-link <?= $brandId === array_key_first($brandInfo['brands']) ? 'active' : '' ?>"
+                        id="<?= strtolower($brandId) ?>-tab" data-bs-toggle="pill"
+                        data-bs-target="#<?= strtolower($brandId) ?>Content" type="button" role="tab"
+                        aria-controls="<?= strtolower($brandId) ?>Content"
+                        aria-selected="<?= $brandId === array_key_first($brandInfo['brands']) ? 'true' : 'false' ?>"
+                        style="border-radius: 20px;"><?= $brandData['name'] ?></button>
                 </li>
             <?php endforeach; ?>
         </ul>
         <div class="tab-content my-3">
-            <?php foreach ($brandInfo['brands'] as $brandName => $brandData): ?>
-                <div class="tab-pane fade <?= $brandName === 'LegendWalker' ? 'show active' : '' ?>"
-                    id="<?= strtolower($brandName) ?>Content" role="tabpanel"
-                    aria-labelledby="<?= strtolower($brandName) ?>-tab">
+            <?php foreach ($brandInfo['brands'] as $brandId => $brandData): ?>
+                <div class="tab-pane fade <?= $brandId === array_key_first($brandInfo['brands']) ? 'show active' : '' ?>"
+                    id="<?= strtolower($brandId) ?>Content" role="tabpanel"
+                    aria-labelledby="<?= strtolower($brandId) ?>-tab">
 
-                    <div class="container d-flix align-items-center">
-                        <?php if (isset($brandData['logos'])): ?>
+                    <div class="container d-flex flex-wrap align-items-center justify-content-center gap-3">
+                        <?php if (!empty($brandData['logos'])): ?>
                             <?php foreach ($brandData['logos'] as $logo): ?>
-                                <img class="img" src="imgs/profile/<?= $logo ?>" alt="<?= $brandName ?>" height="50vh">
+                                <img class="img" src="imgs/brand/<?= $brandId ?>/<?= $logo ?>" alt="<?= $brandId ?>" height="50vh">
                             <?php endforeach; ?>
-                        <?php else: ?>
-                            <img src="imgs/profile/<?= $brandData['logo'] ?>" alt="<?= $brandName ?>" height="40px">
                         <?php endif; ?>
                     </div>
 
-                    <div class="container text-start d-flix my-3 w-100">
+                    <div class="container text-start my-3 col-lg-9">
                         <?php foreach ($brandData['description'] as $paragraph): ?>
                             <p><?= $paragraph ?></p>
                         <?php endforeach; ?>
                     </div>
 
-                    <?php if (isset($brandData['images'])): ?>
-                        <div class="container d-flex flex-column align-items-center">
-                            <?php foreach ($brandData['images'] as $image): ?>
-                                <img class="img" src="imgs/profile/<?= $image ?>" alt="">
-                            <?php endforeach; ?>
+                    <?php if (!empty($brandData['images'])): ?>
+                        <div class="container">
+                            <h5 class="text-center">最新資訊</h5>
+                            <div class="row">
+                                <?php foreach ($brandData['images'] as $image): ?>
+                                    <div class="col-md-4 mb-3 d-flex flex-column">
+                                        <img class="img-fluid rounded" src="imgs/<?= $image ?>" alt="<?= $brandId ?>最新資訊">
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
                         </div>
                     <?php endif; ?>
                 </div>
