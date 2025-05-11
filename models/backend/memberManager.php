@@ -1,5 +1,9 @@
 <?php
 require_once __DIR__ . '/../../api/error_handler.php';
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+$currentRole = isset($_SESSION['user_role']) ? (int) $_SESSION['user_role'] : 0;
 // 會員管理文件
 
 // 防止直接訪問此文件
@@ -174,6 +178,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
 </div>
 
 <script>
+    const currentUserRole = <?php echo $currentRole; ?>; // 強制轉換為整數類型
     // 會員篩選功能
     document.getElementById('filterCity').addEventListener('change', filterMembers);
     document.getElementById('filterAdmin').addEventListener('change', filterMembers);
@@ -191,7 +196,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
 
             try {
                 // 使用AJAX獲取會員詳細資料
-                const response = await fetch(`models/backend/functions/member/getMemberDetails.php?id=${memberId}`);
+                const response = await fetch(`models/backend/functions/member/getMemberDetails.php?id=${memberId}&use_role=1`);
                 if (!response.ok) throw new Error('獲取會員資料失敗');
 
                 const data = await response.json();
@@ -231,8 +236,8 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                             <div class="row mb-2">
                                 <div class="col-md-4"><strong>會員類型：</strong></div>
                                 <div class="col-md-8">
-                                    ${member.IsAdmin == 0 ? '<span class="badge bg-secondary">一般會員</span>' :
-                        member.IsAdmin == 1 ? '<span class="badge bg-success">員工</span>' :
+                                    ${member.user_role == 0 ? '<span class="badge bg-secondary">一般會員</span>' :
+                        member.user_role == 1 ? '<span class="badge bg-success">員工</span>' :
                             '<span class="badge bg-primary">管理員</span>'}
                                 </div>
                             </div>
@@ -290,7 +295,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
 
         try {
             // 使用AJAX獲取會員詳細資料
-            const response = await fetch(`models/backend/functions/member/getMemberDetails.php?id=${memberId}`);
+            const response = await fetch(`models/backend/functions/member/getMemberDetails.php?id=${memberId}&use_role=1`);
             if (!response.ok) throw new Error('獲取會員資料失敗');
 
             const data = await response.json();
@@ -589,9 +594,11 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                         <td>${member.OrderCount !== undefined ? member.OrderCount : 'N/A'}</td>
                         <td>${memberType}</td>
                         <td class="btn-group">
-                            <button class="btn btn-sm btn-outline-info view-member " data-id="${member.MemberID}" title="查看詳情"><i class="bi bi-eye"></i></button>
-                            <button class="btn btn-sm btn-outline-primary edit-member " data-id="${member.MemberID}" title="編輯"><i class="bi bi-pencil-square"></i></button>
-                            <button class="btn btn-sm btn-outline-danger delete-member" data-id="${member.MemberID}" title="刪除"><i class="bi bi-trash"></i></button>
+                            <button class="btn btn-sm btn-outline-info view-member" data-id="${member.MemberID}" title="查看詳情"><i class="bi bi-eye"></i></button>
+                            ${currentUserRole == 2 ? `
+                                <button class="btn btn-sm btn-outline-primary edit-member" data-id="${member.MemberID}" title="編輯"><i class="bi bi-pencil-square"></i></button>
+                                <button class="btn btn-sm btn-outline-danger delete-member" data-id="${member.MemberID}" title="刪除"><i class="bi bi-trash"></i></button>
+                            ` : ''}
                         </td>
                     `;
                     tableBody.appendChild(row);
@@ -635,7 +642,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
         const memberId = this.getAttribute('data-id');
         console.log('查看會員詳情：', memberId);
         try {
-            const response = await fetch(`models/backend/functions/member/getMemberDetails.php?id=${memberId}`);
+            const response = await fetch(`models/backend/functions/member/getMemberDetails.php?id=${memberId}&use_role=1`);
             if (!response.ok) throw new Error('獲取會員資料失敗');
             const data = await response.json();
             if (!data.success) {
@@ -668,7 +675,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
         const memberId = this.getAttribute('data-id');
         console.log('編輯會員資料：', memberId);
         try {
-            const response = await fetch(`models/backend/functions/member/getMemberDetails.php?id=${memberId}`);
+            const response = await fetch(`models/backend/functions/member/getMemberDetails.php?id=${memberId}&use_role=1`);
             if (!response.ok) throw new Error('獲取會員資料失敗');
             const data = await response.json();
             const member = data.member;
