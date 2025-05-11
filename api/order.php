@@ -150,7 +150,7 @@ function filterOrders(?string $status = null, ?string $dateFrom = null, ?string 
     $sql = "SELECT o.OrderID, m.Name AS MemberName, o.OrderDate, 
                    COUNT(oi.OrderID) AS ItemCount, SUM(oi.Quantity * opt.Price) AS TotalAmount, o.Status
             FROM Orders o
-            JOIN Member m ON o.MembersID = m.MemberID
+            JOIN Member m ON o.MemberID = m.MemberID
             LEFT JOIN OrderItem oi ON o.OrderID = oi.OrderID
             LEFT JOIN Options opt ON oi.OptionID = opt.OptionID
             WHERE 1=1";
@@ -191,17 +191,15 @@ function getOrderDetails(int $orderId, ?PDO $pdo = null): array
 
     // 1. 明細
     $detailSql = <<<SQL
-        SELECT  p.ProductName,
-                p.ProductID,
-                opt.Color,
-                opt.Size,
-                opt.SizeDescription,
-                opt.Price,
+        SELECT  orec.ProductName,
+                orec.ProductType as ProductID,
+                orec.ProductColor as Color,
+                orec.ProductSize as Size,
+                orec.ProductPrice as Price,
                 oi.Quantity,
-                (opt.Price * oi.Quantity) AS Subtotal
+                (orec.ProductPrice * oi.Quantity) AS Subtotal
         FROM    OrderItem oi
-        JOIN    Options   opt ON oi.OptionID = opt.OptionID
-        JOIN    Product   p   ON opt.ProductID = p.ProductID
+        JOIN    OrderRecord orec ON oi.OrderRecordID = orec.RecordID
         WHERE   oi.OrderID = :orderId
     SQL;
     $stmt = $pdo->prepare($detailSql);
@@ -252,16 +250,12 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                 </div>
                 <?php
                 foreach ($detail['items'] as $item): ?>
-                    <div class="d-flex align-items-center mb-2">
-                        <div class="me-3" style="width:60px;height:60px;">
-                            <img src="<?= $item['image'] ?>" alt="<?= $item['ProductName'] ?>" class="img-fluid"
-                                style="max-height:100%;">
-                        </div>
+                    <div class="d-flex align-items-center mb-2 border-top mt-2 pt-2">
                         <div>
-                            <p class="mb-1"><?= $item['ProductName'] ?></p>
-                            <p class="mb-0 text-secondary">規格: <?= "{$item['Color']}, {$item['SizeDescription']}" ?></p>
+                            <p class="mb-1 h5"><?= $item['ProductName'] ?></p>
+                            <p class="mb-0">顏色: <?= "{$item['Color']}" ?></p>
                             <p class="mb-0">數量: <?= $item['Quantity'] ?> 件</p>
-                            <p class="mb-0">單價: <span class="text-danger fw-bold">$<?= $item['Price'] ?></span></p>
+                            <p class="mb-0">單價: $<?= $item['Price'] ?></p>
                         </div>
                     </div>
                     <?php
@@ -324,7 +318,7 @@ function createOrder(int $memberId, string $name, string $phone, string $address
 
         // 3. 建立訂單(只包含必要欄位)
         $stmt = $pdo->prepare("
-            INSERT INTO Orders (OrderID, MembersID, Status, Notes, OrderDate)
+            INSERT INTO Orders (OrderID, MemberID, Status, Notes, OrderDate)
             VALUES (:orderId, :memberId, 'Pending', :note, NOW())
         ");
         $stmt->execute([
@@ -333,16 +327,44 @@ function createOrder(int $memberId, string $name, string $phone, string $address
             'note' => $note
         ]);
 
-        /* 2. 取得購物車列表並寫入 OrderItem */
+        /* 2. 取得購物車列表並寫入 OrderRecord 和 OrderItem */
         $cartItems = getCartItems($memberId, $pdo);
-        $itemSql = "INSERT INTO OrderItem (OrderID, OptionID, Quantity) VALUES (:orderId, :optionId, :qty)";
+
+        // 先插入 OrderRecord
+        // 獲取最大RecordID並加1
+        $stmt = $pdo->query("SELECT MAX(RecordID) as maxId FROM OrderRecord");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $recordId = $result['maxId'] ? $result['maxId'] + 1 : 1;
+
+        $recordSql = "INSERT INTO OrderRecord (RecordID, ProductName, ProductType, ProductColor, ProductSize, ProductPrice, OrderID) 
+                      VALUES (:recordId, :productName, :productType, :color, :size, :price, :orderId)";
+        $recordStmt = $pdo->prepare($recordSql);
+
+        // 再插入 OrderItem
+        $itemSql = "INSERT INTO OrderItem (OrderID, OrderRecordID, Quantity) VALUES (:orderId, :recordId, :qty)";
         $itemStmt = $pdo->prepare($itemSql);
+
         foreach ($cartItems as $item) {
+            // 插入 OrderRecord
+            $recordStmt->execute([
+                'recordId' => $recordId,
+                'productName' => $item['ProductName'],
+                'productType' => $item['Type'] ?? '',
+                'color' => $item['Color'],
+                'size' => $item['Size'],
+                'price' => $item['Price'],
+                'orderId' => $orderId
+            ]);
+
+            // 插入 OrderItem
             $itemStmt->execute([
                 'orderId' => $orderId,
-                'optionId' => $item['OptionID'],
-                'qty' => $item['Quantity'],
+                'recordId' => $recordId,
+                'qty' => $item['Quantity']
             ]);
+
+            // 更新 RecordID 為下一個值
+            $recordId++;
         }
 
         /* 3. 清空購物車 */
@@ -369,6 +391,7 @@ function getCartItems(int $memberId, ?PDO $pdo = null): array
                 ci.OptionID,
                 p.ProductName,
                 p.ProductID,
+                p.Type,
                 o.Price,
                 o.Color,
                 o.SizeDescription,
@@ -391,7 +414,7 @@ function reorder(int $memberId, int $orderId): array
         $pdo->beginTransaction();
 
         // 1. 檢查訂單是否存在且屬於該會員
-        $checkOrder = $pdo->prepare("SELECT OrderID FROM Orders WHERE OrderID = :orderId AND MembersID = :memberId");
+        $checkOrder = $pdo->prepare("SELECT OrderID FROM Orders WHERE OrderID = :orderId AND MemberID = :memberId");
         $checkOrder->execute(['orderId' => $orderId, 'memberId' => $memberId]);
         if (!$checkOrder->fetch()) {
             return ['success' => false, 'message' => '訂單不存在或不屬於該會員'];
@@ -437,7 +460,7 @@ function updateOrderStatus(int $memberId, int $orderId, string $newStatus, strin
         $pdo->beginTransaction();
 
         // 1. 檢查訂單是否存在且屬於該會員
-        $checkOrder = $pdo->prepare("SELECT OrderID FROM Orders WHERE OrderID = :orderId AND MembersID = :memberId");
+        $checkOrder = $pdo->prepare("SELECT OrderID FROM Orders WHERE OrderID = :orderId AND MemberID = :memberId");
         $checkOrder->execute(['orderId' => $orderId, 'memberId' => $memberId]);
         if (!$checkOrder->fetch()) {
             return ['success' => false, 'message' => '訂單不存在或不屬於該會員'];

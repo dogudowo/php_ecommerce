@@ -24,11 +24,11 @@ function getMemberOrders(int $memberId, ?PDO $pdo = null): array
         SELECT  o.OrderID,
                 o.OrderDate,
                 o.Status,
-                SUM(oi.Quantity * opt.Price) AS TotalAmount
+                SUM(oi.Quantity * orec.ProductPrice) AS TotalAmount
         FROM    Orders o
         JOIN    OrderItem   oi  ON o.OrderID  = oi.OrderID
-        JOIN    Options     opt ON oi.OptionID = opt.OptionID
-        WHERE   o.MembersID = :memberId
+        JOIN    OrderRecord orec ON oi.OrderRecordID = orec.RecordID
+        WHERE   o.MemberID = :memberId
         GROUP BY o.OrderID, o.OrderDate, o.Status
         ORDER BY o.OrderDate DESC
     SQL;
