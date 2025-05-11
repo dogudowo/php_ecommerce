@@ -49,9 +49,9 @@ $brandInfo = BrandModel::getBrandInfo();
                     </div>
 
                     <div class="container text-start my-3 col-lg-9">
-                        <?php foreach ($brandData['description'] as $paragraph): ?>
-                            <p><?= $paragraph ?></p>
-                        <?php endforeach; ?>
+                        <?php if (!empty($brandData['content'])): ?>
+                            <p><?= $brandData['content'] ?></p>
+                        <?php endif; ?>
                     </div>
 
                     <?php if (!empty($brandData['images'])): ?>
