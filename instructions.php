@@ -61,7 +61,7 @@ require_once __DIR__ . '/fixedFile/header.php';
             </div>
         </div>
         <div class="tab-pane fade text-center" id="processContent" role="tabpanel" aria-labelledby="process-tab">
-            <img src="imgs/instruction/order.jpg" alt="" class="img-fulid" />
+            <img src="imgs/instruction/order.jpg" alt="" class="img-fulid w-100" />
         </div>
     </div>
 </div>
