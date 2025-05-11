@@ -199,7 +199,7 @@ function renderProductCard(array $product)
 
     ob_start();
     ?>
-    <div class="col-lg-3 col-md-4 col-6 d-flex justify-content-center product-item mb-3" data-size="<?= $sizeClass ?>"
+    <div class="col-lg-3 col-md-4 col-6 d-flex justify-content-center product-item mb-2 px-1" data-size="<?= $sizeClass ?>"
         data-material="<?= $type ?>" data-sizes="<?= htmlspecialchars(implode(',', $filteredSizes), ENT_QUOTES) ?>">
         <div class="card" style="width:100%; max-width:320px; border-radius:20px; transition:transform .2s;"
             onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
@@ -209,12 +209,12 @@ function renderProductCard(array $product)
                 <div class="card-body pb-0 mb-2">
                     <h5 class="card-title mb-1"><?= $prodName ?></h5>
                     <?php
-if (!empty($filteredSizes)): ?>
+                    if (!empty($filteredSizes)): ?>
                         <p class="card-text mb-0">
                             尺寸：<?= implode(', ', $filteredSizes) ?> 吋
                         </p>
-                    <?php
-endif; ?>
+                        <?php
+                    endif; ?>
                     <p class="mb-0">
                         價格：
                         <span class="text-decoration-line-through text-muted">
