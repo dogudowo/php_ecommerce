@@ -58,8 +58,8 @@
     </div>
 </footer>
 <button id="backToTop" type="button"
-    class="btn btn-success bg-opacity-10 rounded-circle position-fixed bottom-0 end-0 m-3 d-none"
-    style="width:3rem; height:3rem; z-index:1050;" aria-label="Back to Top">
+    class="btn bg-success bg-opacity-25 rounded-circle position-fixed bottom-0 end-0 m-3 d-none"
+    style="width:4rem; height:4rem; z-index:1050;" aria-label="Back to Top">
     ↑
 </button>
 
