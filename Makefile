@@ -1,8 +1,16 @@
-.PHONY: config set_permissions all update
+.PHONY: config set_permissions all update help
 
 .DEFAULT_GOAL := all
 
 all: config set_permissions
+
+help:
+	@echo "可用指令:"
+	@echo "  make help      - 顯示此幫助訊息"
+	@echo "  make all       - 執行config與set_permissions指令"
+	@echo "  make config    - 檢查並創建config.php"
+	@echo "  make set_permissions - 設置檔案權限(777)與error_log權限(666)"
+	@echo "  make update    - 從遠端倉庫更新代碼"
 
 update:
 	@git pull
