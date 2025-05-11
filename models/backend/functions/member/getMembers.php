@@ -18,7 +18,7 @@ try {
                 m.City, 
                 m.Address, 
                 m.IsAdmin,
-                (SELECT COUNT(*) FROM Orders o WHERE o.MembersID = m.MemberID) as OrderCount
+                (SELECT COUNT(*) FROM Orders o WHERE o.MemberID = m.MemberID) as OrderCount
             FROM Member m
             ORDER BY m.MemberID ASC";
 

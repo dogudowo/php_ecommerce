@@ -115,7 +115,7 @@
             const element = document.getElementById(elementId);
             if (element && newUrl && newUrl !== oldUrl) {
                 element.href = newUrl;
-                console.log(`已更新 ${elementId} 的連結為: ${newUrl}`);
+                //console.log(`已更新 ${elementId} 的連結為: ${newUrl}`);
             }
         }
 

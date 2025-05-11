@@ -536,14 +536,13 @@ function updateMember(int $memberId, string $name, string $phone, string $email,
         }
 
         // 更新會員資料
-        $updateMember = $pdo->prepare("UPDATE Member SET Name = :name, Phone = :phone, Email = :email, City = :city, Address = :address, IsAdmin = :isAdmin WHERE MemberID = :memberId");
+        $updateMember = $pdo->prepare("UPDATE Member SET Name = :name, Phone = :phone, Email = :email, City = :city, Address = :address WHERE MemberID = :memberId");
         $updateMember->execute([
             'name' => $name,
             'phone' => $phone,
             'email' => $email,
             'city' => $city,
             'address' => $address,
-            'isAdmin' => $isAdmin ? 1 : 0,
             'memberId' => $memberId
         ]);
 

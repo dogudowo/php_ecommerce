@@ -8,8 +8,6 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
     exit;
 }
 
-// 引入會員功能
-require_once __DIR__ . '/functions/member/memberFunction.php';
 ?>
 
 <div class="container-fluid p-0">
