@@ -68,18 +68,6 @@ if ($method === 'POST' && $action === 'createOrder') {
     exit;
 }
 
-if ($method === 'POST' && $action === 'reorder') {
-    $input = json_decode(file_get_contents('php://input'), true) ?? [];
-    if (empty($input['memberId']) || empty($input['orderId'])) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => '缺少必要參數']);
-        exit;
-    }
-    $result = reorder((int) $input['memberId'], (int) $input['orderId']);
-    echo json_encode($result);
-    exit;
-}
-
 if ($method === 'POST' && $action === 'updateOrderStatus') {
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
     if (empty($input['memberId']) || empty($input['order_id']) || empty($input['new_status'])) {
@@ -279,8 +267,6 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                             endif; ?>
                             <?php
                         else: ?>
-                            <button class="btn btn-primary btn-sm me-2" data-action="reorder"
-                                data-order-id="<?= $order['OrderID'] ?>">再買一次</button>
                             <button class="btn btn-warning btn-sm" data-action="repair"
                                 data-order-id="<?= $order['OrderID'] ?>">維修</button>
                             <?php
@@ -405,52 +391,6 @@ function getCartItems(int $memberId, ?PDO $pdo = null): array
     return $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
-/* =========  再買一次 ========= */
-function reorder(int $memberId, int $orderId): array
-{
-    $pdo = db_connect();
-    try {
-        $pdo->beginTransaction();
-
-        // 1. 檢查訂單是否存在且屬於該會員
-        $checkOrder = $pdo->prepare("SELECT OrderID FROM Orders WHERE OrderID = :orderId AND MemberID = :memberId");
-        $checkOrder->execute(['orderId' => $orderId, 'memberId' => $memberId]);
-        if (!$checkOrder->fetch()) {
-            return ['success' => false, 'message' => '訂單不存在或不屬於該會員'];
-        }
-
-        // 2. 獲取訂單項目
-        $getItems = $pdo->prepare("SELECT OptionID, Quantity FROM OrderItem WHERE OrderID = :orderId");
-        $getItems->execute(['orderId' => $orderId]);
-        $items = $getItems->fetchAll(PDO::FETCH_ASSOC);
-
-        if (empty($items)) {
-            return ['success' => false, 'message' => '訂單項目為空'];
-        }
-
-        // 3. 清空購物車
-        $clearCart = $pdo->prepare("DELETE FROM CartItem WHERE MemberID = :memberId");
-        $clearCart->execute(['memberId' => $memberId]);
-
-        // 4. 將訂單項目加入購物車
-        $addToCart = $pdo->prepare("INSERT INTO CartItem (MemberID, OptionID, Quantity) VALUES (:memberId, :optionId, :quantity)");
-        foreach ($items as $item) {
-            $addToCart->execute([
-                'memberId' => $memberId,
-                'optionId' => $item['OptionID'],
-                'quantity' => $item['Quantity']
-            ]);
-        }
-
-        $pdo->commit();
-        return ['success' => true, 'message' => '已將商品加入購物車'];
-    } catch (Throwable $e) {
-        $pdo->rollBack();
-        error_log('再買一次失敗：' . $e->getMessage());
-        return ['success' => false, 'message' => '操作失敗：' . $e->getMessage()];
-    }
-}
-
 /* =========  更新訂單狀態 ========= */
 function updateOrderStatus(int $memberId, int $orderId, string $newStatus, string $paymentMethod = '信用卡'): array
 {
@@ -477,7 +417,7 @@ function updateOrderStatus(int $memberId, int $orderId, string $newStatus, strin
             $receiptId = $result['maxId'] ? $result['maxId'] + 1 : 1;
 
             // 創建收據
-            $createReceipt = $pdo->prepare("INSERT INTO Receipt (ReceiptID, MemberID, OrderID, PaymentMethod, PaymentDate) VALUES (:receiptId, :memberId, :orderId, :paymentMethod, NOW())");
+            $createReceipt = $pdo->prepare("INSERT INTO Receipt (ReceiptID, OrderRecordID, MemberID, PaymentMethod, PaymentDate) VALUES (:receiptId, :orderId, :memberId, :paymentMethod, NOW())");
             $createReceipt->execute([
                 'receiptId' => $receiptId,
                 'memberId' => $memberId,
@@ -486,15 +426,15 @@ function updateOrderStatus(int $memberId, int $orderId, string $newStatus, strin
             ]);
 
             // 獲取訂單項目並創建收據項目
-            $getItems = $pdo->prepare("SELECT OptionID FROM OrderItem WHERE OrderID = :orderId");
+            $getItems = $pdo->prepare("SELECT OrderRecordID FROM OrderItem WHERE OrderID = :orderId");
             $getItems->execute(['orderId' => $orderId]);
             $items = $getItems->fetchAll(PDO::FETCH_ASSOC);
 
-            $createReceiptItem = $pdo->prepare("INSERT INTO ReceiptItem (ReceiptID, OptionID) VALUES (:receiptId, :optionId)");
+            $createReceiptItem = $pdo->prepare("INSERT INTO ReceiptItem (ReceiptID, OrderRecordID) VALUES (:receiptId, :orderRecordId)");
             foreach ($items as $item) {
                 $createReceiptItem->execute([
                     'receiptId' => $receiptId,
-                    'optionId' => $item['OptionID']
+                    'orderRecordId' => $item['OrderRecordID']
                 ]);
             }
         }
