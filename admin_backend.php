@@ -124,7 +124,7 @@ define('INCLUDED_FROM_ADMIN', true);
                                     <button class="nav-link" id="v-pills-settings-tab" data-bs-toggle="pill"
                                         data-bs-target="#settings" type="button" role="tab" aria-controls="settings"
                                         aria-selected="false">
-                                        <i class="bi bi-sliders me-2"></i> 系統設置
+                                        <i class="bi bi-sliders me-2"></i>社群連結設置
                                     </button>
                                 </div>
                             </div>

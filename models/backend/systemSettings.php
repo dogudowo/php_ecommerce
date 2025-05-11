@@ -8,16 +8,15 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
     exit;
 }
 ?>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-sliders me-2"></i>社群連結設置</h3>
+</div>
 <div class="container-fluid p-0">
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
-                <div class="card-header bg-primary text-white">
-                    <h5 class="mb-0"><i class="bi bi-sliders me-2"></i>系統設置</h5>
-                </div>
                 <div class="card-body">
                     <form id="systemSettingsForm">
-                        <h5 class="mb-3">社群連結設定</h5>
                         <div class="mb-3">
                             <label for="lineLink" class="form-label">Line 連結</label>
                             <input type="url" class="form-control" id="lineLink"
