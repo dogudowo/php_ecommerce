@@ -80,11 +80,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <label for="password">密碼</label>
         </div>
 
-        <div class="checkbox mb-3">
+        <!-- <div class="checkbox mb-3">
             <label>
                 <input type="checkbox" value="remember-me"> 記住我
             </label>
-        </div>
+        </div> -->
 
         <button class="w-100 btn btn-lg btn-success" type="submit">登入</button>
 
