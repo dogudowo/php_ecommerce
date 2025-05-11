@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../api/error_handler.php';
 // 防止直接訪問此文件
 if (!defined('INCLUDED_FROM_ADMIN')) {
     header('Location: ../../login.php');

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../api/error_handler.php';
 class QAModel
 {
     public static function getQAItems()

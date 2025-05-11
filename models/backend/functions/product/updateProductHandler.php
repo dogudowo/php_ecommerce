@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../../../api/error_handler.php';
 require_once __DIR__ . '/../../../../api/db.php';
 
 // 設置 JSON 頭

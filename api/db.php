@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/error_handler.php';
 function db_connect()
 {
     $config = require __DIR__ . '/../config.php';

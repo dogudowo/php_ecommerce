@@ -17,7 +17,7 @@ if (empty($_SESSION['logged_in'])) {
 /* ---------- 相依檔 ---------- */
 require_once __DIR__ . '/api/Member.php';
 require_once __DIR__ . '/api/order.php';
-
+require_once __DIR__. '/api/error_handler.php';
 /* ---------- 取資料 ---------- */
 $memberId = (int) $_SESSION['user_id'];
 $currentMember = getMemberByID($memberId);       // 來自 Member.php（已使用 PDO）

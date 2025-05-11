@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../../api/error_handler.php';
 // 防止直接訪問此文件
 session_start();
 if (!isset($_SESSION['logged_in']) || $_SESSION['user_role'] !== 'admin') {

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../api/error_handler.php';
 require_once __DIR__ . '/functions/instruction/InstructionHandler.php';
 
 // 處理圖片上傳

@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/error_handler.php';
 session_start();
 header('Content-Type: application/json');
 

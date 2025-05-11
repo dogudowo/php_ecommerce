@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../api/error_handler.php';
 // 系統設置管理文件
 
 // 防止直接訪問此文件

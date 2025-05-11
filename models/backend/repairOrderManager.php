@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../api/error_handler.php';
 // 維修訂單管理文件
 
 // 防止直接訪問此文件
@@ -75,7 +76,7 @@ try {
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3><i class="bi bi-tools me-2"></i>維修訂單管理</h3>
         <div>
-            
+
         </div>
     </div>
 
@@ -132,7 +133,9 @@ try {
                                 <td colspan="7" class="text-center">暫無維修訂單數據</td>
                             </tr>
                         <?php else: ?>
-                            <?php foreach ($repairOrders as $repair): ?>
+                            <?php
+                            require_once __DIR__ . '/../../api/error_handler.php';
+                            foreach ($repairOrders as $repair): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($repair['RepairID']); ?></td>
                                     <td><?php echo htmlspecialchars($repair['WarrantyID']); ?></td>
@@ -141,7 +144,9 @@ try {
                                     <td><?php echo htmlspecialchars(date('Y-m-d', strtotime($repair['RepairDate']))); ?></td>
                                     <td>
                                         <span class="badge <?php echo getRepairStatusClass($repair['RepairStatus']); ?>">
-                                            <?php echo htmlspecialchars($statusList[$repair['RepairStatus']] ?? $repair['RepairStatus']); ?>
+                                            <?php
+                                            require_once __DIR__ . '/../../api/error_handler.php';
+                                            echo htmlspecialchars($statusList[$repair['RepairStatus']] ?? $repair['RepairStatus']); ?>
                                         </span>
                                     </td>
                                     <td>

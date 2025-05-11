@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/error_handler.php';
 require_once __DIR__ . '/db.php';
 
 // 只在直接訪問時設置 JSON 頭，而不是在被引入時
@@ -207,11 +208,13 @@ function renderProductCard(array $product)
                     style="border-radius:20px 20px 0 0; object-fit:cover;" alt="<?= $prodName ?>">
                 <div class="card-body pb-0 mb-2">
                     <h5 class="card-title mb-1"><?= $prodName ?></h5>
-                    <?php if (!empty($filteredSizes)): ?>
+                    <?php
+if (!empty($filteredSizes)): ?>
                         <p class="card-text mb-0">
                             尺寸：<?= implode(', ', $filteredSizes) ?> 吋
                         </p>
-                    <?php endif; ?>
+                    <?php
+endif; ?>
                     <p class="mb-0">
                         價格：
                         <span class="text-decoration-line-through text-muted">

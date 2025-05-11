@@ -1,5 +1,6 @@
 <?php
 declare(strict_types=1);
+require_once __DIR__ . '/error_handler.php';
 
 require_once __DIR__ . '/db.php';   // 需提供 db_connect(): PDO
 
@@ -249,7 +250,8 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                     <h5 class="mb-1">訂單號碼: ORD-<?= $order['OrderID'] ?></h5>
                     <small><?= $order['OrderDate'] ?></small>
                 </div>
-                <?php foreach ($detail['items'] as $item): ?>
+                <?php
+                foreach ($detail['items'] as $item): ?>
                     <div class="d-flex align-items-center mb-2">
                         <div class="me-3" style="width:60px;height:60px;">
                             <img src="<?= $item['image'] ?>" alt="<?= $item['ProductName'] ?>" class="img-fluid"
@@ -262,27 +264,34 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                             <p class="mb-0">單價: <span class="text-danger fw-bold">$<?= $item['Price'] ?></span></p>
                         </div>
                     </div>
-                <?php endforeach; ?>
+                    <?php
+                endforeach; ?>
                 <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
                     <span class="badge fs-6 <?= getStatusClass($order['Status']) ?>">
                         <?= getStatusText($order['Status']) ?>
                     </span>
                     <div class="text-center fw-bold fs-5 text-danger">總計 $<?= number_format($detail['total_amount']) ?></div>
                     <div class="d-flex align-items-center">
-                        <?php if ($status === 'Pending'): ?>
-                            <?php if ($order['Status'] === 'Shipping'): ?>
+                        <?php
+                        if ($status === 'Pending'): ?>
+                            <?php
+                            if ($order['Status'] === 'Shipping'): ?>
                                 <button class="btn btn-success btn-sm" data-action="pay"
                                     data-order-id="<?= $order['OrderID'] ?>">付款</button>
-                            <?php elseif ($order['Status'] === 'Pending'): ?>
+                                <?php
+                            elseif ($order['Status'] === 'Pending'): ?>
                                 <button class="btn btn-secondary btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>"
                                     disabled>付款</button>
-                            <?php endif; ?>
-                        <?php else: ?>
+                                <?php
+                            endif; ?>
+                            <?php
+                        else: ?>
                             <button class="btn btn-primary btn-sm me-2" data-action="reorder"
                                 data-order-id="<?= $order['OrderID'] ?>">再買一次</button>
                             <button class="btn btn-warning btn-sm" data-action="repair"
                                 data-order-id="<?= $order['OrderID'] ?>">維修</button>
-                        <?php endif; ?>
+                            <?php
+                        endif; ?>
                     </div>
                 </div>
             </div>

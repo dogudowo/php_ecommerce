@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/error_handler.php';
 // 註冊功能API
 require_once __DIR__ . '/db.php';
 

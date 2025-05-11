@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../api/error_handler.php';
 // admin/products.php
 
 // 防止直接訪問此文件

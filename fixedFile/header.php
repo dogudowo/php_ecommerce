@@ -1,4 +1,10 @@
-<?php require_once __DIR__ . '/../api/header.php'; ?>
+<?php
+require_once __DIR__ . '/../api/header.php';
+
+// 引入自訂錯誤處理
+require_once __DIR__ . '/../api/error_handler.php';
+
+?>
 <!DOCTYPE html>
 <html lang="zh-TW">
 

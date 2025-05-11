@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../../../api/error_handler.php';
 // 處理 AJAX 請求的入口點
 if (isset($_GET['action'])) {
     $action = $_GET['action'];

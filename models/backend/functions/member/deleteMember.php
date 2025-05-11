@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../../../api/error_handler.php';
 // 刪除會員及相關資料的處理文件
 
 // 引入資料庫連接

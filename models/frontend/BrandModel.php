@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/../../api/error_handler.php';
 class BrandModel
 {
     public static function getBrandInfo()
