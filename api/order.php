@@ -142,17 +142,16 @@ function getStatusText(string $status): string
 
 /* =========  資料存取  ========= */
 
-
 function filterOrders(?string $status = null, ?string $dateFrom = null, ?string $dateTo = null, ?string $search = null, ?PDO $pdo = null): array
 {
     $pdo = $pdo ?? db_connect();
 
     $sql = "SELECT o.OrderID, m.Name AS MemberName, o.OrderDate, 
-                   COUNT(oi.OrderID) AS ItemCount, SUM(oi.Quantity * opt.Price) AS TotalAmount, o.Status
+                   COUNT(oi.OrderID) AS ItemCount, SUM(oi.Quantity * orec.ProductPrice) AS TotalAmount, o.Status
             FROM Orders o
             JOIN Member m ON o.MemberID = m.MemberID
             LEFT JOIN OrderItem oi ON o.OrderID = oi.OrderID
-            LEFT JOIN Options opt ON oi.OptionID = opt.OptionID
+            LEFT JOIN OrderRecord orec ON oi.OrderRecordID = orec.RecordID
             WHERE 1=1";
 
     $params = [];
