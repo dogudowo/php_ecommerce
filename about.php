@@ -115,10 +115,6 @@ $social_links = json_decode(file_get_contents(__DIR__ . '/fixedFile/social_links
                         <p><?php echo nl2br($time); ?></p>
                     <?php endforeach; ?>
 
-                    <?php foreach ($store['service_notice'] as $notice): ?>
-                        <p class="text-danger"><?php echo $notice; ?></p>
-                    <?php endforeach; ?>
-
                     <?php if (!empty($store['phone'])): ?>
                         <p class="h6">聯絡電話</p>
                         <p><?php echo $store['phone']; ?></p>
