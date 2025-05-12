@@ -430,11 +430,25 @@ function updateOrderStatus(int $memberId, int $orderId, string $newStatus, strin
             $getItems->execute(['orderId' => $orderId]);
             $items = $getItems->fetchAll(PDO::FETCH_ASSOC);
 
-            $createReceiptItem = $pdo->prepare("INSERT INTO ReceiptItem (ReceiptID, OrderRecordID) VALUES (:receiptId, :orderRecordId)");
+            // 為每個商品創建保固記錄
+            $createWarranty = $pdo->prepare("INSERT INTO warranty (WarrantyID, WarrantyDate, WarrantyStatus) VALUES (:warrantyId, DATE_ADD(NOW(), INTERVAL 1 YEAR), true)");
+
+            $createReceiptItem = $pdo->prepare("INSERT INTO ReceiptItem (ReceiptID, OrderRecordID, WarrantyID) VALUES (:receiptId, :orderRecordId, :warrantyId)");
+
             foreach ($items as $item) {
+                // 獲取最大WarrantyID並加1
+                $stmt = $pdo->query("SELECT MAX(WarrantyID) as maxId FROM warranty");
+                $result = $stmt->fetch(PDO::FETCH_ASSOC);
+                $warrantyId = $result['maxId'] ? $result['maxId'] + 1 : 1;
+
+                // 創建保固記錄
+                $createWarranty->execute(['warrantyId' => $warrantyId]);
+
+                // 創建收據項目並關聯保固ID
                 $createReceiptItem->execute([
                     'receiptId' => $receiptId,
-                    'orderRecordId' => $item['OrderRecordID']
+                    'orderRecordId' => $item['OrderRecordID'],
+                    'warrantyId' => $warrantyId
                 ]);
             }
         }
