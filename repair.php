@@ -8,7 +8,7 @@
 
     <div class="container text-center mt-3">
         <a class="btn btn-outline-success" style="border-radius: 20px;"
-            href="imgs/repair/AllenRepairPrice0609.jpg">維修價格表</a>
+            href="imgs/repair/price/AllenRepairPrice0609.jpg">維修價格表</a>
         <a class="btn btn-outline-success" style="border-radius: 20px;" href="src/KeyReport.doc">鑰匙價格表</a>
     </div>
 
@@ -28,12 +28,12 @@
                 <!-- 中文內容 -->
                 <div class="container w-100">
                     <div class="container my-3 d-flex justify-content-center">
-                        <img src="imgs/repair/repairContext.jpg" alt="" class="img-fluid">
+                        <img src="imgs/repair/context-ch/repairContext.jpg" alt="" class="img-fluid">
                     </div>
 
                     <h3 class="text-decoration-underline">維修流程</h3>
                     <div class="container my-3 d-flex justify-content-center">
-                        <img src="imgs/repair/repairRundown.jpg" alt="" class="img-fluid">
+                        <img src="imgs/repair/context-ch/repairRundown.jpg" alt="" class="img-fluid">
                     </div>
                 </div>
             </div>
@@ -42,12 +42,12 @@
                 <!-- 英文內容 -->
                 <div class="container">
                     <div class="container my-3 d-flex justify-content-center">
-                        <img src="imgs/repair/repairContextUS.jpg" alt="" class="img-fluid">
+                        <img src="imgs/repair/context-en/repairContextUS.jpg" alt="" class="img-fluid">
                     </div>
 
                     <h3 class="text-decoration-underline">Repair Rundown</h3>
                     <div class="container my-3 d-flex justify-content-center">
-                        <img src="imgs/repair/repairRundownEN.jpg" alt="" class="img-fluid">
+                        <img src="imgs/repair/context-en/repairRundownEN.jpg" alt="" class="img-fluid">
                     </div>
                 </div>
             </div>
