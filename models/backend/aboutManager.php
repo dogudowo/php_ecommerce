@@ -20,12 +20,12 @@ $adLink = $adLinkObj->adLink;
     <?php function renderTable($title, $headers, $rows, $type)
     { ?>
         <div class="card mb-4">
-            <div class="card-header bg-<?= $type === 'company' ? 'primary' : 'success' ?> text-white">
+            <div class="card-header">
                 <div class="d-flex justify-content-between align-items-center">
                     <h4><?= $title ?></h4>
-                    <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addModal"
+                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addModal"
                         data-entity="<?= $type ?>">
-                        <i class="bi bi-plus-lg me-1"></i>新增<?= $type === 'company' ? '公司' : '門市' ?>
+                        <i class="bi bi-plus-lg  me-1"></i>新增<?= $type === 'company' ? '公司' : '門市' ?>
                     </button>
                 </div>
             </div>
@@ -80,7 +80,7 @@ $adLink = $adLinkObj->adLink;
 
     <!-- 廣告連結管理 -->
     <div class="card">
-        <div class="card-header bg-info text-white">
+        <div class="card-header">
             <h4><i class="bi bi-link-45deg me-2"></i>廣告連結管理</h4>
         </div>
         <div class="card-body">
@@ -88,7 +88,7 @@ $adLink = $adLinkObj->adLink;
                 <label class="form-label">廣告連結</label>
                 <input type="text" class="form-control" id="adLinkInput" value="<?= htmlspecialchars($adLink) ?>">
             </div>
-            <button class="btn btn-primary" id="saveAdLinkBtn"><i class="bi bi-save me-1"></i>儲存變更</button>
+            <button class="btn btn-primary" id="saveAdLinkBtn">儲存變更</button>
         </div>
     </div>
 </div>
