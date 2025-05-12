@@ -130,7 +130,24 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label">品牌介紹</label>
-                    <textarea class="form-control" rows="5" id="editBrandContentInput"></textarea>
+                    <textarea class="form-control" rows="8" id="editBrandContentInput"></textarea>
+                </div>
+
+                <!-- Logo 圖片上傳 (多張) -->
+                <div class="mb-3">
+                    <label class="form-label">品牌 Logo</label>
+                    <input type="file" class="form-control" id="editBrandLogoInput" accept="image/png, image/jpeg"
+                        multiple>
+                    <div class="mt-2" id="editBrandLogoPreviewContainer"></div>
+                    <div class="mt-2" id="existingBrandLogosContainer"></div>
+                </div>
+
+                <!-- 最新消息圖片上傳 (多張) -->
+                <div class="mb-3">
+                    <label class="form-label">最新消息圖片</label>
+                    <input type="file" class="form-control" id="editBrandNewsImageInput" accept="image/jpeg" multiple>
+                    <div class="mt-2" id="editBrandNewsImagePreviewContainer"></div>
+                    <div class="mt-2" id="existingBrandNewsImagesContainer"></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -157,6 +174,20 @@
                 <div class="mb-3">
                     <label class="form-label">品牌介紹</label>
                     <textarea class="form-control" rows="5" id="brandContentInput"></textarea>
+                </div>
+                <!-- Logo 圖片上傳 (多張) -->
+                <div class="mb-3">
+                    <label class="form-label">品牌 Logo</label>
+                    <input type="file" class="form-control" id="addBrandLogoInput" accept="image/png, image/jpeg"
+                        multiple>
+                    <div class="mt-2" id="addBrandLogoPreviewContainer"></div>
+                </div>
+
+                <!-- 最新消息圖片上傳 (多張) -->
+                <div class="mb-3">
+                    <label class="form-label">最新消息圖片</label>
+                    <input type="file" class="form-control" id="addBrandNewsImageInput" accept="image/jpeg" multiple>
+                    <div class="mt-2" id="addBrandNewsImagePreviewContainer"></div>
                 </div>
             </div>
             <div class="modal-footer">
@@ -192,10 +223,37 @@
                 .toast('show');
         }
 
-        async function apiRequest(action, data = {}) {
-            const res = await $.post(API_URL, { action, ...data });
-            if (!res.success) throw new Error(res.message || '操作失敗');
-            return res.data || res;
+        async function apiRequest(action, data = {}, method = 'POST') {
+            let url = API_URL;
+            let ajaxOptions = {
+                url: url,
+                method: method,
+                dataType: 'json',
+                data: { action, ...data }
+            };
+
+            if (method.toUpperCase() === 'GET') {
+                // For GET requests, parameters are typically in the URL
+                ajaxOptions.data = { action, ...data }; // jQuery handles query string for GET
+            } else if (data instanceof FormData) {
+                // For FormData, set processData and contentType to false
+                ajaxOptions.data = data; // FormData already includes action
+                ajaxOptions.processData = false;
+                ajaxOptions.contentType = false;
+            } else {
+                // For regular POST, jQuery will handle serialization
+                ajaxOptions.data = { action, ...data };
+            }
+
+            try {
+                const res = await $.ajax(ajaxOptions);
+                if (!res.success) throw new Error(res.message || '操作失敗');
+                return res.data || res; // Assuming 'data' key for successful responses with payload
+            } catch (jqXHR) {
+                // Attempt to parse error from responseJSON if available
+                const errorMsg = jqXHR.responseJSON && jqXHR.responseJSON.message ? jqXHR.responseJSON.message : (jqXHR.responseText || '操作失敗');
+                throw new Error(errorMsg);
+            }
         }
 
         const introTpl = intro => `
@@ -301,6 +359,8 @@
             // ==== 代理品牌 ====
             $('#addBrandBtn').click(() => {
                 $('#brandNameInput, #brandContentInput').val('');
+                $('#addBrandLogoPreviewContainer, #addBrandNewsImagePreviewContainer').html('');
+                $('#addBrandLogoInput, #addBrandNewsImageInput').val('');
                 getModal('addBrandModal').show();
             });
 
@@ -308,11 +368,42 @@
                 const name = $('#brandNameInput').val().trim();
                 const content = $('#brandContentInput').val().trim();
                 if (!name) return showToast('警告', '品牌名稱不得為空', 'warning');
+
+                const formData = new FormData();
+                formData.append('action', 'create_brand');
+                formData.append('brandName', name);
+                formData.append('brandContent', content);
+
+                const logoFiles = $('#addBrandLogoInput')[0].files;
+                if (logoFiles && logoFiles.length > 0) {
+                    Array.from(logoFiles).forEach((file, index) => {
+                        formData.append(`logo_images[${index}]`, file);
+                    });
+                }
+
+                const newsImageFiles = $('#addBrandNewsImageInput')[0].files;
+                if (newsImageFiles && newsImageFiles.length > 0) {
+                    Array.from(newsImageFiles).forEach((file, index) => {
+                        formData.append(`news_images[${index}]`, file);
+                    });
+                }
+
                 try {
-                    await apiRequest('create_brand', { brandName: name, brandContent: content });
-                    getModal('addBrandModal').hide();
-                    await refreshBrand();
-                    showToast('成功', '品牌新增成功');
+                    await $.ajax({
+                        url: API_URL,
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        dataType: 'json'
+                    }).done(function (res) {
+                        if (!res.success) throw new Error(res.message || '操作失敗');
+                        getModal('addBrandModal').hide();
+                        refreshBrand();
+                        showToast('成功', '品牌新增成功');
+                    }).fail(function (jqXHR, textStatus, errorThrown) {
+                        throw new Error(errorThrown || textStatus);
+                    });
                 } catch (err) {
                     showToast('錯誤', err.message, 'danger');
                 }
@@ -324,6 +415,10 @@
                 $('#editBrandNameInput').val($card.find('h5').text().trim());
                 $('#editBrandContentInput').val($card.find('p').text().trim());
                 $('#editBrandModal').data('id', id);
+                // 清空舊的圖片預覽和列表
+                $('#editBrandLogoPreviewContainer, #existingBrandLogosContainer, #editBrandNewsImagePreviewContainer, #existingBrandNewsImagesContainer').html('');
+                $('#editBrandLogoInput, #editBrandNewsImageInput').val(''); // 清空檔案選擇
+                loadBrandImages(id); // 加載現有圖片
                 getModal('editBrandModal').show();
             });
 
@@ -332,11 +427,44 @@
                 const name = $('#editBrandNameInput').val().trim();
                 const content = $('#editBrandContentInput').val().trim();
                 if (!name) return showToast('警告', '品牌名稱不得為空', 'warning');
+
+                const formData = new FormData();
+                formData.append('action', 'update_brand');
+                formData.append('id', id);
+                formData.append('brandName', name);
+                formData.append('brandContent', content);
+
+                const logoFiles = $('#editBrandLogoInput')[0].files;
+                if (logoFiles && logoFiles.length > 0) {
+                    Array.from(logoFiles).forEach((file, index) => {
+                        formData.append(`logo_images[${index}]`, file);
+                    });
+                }
+
+                const newsImageFiles = $('#editBrandNewsImageInput')[0].files;
+                if (newsImageFiles && newsImageFiles.length > 0) {
+                    Array.from(newsImageFiles).forEach((file, index) => {
+                        formData.append(`news_images[${index}]`, file);
+                    });
+                }
+
                 try {
-                    await apiRequest('update_brand', { id, brandName: name, brandContent: content });
-                    getModal('editBrandModal').hide();
-                    await refreshBrand();
-                    showToast('成功', '品牌更新成功');
+                    // 使用 jQuery.ajax 進行 FormData 上傳
+                    await $.ajax({
+                        url: API_URL,
+                        type: 'POST',
+                        data: formData,
+                        processData: false,
+                        contentType: false,
+                        dataType: 'json'
+                    }).done(function (res) {
+                        if (!res.success) throw new Error(res.message || '操作失敗');
+                        getModal('editBrandModal').hide();
+                        refreshBrand();
+                        showToast('成功', '品牌更新成功');
+                    }).fail(function (jqXHR, textStatus, errorThrown) {
+                        throw new Error(errorThrown || textStatus);
+                    });
                 } catch (err) {
                     showToast('錯誤', err.message, 'danger');
                 }
@@ -359,15 +487,191 @@
                     showToast('錯誤', err.message, 'danger');
                 }
             });
+
+            // Logo 圖片預覽 (多張)
+            $('#editBrandLogoInput').on('change', function (event) {
+                const previewContainer = $('#editBrandLogoPreviewContainer');
+                previewContainer.html(''); // 清空舊的預覽
+                const files = event.target.files;
+                if (files && files.length > 0) {
+                    Array.from(files).forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            previewContainer.append(`<img src="${e.target.result}" class="img-thumbnail me-2 mb-2" style="width: 100px; height: 100px; object-fit: contain;">`);
+                        }
+                        reader.readAsDataURL(file);
+                    });
+                }
+            });
+
+            // 新增品牌Logo圖片預覽 (多張)
+            $('#addBrandLogoInput').on('change', function (event) {
+                const previewContainer = $('#addBrandLogoPreviewContainer');
+                previewContainer.html(''); // 清空舊的預覽
+                const files = event.target.files;
+                if (files && files.length > 0) {
+                    Array.from(files).forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            previewContainer.append(`<img src="${e.target.result}" class="img-thumbnail me-2 mb-2" style="width: 100px; height: 100px; object-fit: contain;">`);
+                        }
+                        reader.readAsDataURL(file);
+                    });
+                }
+            });
+
+            // 最新消息圖片預覽 (多張)
+            $('#editBrandNewsImageInput').on('change', function (event) {
+                const previewContainer = $('#editBrandNewsImagePreviewContainer');
+                previewContainer.html(''); // 清空舊的預覽
+                const files = event.target.files;
+                if (files && files.length > 0) {
+                    Array.from(files).forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            previewContainer.append(`<img src="${e.target.result}" class="img-thumbnail me-2 mb-2" style="width: 100px; height: 100px; object-fit: contain;">`);
+                        }
+                        reader.readAsDataURL(file);
+                    });
+                }
+            });
+
+            // 新增品牌最新消息圖片預覽 (多張)
+            $('#addBrandNewsImageInput').on('change', function (event) {
+                const previewContainer = $('#addBrandNewsImagePreviewContainer');
+                previewContainer.html(''); // 清空舊的預覽
+                const files = event.target.files;
+                if (files && files.length > 0) {
+                    Array.from(files).forEach(file => {
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            previewContainer.append(`<img src="${e.target.result}" class="img-thumbnail me-2 mb-2" style="width: 100px; height: 100px; object-fit: contain;">`);
+                        }
+                        reader.readAsDataURL(file);
+                    });
+                }
+            });
         }
 
         const refreshIntro = () => renderList('#introContainer', introTpl, 'get_intros');
         const refreshBrand = () => renderList('#brandContainer', brandTpl, 'get_brands');
 
+        // 載入品牌圖片
+        async function loadBrandImages(id) {
+            try {
+                const res = await apiRequest('get_brand_images', { brand_id: id });
+
+                // 顯示現有Logo圖片
+                const $logoContainer = $('#existingBrandLogosContainer');
+                $logoContainer.html('<h6 class="mt-3">現有Logo圖片</h6><div class="row g-2" id="existingLogosRow"></div>');
+
+                if (res.logos && res.logos.length > 0) {
+                    res.logos.forEach(logo => {
+                        $('#existingLogosRow').append(`
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="card h-100">
+                            <img src="imgs/brand/${id}/${logo}" class="card-img-top" alt="品牌Logo">
+                            <div class="card-footer p-1 bg-white text-center">
+                                <button class="btn btn-sm btn-danger delete-brand-image" 
+                                    data-image-type="logo" data-image-name="${logo}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `);
+                    });
+                } else {
+                    $('#existingLogosRow').html('<div class="col-12 text-muted">沒有Logo圖片</div>');
+                }
+
+                // 顯示現有最新消息圖片
+                const $newsContainer = $('#existingBrandNewsImagesContainer');
+                $newsContainer.html('<h6 class="mt-3">現有最新消息圖片</h6><div class="row g-2" id="existingNewsRow"></div>');
+
+                if (res.news_images && res.news_images.length > 0) {
+                    res.news_images.forEach(news => {
+                        $('#existingNewsRow').append(`
+                    <div class="col-6 col-md-4 col-lg-3">
+                        <div class="card h-100">
+                            <img src="imgs/brand/${id}/newAbout/${news}" class="card-img-top" alt="最新消息圖片">
+                            <div class="card-footer p-1 bg-white text-center">
+                                <button class="btn btn-sm btn-danger delete-brand-image" 
+                                    data-image-type="news" data-image-name="${news}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `);
+                    });
+                } else {
+                    $('#existingNewsRow').html('<div class="col-12 text-muted">沒有最新消息圖片</div>');
+                }
+
+                // 綁定刪除圖片事件
+                $('.delete-brand-image').click(async function () {
+                    const imageType = $(this).data('image-type');
+                    const imageName = $(this).data('image-name');
+
+                    try {
+                        await apiRequest('delete_brand_image', {
+                            brand_id: id,
+                            image_type: imageType,
+                            image_name: imageName
+                        });
+                        showToast('成功', '圖片刪除成功');
+                        loadBrandImages(id); // 重新載入圖片列表
+                    } catch (err) {
+                        showToast('錯誤', err.message, 'danger');
+                    }
+                });
+
+            } catch (err) {
+                console.error(err);
+                showToast('錯誤', '載入品牌圖片失敗', 'danger');
+            }
+        }
+
+        // 預覽選擇的圖片
+        function previewImage(fileInputId, previewContainerId) {
+            const input = document.getElementById(fileInputId);
+            const previewContainer = $(previewContainerId);
+            previewContainer.html('');
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    previewContainer.html(`<img src="${e.target.result}" class="img-thumbnail" style="width: 100px; height: 100px; object-fit: contain;">`);
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+
         $(document).ready(() => {
             bindEvents();
             refreshIntro();
             refreshBrand();
+
+            $('#editBrandLogoInput').change(() => previewImage('editBrandLogoInput', '#editBrandLogoPreviewContainer'));
+            $('#editBrandNewsImageInput').change(() => previewImage('editBrandNewsImageInput', '#editBrandNewsImagePreviewContainer'));
+
+            // 刪除品牌圖片事件綁定 (動態綁定到Modal內部)
+            $('#editBrandModal').on('click', '.delete-brand-image', async function () {
+                const brandId = $(this).data('brand-id');
+                const imageType = $(this).data('type');
+                const imageName = $(this).data('name');
+
+                if (!confirm(`確定要刪除這個${imageType === 'logo' ? 'Logo' : '最新消息圖片'}嗎？`)) return;
+
+                try {
+                    await apiRequest('delete_brand_image', { brand_id: brandId, image_type: imageType, image_name: imageName });
+                    showToast('成功', '圖片刪除成功');
+                    loadBrandImages(brandId); // 重新載入圖片列表
+                } catch (err) {
+                    showToast('錯誤', '圖片刪除失敗: ' + err.message, 'danger');
+                }
+            });
         });
+
     })(jQuery, bootstrap);
 </script>
