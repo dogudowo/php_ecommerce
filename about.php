@@ -98,7 +98,7 @@ $social_links = json_decode(file_get_contents(__DIR__ . '/fixedFile/social_links
         </li>
         <li class="nav-item" role="presentation">
             <a class="nav-link"
-                href="https://docs.google.com/forms/u/0/d/e/1FAIpQLSf5T8Jt46qCVAIgzvzLTv-wfvfqMOUX0Dl8VeS1Fnu_vxtysA/formResponse"
+                href="<?php echo json_decode(file_get_contents(__DIR__ . '/src/adLink.json'))->adLink; ?>"
                 target="_blank">
                 廣告合作
             </a>
