@@ -161,7 +161,9 @@ try {
                                             </button>
                                             <button type="button" class="btn btn-sm btn-outline-success update-repair-status"
                                                 data-id="<?php echo htmlspecialchars($repair['RepairID']); ?>"
-                                                data-status="<?php echo htmlspecialchars($repair['RepairStatus']); ?>">
+                                                data-status="<?php echo htmlspecialchars($repair['RepairStatus']); ?>"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#updateRepairStatusModal">
                                                 <i class="bi bi-arrow-repeat"></i>
                                             </button>
                                         </div>
@@ -201,6 +203,33 @@ try {
             </div>
         </div>
     </div>
+
+    <!-- 變更維修狀態 Modal -->
+    <div class="modal fade" id="updateRepairStatusModal" tabindex="-1" aria-labelledby="updateRepairStatusModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <form id="updateRepairStatusForm" class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="updateRepairStatusModalLabel">變更維修狀態</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="關閉"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" id="modalRepairId" name="repair_id">
+                    <div class="mb-3">
+                        <label for="modalNewStatus" class="form-label">選擇新狀態</label>
+                        <select class="form-select" id="modalNewStatus" name="new_status" required>
+                            <?php foreach ($statusList as $key => $value): ?>
+                                <option value="<?php echo htmlspecialchars($key); ?>"><?php echo htmlspecialchars($value); ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">儲存</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </div>
 
 <script>
@@ -226,6 +255,44 @@ try {
             document.getElementById('modalRepairCommit').textContent = commit;
             document.getElementById('modalWarrantyDate').textContent = warrantyDate;
         });
+    });
+
+    // 彈出 modal 時帶入 RepairID 與目前狀態
+    document.querySelectorAll('.update-repair-status').forEach(button => {
+        button.addEventListener('click', function () {
+            const repairId = this.getAttribute('data-id');
+            const currentStatus = this.getAttribute('data-status');
+            document.getElementById('modalRepairId').value = repairId;
+            document.getElementById('modalNewStatus').value = currentStatus;
+        });
+    });
+
+    // 處理表單送出
+    document.getElementById('updateRepairStatusForm').addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const repairId = document.getElementById('modalRepairId').value;
+        const newStatus = document.getElementById('modalNewStatus').value;
+
+        try {
+            const response = await fetch('models/backend/functions/updateRepairStatus.php', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                body: `repair_id=${encodeURIComponent(repairId)}&new_status=${encodeURIComponent(newStatus)}`
+            });
+            const result = await response.json();
+            if (result.success) {
+                // 更新表格上的狀態
+                const row = document.querySelector(`button.update-repair-status[data-id="${repairId}"]`).closest('tr');
+                row.querySelector('span.badge').textContent = result.statusText;
+                row.querySelector('span.badge').className = 'badge ' + result.statusClass;
+                // 關閉 modal
+                bootstrap.Modal.getInstance(document.getElementById('updateRepairStatusModal')).hide();
+            } else {
+                alert(result.message || '更新失敗');
+            }
+        } catch (err) {
+            alert('發生錯誤，請稍後再試');
+        }
     });
 
 </script>
