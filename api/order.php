@@ -314,7 +314,7 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                                 data-order-id="<?= $order['OrderID'] ?>"
                                 data-bs-toggle="modal" 
                                 data-bs-target="#warrantyModal<?= $order['OrderID'] ?>">維修</button>
-                        <?php
+                            <?php
                         endif; ?>
                     </div>
                 </div>
@@ -342,6 +342,15 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                         <?php if (empty($warranties)): ?>
                             <p class="text-center">此訂單尚無保固記錄</p>
                         <?php else: ?>
+                            <?php
+                            // 調試輸出
+                            error_log('Warranties for modal: ' . json_encode($warranties, JSON_UNESCAPED_UNICODE));
+                            foreach ($warranties as $warranty) {
+                                error_log('Warranty ID: ' . $warranty['WarrantyID'] . 
+                                         ', Repair ID: ' . ($warranty['RepairID'] ?? 'null') . 
+                                         ', Status: ' . ($warranty['RepairStatus'] ?? 'null'));
+                            }
+                            ?>
                             <form id="repairForm<?= $order['OrderID'] ?>" class="repair-form">
                                 <div class="table-responsive">
                                     <table class="table">
@@ -352,6 +361,9 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                                                 <th>保固ID</th>
                                                 <th>保固到期日</th>
                                                 <th>保固狀態</th>
+                                                <th>維修狀態</th>
+                                                <th>維修日期</th>
+                                                <th>備註</th>
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -362,7 +374,7 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                                                                class="form-check-input warranty-checkbox" 
                                                                name="warranty_ids[]" 
                                                                value="<?= $warranty['WarrantyID'] ?>"
-                                                               <?= !$warranty['WarrantyStatus'] ? 'disabled' : '' ?>>
+                                                               <?= (!$warranty['WarrantyStatus'] || $warranty['RepairID']) ? 'disabled' : '' ?>>
                                                     </td>
                                                     <td><?= htmlspecialchars($warranty['ProductName']) ?></td>
                                                     <td><?= $warranty['WarrantyID'] ?></td>
@@ -371,6 +383,21 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                                                         <span class="badge <?= $warranty['WarrantyStatus'] ? 'bg-success' : 'bg-danger' ?>">
                                                             <?= $warranty['WarrantyStatus'] ? '有效' : '過期' ?>
                                                         </span>
+                                                    </td>
+                                                    <td>
+                                                        <?php if ($warranty['RepairID']): ?>
+                                                            <span class="badge <?= getRepairStatusClass($warranty['RepairStatus']) ?>">
+                                                                <?= getRepairStatusText($warranty['RepairStatus']) ?>
+                                                            </span>
+                                                        <?php else: ?>
+                                                            <span class="badge bg-secondary">未送修</span>
+                                                        <?php endif; ?>
+                                                    </td>
+                                                    <td>
+                                                        <?= $warranty['RepairDate'] ? date('Y-m-d', strtotime($warranty['RepairDate'])) : '-' ?>
+                                                    </td>
+                                                    <td>
+                                                        <?= $warranty['RepairCommit'] ? htmlspecialchars($warranty['RepairCommit']) : '-' ?>
                                                     </td>
                                                 </tr>
                                             <?php endforeach; ?>
@@ -656,22 +683,52 @@ function getOrderWarranties(int $orderId, ?PDO $pdo = null): array
 {
     $pdo = $pdo ?? db_connect();
     
+    // 首先檢查repairs資料
+    $checkRepairs = $pdo->prepare("SELECT * FROM Repairs");
+    $checkRepairs->execute();
+    $allRepairs = $checkRepairs->fetchAll(PDO::FETCH_ASSOC);
+    error_log('All Repairs: ' . json_encode($allRepairs, JSON_UNESCAPED_UNICODE));
+    
+    // 簡化查詢，先確保基本資料能正確獲取
     $sql = <<<SQL
         SELECT  w.WarrantyID,
                 w.WarrantyDate,
                 w.WarrantyStatus,
-                orec.ProductName
+                orec.ProductName,
+                r.RepairID,
+                r.RepairDate,
+                r.RepairStatus,
+                r.RepairCommit
         FROM    Orders o
         JOIN    OrderRecord orec ON o.OrderID = orec.OrderID
         JOIN    ReceiptItem ri ON orec.RecordID = ri.OrderRecordID
         JOIN    Warranty w ON ri.WarrantyID = w.WarrantyID
+        LEFT JOIN Repairs r ON w.WarrantyID = r.WarrantyID
         WHERE   o.OrderID = :orderId
-        ORDER BY w.WarrantyID
     SQL;
     
     $stmt = $pdo->prepare($sql);
     $stmt->execute(['orderId' => $orderId]);
-    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    // 調試輸出
+    error_log('Order ID: ' . $orderId);
+    error_log('SQL Query: ' . $sql);
+    error_log('Results: ' . json_encode($results, JSON_UNESCAPED_UNICODE));
+    
+    // 檢查warranty和repairs的關聯
+    if (!empty($results)) {
+        $warrantyIds = array_column($results, 'WarrantyID');
+        $checkWarrantyRepairs = $pdo->prepare("
+            SELECT * FROM Repairs 
+            WHERE WarrantyID IN (" . implode(',', $warrantyIds) . ")
+        ");
+        $checkWarrantyRepairs->execute();
+        $warrantyRepairs = $checkWarrantyRepairs->fetchAll(PDO::FETCH_ASSOC);
+        error_log('Warranty Repairs: ' . json_encode($warrantyRepairs, JSON_UNESCAPED_UNICODE));
+    }
+    
+    return $results;
 }
 
 // 添加處理維修申請的函數
@@ -719,6 +776,27 @@ if ($method === 'POST' && $action === 'createRepair') {
     $result = createRepairRequest($input['warrantyIds']);
     echo json_encode($result);
     exit;
+}
+
+// 添加維修狀態相關的輔助函數
+function getRepairStatusClass(string $status): string
+{
+    return [
+        '待處理' => 'bg-warning',
+        '處理中' => 'bg-info',
+        '已完成' => 'bg-success',
+        '已取消' => 'bg-danger'
+    ][$status] ?? 'bg-secondary';
+}
+
+function getRepairStatusText(string $status): string
+{
+    return [
+        '待處理' => '待處理',
+        '處理中' => '處理中',
+        '已完成' => '已完成',
+        '已取消' => '已取消'
+    ][$status] ?? $status;
 }
 ?>
 <script>

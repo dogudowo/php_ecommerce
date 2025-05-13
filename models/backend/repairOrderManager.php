@@ -18,14 +18,13 @@ function getAllRepairOrders()
     try {
         $stmt = $pdo->prepare("SELECT r.RepairID, r.RepairDate, r.RepairStatus, 
                               w.WarrantyID, w.WarrantyDate, w.WarrantyStatus, 
-                              m.Name as MemberName, p.ProductName 
+                              m.Name as MemberName, orec.ProductName 
                               FROM Repairs r 
                               JOIN Warranty w ON r.WarrantyID = w.WarrantyID 
                               JOIN ReceiptItem ri ON w.WarrantyID = ri.WarrantyID 
+                              JOIN OrderRecord orec ON ri.OrderRecordID = orec.RecordID 
                               JOIN Receipt rec ON ri.ReceiptID = rec.ReceiptID 
                               JOIN Member m ON rec.MemberID = m.MemberID 
-                              JOIN Options o ON ri.OptionID = o.OptionID 
-                              JOIN Product p ON o.ProductID = p.ProductID 
                               ORDER BY r.RepairDate DESC");
         $stmt->execute();
         return $stmt->fetchAll(PDO::FETCH_ASSOC);
