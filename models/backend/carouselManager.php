@@ -135,7 +135,7 @@ $carousel_dir = __DIR__ . '/../../imgs/carousel/';
             formData.append('action', 'upload');
 
             try {
-                const response = await fetch('models/backend/functions/carouselHandler.php', {
+                const response = await fetch('api/carousel.php', {
                     method: 'POST',
                     body: formData
                 });
@@ -172,7 +172,7 @@ $carousel_dir = __DIR__ . '/../../imgs/carousel/';
                 formData.append('filename', filename);
                 formData.append('action', 'delete');
 
-                const response = await fetch('models/backend/functions/carouselHandler.php', {
+                const response = await fetch('api/carousel.php', {
                     method: 'POST',
                     body: formData
                 });
@@ -209,13 +209,13 @@ $carousel_dir = __DIR__ . '/../../imgs/carousel/';
         `;
 
         try {
-            const response = await fetch('models/backend/functions/carouselHandler.php?action=list');
+            const response = await fetch('api/carousel.php?action=list');
             const result = await response.json();
 
-            if (result.success) {
-                if (result.images.length > 0) {
+            if (result.success && result.data) {
+                if (Array.isArray(result.data) && result.data.length > 0) {
                     let html = '';
-                    result.images.forEach(image => {
+                    result.data.forEach(image => {
                         html += `
                             <div class="col-md-6 col-lg-4">
                                 <div class="card h-100">

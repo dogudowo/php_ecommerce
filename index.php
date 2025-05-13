@@ -9,23 +9,12 @@ $featureds = getProductsByType('featured');
 ?>
 
 <div class="col-12 col-md-10 mx-auto">
-    <?php
-    $dir = 'imgs/carousel/';
-    $imgs = glob($dir . '*.{jpg,jpeg,png,gif}', GLOB_BRACE);
-    ?>
     <div id="homeCarousel" class="carousel slide" data-bs-ride="carousel">
-        <div class="carousel-indicators">
-            <?php foreach ($imgs as $i => $img): ?>
-                <button type="button" data-bs-target="#homeCarousel" data-bs-slide-to="<?= $i ?>"
-                    class="<?= !$i ? 'active' : '' ?>"></button>
-            <?php endforeach; ?>
+        <div class="carousel-indicators" id="carouselIndicators">
+            <!-- Indicators will be added by JavaScript -->
         </div>
-        <div class="carousel-inner">
-            <?php foreach ($imgs as $i => $img): ?>
-                <div class="carousel-item <?= !$i ? 'active' : '' ?>">
-                    <img src="<?= $img ?>" class="d-block w-100" alt="slide">
-                </div>
-            <?php endforeach; ?>
+        <div class="carousel-inner" id="carouselInner">
+            <!-- Carousel items will be added by JavaScript -->
         </div>
         <button class="carousel-control-prev" data-bs-target="#homeCarousel" data-bs-slide="prev">
             <span class="carousel-control-prev-icon"></span>
@@ -35,6 +24,53 @@ $featureds = getProductsByType('featured');
         </button>
     </div>
 </div>
+
+<script>
+    async function loadCarousel() {
+        try {
+            const response = await fetch('api/carousel.php?action=getCarouselImgs', { method: 'GET' });
+            const result = await response.json();
+
+            if (!result.success || !Array.isArray(result.data)) {
+                console.error('Invalid carousel data:', result);
+                return;
+            }
+
+            const indicatorsContainer = document.getElementById('carouselIndicators');
+            const innerContainer = document.getElementById('carouselInner');
+
+            result.data.forEach((img, i) => {
+                // Add indicator
+                const indicator = document.createElement('button');
+                indicator.type = 'button';
+                indicator.dataset.bsTarget = '#homeCarousel';
+                indicator.dataset.bsSlideTo = i;
+                indicator.className = i === 0 ? 'active' : '';
+                indicatorsContainer.appendChild(indicator);
+
+                // Add carousel item
+                const item = document.createElement('div');
+                item.className = `carousel-item ${i === 0 ? 'active' : ''}`;
+
+                const imgElement = document.createElement('img');
+                imgElement.src = img;
+                imgElement.className = 'd-block w-100';
+                imgElement.alt = 'slide';
+
+                item.appendChild(imgElement);
+                innerContainer.appendChild(item);
+            });
+
+            // Initialize carousel after loading images
+            const carousel = new bootstrap.Carousel(document.getElementById('homeCarousel'));
+        } catch (error) {
+            console.error('Error loading carousel:', error);
+        }
+    }
+
+    // Load carousel when DOM is loaded
+    document.addEventListener('DOMContentLoaded', loadCarousel);
+</script>
 
 <div class="container-fulid mt-3">
     <div class="row col-lg-9 col-12 mx-auto m-0 p-0">
