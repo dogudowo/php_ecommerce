@@ -1,7 +1,7 @@
 <?php
 // about_management_optimized.php (no global API constants)
-require_once __DIR__ . '/../../api/db.php';
-$adLinkObj = json_decode(file_get_contents(__DIR__ . '/../../src/adLink.json'));
+require_once __DIR__ . '/../api/db.php';
+$adLinkObj = json_decode(file_get_contents(__DIR__ . '/../src/adLink.json'));
 $adLink = $adLinkObj->adLink ?? '';
 ?>
 

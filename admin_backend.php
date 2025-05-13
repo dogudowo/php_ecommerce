@@ -157,29 +157,29 @@ define('INCLUDED_FROM_ADMIN', true);
                     </div>
                     <!-- 系統設置 -->
                     <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
-                        <?php include "models/backend/systemSettings.php"; ?>
+                        <?php include "models/systemSettings.php"; ?>
                     </div>
                     <!-- 輪播圖編輯 -->
                     <div class="tab-pane fade" id="carousel" role="tabpanel" aria-labelledby="v-pills-carousel-tab">
-                        <?php include "models/backend/carouselManager.php"; ?>
+                        <?php include "models/carouselManager.php"; ?>
                     </div>
                     <!-- 維修頁面管理 -->
                     <div class="tab-pane fade" id="repair-page" role="tabpanel"
                         aria-labelledby="v-pills-repair-page-tab">
-                        <?php include "models/backend/repairManager.php"; ?>
+                        <?php include "models/repairManager.php"; ?>
                     </div>
                     <!-- 購物說明頁面管理 -->
                     <div class="tab-pane fade" id="instruction" role="tabpanel"
                         aria-labelledby="v-pills-instruction-tab">
-                        <?php include "models/backend/instructionManager.php"; ?>
+                        <?php include "models/instructionManager.php"; ?>
                     </div>
                     <!-- 品牌介紹頁面管理 -->
                     <div class="tab-pane fade" id="brand" role="tabpanel" aria-labelledby="v-pills-brand-tab">
-                        <?php include "models/backend/brandManager.php"; ?>
+                        <?php include "models/brandManager.php"; ?>
                     </div>
                     <!-- 關於我們頁面管理 -->
                     <div class="tab-pane fade" id="about" role="tabpanel" aria-labelledby="v-pills-about-tab">
-                        <?php include "models/backend/aboutManager.php"; ?>
+                        <?php include "models/aboutManager.php"; ?>
                     </div>
                 </div>
             </div>

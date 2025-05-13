@@ -1,10 +1,10 @@
 <?php
-require_once __DIR__ . '/../../api/error_handler.php';
+require_once __DIR__ . '/../api/error_handler.php';
 // 系統設置管理文件
 
 // 只有後台登入者可存取
 if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
-    header('Location: ../../login.php');
+    header('Location: ../login.php');
     exit;
 }
 ?>

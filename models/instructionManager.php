@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/../../api/error_handler.php';
-require_once __DIR__ . '/../../api/instruction.php';
+require_once __DIR__ . '/../api/error_handler.php';
+require_once __DIR__ . '/../api/instruction.php';
 
 // 處理圖片上傳
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])) {

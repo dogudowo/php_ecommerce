@@ -1,13 +1,13 @@
 <?php
-require_once __DIR__ . '/../../api/error_handler.php';
+require_once __DIR__ . '/../api/error_handler.php';
 // 防止直接訪問此文件
 if (!defined('INCLUDED_FROM_ADMIN')) {
-    header('Location: ../../login.php');
+    header('Location: ../login.php');
     exit;
 }
 
 // 輪播圖目錄路徑
-$carousel_dir = __DIR__ . '/../../imgs/carousel/';
+$carousel_dir = __DIR__ . '/../imgs/carousel/';
 ?>
 
 <div class="container-fluid p-0">
