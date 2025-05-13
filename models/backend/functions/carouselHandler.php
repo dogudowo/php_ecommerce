@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../../../api/error_handler.php';
 // 防止直接訪問此文件
 session_start();
-if (!isset($_SESSION['logged_in']) || $_SESSION['user_role'] !== 'admin') {
+if (!isset($_SESSION['logged_in']) || $_SESSION['user_role'] !== 2) {
     header('Content-Type: application/json');
     echo json_encode(['success' => false, 'message' => '未授權的訪問']);
     exit;

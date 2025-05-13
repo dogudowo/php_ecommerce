@@ -178,7 +178,8 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
 </div>
 
 <script>
-    const currentUserRole = <?php echo $currentRole; ?>; // 強制轉換為整數類型
+    const currentUserRole = <?php echo json_encode($currentRole, JSON_NUMERIC_CHECK); ?>;
+    // const currentUserRole = <?php echo $currentRole; ?>; // 強制轉換為整數類型
     // 會員篩選功能
     document.getElementById('filterCity').addEventListener('change', filterMembers);
     document.getElementById('filterAdmin').addEventListener('change', filterMembers);
@@ -594,10 +595,16 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                         <td>${member.OrderCount !== undefined ? member.OrderCount : 'N/A'}</td>
                         <td>${memberType}</td>
                         <td class="btn-group">
-                            <button class="btn btn-sm btn-outline-info view-member" data-id="${member.MemberID}" title="查看詳情"><i class="bi bi-eye"></i></button>
-                            ${currentUserRole == 2 ? `
-                                <button class="btn btn-sm btn-outline-primary edit-member" data-id="${member.MemberID}" title="編輯"><i class="bi bi-pencil-square"></i></button>
-                                <button class="btn btn-sm btn-outline-danger delete-member" data-id="${member.MemberID}" title="刪除"><i class="bi bi-trash"></i></button>
+                            <button class="btn btn-sm btn-outline-info view-member" data-id="${member.MemberID}" title="查看詳情">
+                                <i class="bi bi-eye"></i>
+                            </button>
+                            ${currentUserRole === 2 ? `
+                                <button class="btn btn-sm btn-outline-primary edit-member" data-id="${member.MemberID}" title="編輯">
+                                    <i class="bi bi-pencil-square"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-danger delete-member" data-id="${member.MemberID}" title="刪除">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             ` : ''}
                         </td>
                     `;

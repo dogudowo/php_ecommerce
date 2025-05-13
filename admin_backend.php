@@ -1,6 +1,6 @@
 <?php
 // 防止直接訪問此文件
-if (!defined('INCLUDED_FROM_ROUTER') && (!isset($_SESSION['logged_in']) || $_SESSION['user_role'] !== 'admin')) {
+if (!defined('INCLUDED_FROM_ROUTER') && (!isset($_SESSION['logged_in']) || $_SESSION['user_role'] !== 2)) {
     header('Location: login.php');
     exit;
 }

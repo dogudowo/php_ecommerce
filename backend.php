@@ -8,10 +8,10 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 }
 
 // 根據用戶角色重定向到相應的後台頁面
-if ($_SESSION['user_role'] === 'admin') {
+if ($_SESSION['user_role'] === 2) {
     // 管理員訪問完整後台
     include 'admin_backend.php';
-} elseif ($_SESSION['user_role'] === 'staff') {
+} elseif ($_SESSION['user_role'] === 1) {
     // 員工訪問限制後台
     include 'staff_backend.php';
 } else {
