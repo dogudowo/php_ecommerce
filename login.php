@@ -89,7 +89,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <button class="w-100 btn btn-lg btn-success" type="submit">登入</button>
 
         <p class="mt-3 text-center">
-            <a href="register.php" class="text-decoration-none">註冊會員</a>
+            <a href="register.php" class="text-decoration-none">註冊會員</a> |
+            <a href="forgotPassword.php" class="text-decoration-none">忘記密碼</a>
         </p>
 
         <p class="mt-5 mb-3 text-muted text-center">&copy; 2025 歐印精品</p>
@@ -103,7 +104,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (rememberMe === 'true') {
             document.getElementById('remember-me').checked = true;
             document.getElementById('phone').value = localStorage.getItem('savedPhone') || '';
-            document.getElementById('password').value = localStorage.getItem('savedPassword') || '';
         }
     });
 
@@ -111,16 +111,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     document.querySelector('form').addEventListener('submit', function (e) {
         const rememberMe = document.getElementById('remember-me').checked;
         const phone = document.getElementById('phone').value;
-        const password = document.getElementById('password').value;
 
         if (rememberMe) {
             localStorage.setItem('rememberMe', 'true');
             localStorage.setItem('savedPhone', phone);
-            localStorage.setItem('savedPassword', password);
         } else {
             localStorage.removeItem('rememberMe');
             localStorage.removeItem('savedPhone');
-            localStorage.removeItem('savedPassword');
         }
     });
 </script>
