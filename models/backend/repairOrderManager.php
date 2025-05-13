@@ -151,7 +151,12 @@ try {
                                     <td>
                                         <div class="btn-group">
                                             <button type="button" class="btn btn-sm btn-outline-primary view-repair"
-                                                data-id="<?php echo htmlspecialchars($repair['RepairID']); ?>">
+                                                data-id="<?php echo htmlspecialchars($repair['RepairID']); ?>"
+                                                data-commit="<?php echo htmlspecialchars($repair['RepairCommit'] ?? ''); ?>"
+                                                data-warranty-date="<?php echo htmlspecialchars($repair['WarrantyDate'] ?? ''); ?>"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#repairDetailModal"
+                                                title="查看詳情">
                                                 <i class="bi bi-eye"></i>
                                             </button>
                                             <button type="button" class="btn btn-sm btn-outline-success update-repair-status"
@@ -181,11 +186,14 @@ try {
                         aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="alert alert-info">
-                        <i class="bi bi-info-circle me-2"></i>維修訂單詳情功能正在開發中，敬請期待。
+                    <div class="mb-3">
+                        <label class="form-label">維修備註：</label>
+                        <div id="modalRepairCommit" class="form-control"></div>
                     </div>
-                    <!-- 維修訂單詳情內容將在這裡動態加載 -->
-                    <div id="repairDetailContent"></div>
+                    <div class="mb-3">
+                        <label class="form-label">保固到期日：</label>
+                        <div id="modalWarrantyDate" class="form-control"></div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
@@ -213,13 +221,13 @@ try {
     // 查看維修訂單詳情
     document.querySelectorAll('.view-repair').forEach(button => {
         button.addEventListener('click', function () {
-            const repairId = this.getAttribute('data-id');
-            console.log('查看維修訂單詳情：', repairId);
-            // 實際查看功能將在後續開發中實現
+            // 取得資料
+            const commit = this.getAttribute('data-commit') || '無';
+            const warrantyDate = this.getAttribute('data-warranty-date') || '無';
 
-            // 顯示模態框
-            const modal = new bootstrap.Modal(document.getElementById('repairDetailModal'));
-            modal.show();
+            // 填進 modal
+            document.getElementById('modalRepairCommit').textContent = commit;
+            document.getElementById('modalWarrantyDate').textContent = warrantyDate;
         });
     });
 
