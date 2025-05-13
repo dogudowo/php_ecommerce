@@ -43,7 +43,7 @@ define('KEY_REPORT_DOC_PATH', 'src/KeyReport.doc');
                     accept="image/jpeg, image/png">
                 <p class="current-img-label mt-2">目前圖片:</p>
                 <img src="<?php echo CH_CONTEXT_IMG_PATH; ?>?t=<?php echo time(); ?>"
-                    alt="Current Chinese Context Image" class="img-preview" style="max-width: 10%; height: auto;">
+                    alt="Current Chinese Context Image" class="img-preview" style="max-width: 30%; height: auto;">
             </div>
             <div class="mb-3">
                 <label for="ch_rundown_img" class="form-label">中文維修流程圖片 (repairRundown.jpg):</label>
@@ -51,7 +51,7 @@ define('KEY_REPORT_DOC_PATH', 'src/KeyReport.doc');
                     accept="image/jpeg, image/png">
                 <p class="current-img-label mt-2">目前圖片:</p>
                 <img src="<?php echo CH_RUNDOWN_IMG_PATH; ?>?t=<?php echo time(); ?>"
-                    alt="Current Chinese Rundown Image" class="img-preview" style="max-width: 10%; height: auto;">
+                    alt="Current Chinese Rundown Image" class="img-preview" style="max-width: 30%; height: auto;">
             </div>
         </div>
 
@@ -63,7 +63,7 @@ define('KEY_REPORT_DOC_PATH', 'src/KeyReport.doc');
                     accept="image/jpeg, image/png">
                 <p class="current-img-label mt-2">目前圖片:</p>
                 <img src="<?php echo EN_CONTEXT_IMG_PATH; ?>?t=<?php echo time(); ?>"
-                    alt="Current English Context Image" class="img-preview" style="max-width: 10%; height: auto;">
+                    alt="Current English Context Image" class="img-preview" style="max-width: 30%; height: auto;">
             </div>
             <div class="mb-3">
                 <label for="en_rundown_img" class="form-label">英文維修流程圖片 (repairRundownEN.jpg):</label>
@@ -71,7 +71,7 @@ define('KEY_REPORT_DOC_PATH', 'src/KeyReport.doc');
                     accept="image/jpeg, image/png">
                 <p class="current-img-label mt-2">目前圖片:</p>
                 <img src="<?php echo EN_RUNDOWN_IMG_PATH; ?>?t=<?php echo time(); ?>"
-                    alt="Current English Rundown Image" class="img-preview" style="max-width: 10%; height: auto;">
+                    alt="Current English Rundown Image" class="img-preview" style="max-width: 30%; height: auto;">
             </div>
         </div>
 
@@ -82,7 +82,7 @@ define('KEY_REPORT_DOC_PATH', 'src/KeyReport.doc');
                 <input class="form-control" type="file" id="price_img" name="price_img" accept="image/jpeg, image/png">
                 <p class="current-img-label mt-2">目前圖片:</p>
                 <img src="<?php echo PRICE_IMG_PATH; ?>?t=<?php echo time(); ?>" alt="Current Price Image"
-                    class="img-preview" style="max-width: 10%; height: auto;">
+                    class="img-preview" style="max-width: 30%; height: auto;">
             </div>
             <div class="mb-3">
                 <label for="key_report_doc" class="form-label">鑰匙價格表文件 (KeyReport.doc):</label>

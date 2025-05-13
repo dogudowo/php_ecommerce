@@ -5,86 +5,111 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-// Define root path for file operations
-$webRoot = $_SERVER['DOCUMENT_ROOT'];
-$basePath = is_dir($webRoot . '/public_html') ? $webRoot . '/public_html' : $webRoot;
+/**
+ * 取得專案根目錄（以目前檔案為基準往上兩層）
+ * 例：/htdocs/public_html/models/backend → /htdocs/public_html
+ * 如果您的實際層級不同，調整 dirname(__DIR__, 2) 的第二個參數即可。
+ */
+$projectRoot = dirname(__DIR__, 4);
 
-define('CH_CONTEXT_IMG_TARGET_PATH', $basePath . '/imgs/repair/context-ch/repairContext.jpg');
-define('CH_RUNDOWN_IMG_TARGET_PATH', $basePath . '/imgs/repair/context-ch/repairRundown.jpg');
-define('EN_CONTEXT_IMG_TARGET_PATH', $basePath . '/imgs/repair/context-en/repairContextUS.jpg');
-define('EN_RUNDOWN_IMG_TARGET_PATH', $basePath . '/imgs/repair/context-en/repairRundownEN.jpg');
-define('PRICE_IMG_TARGET_PATH', $basePath . '/imgs/repair/price/AllenRepairPrice0609.jpg');
-define('KEY_REPORT_DOC_TARGET_PATH', $basePath . '/src/KeyReport.doc');
+/* ---------- 目標檔案（相對）路徑 ---------- */
+const CH_CONTEXT_IMG_PATH = 'imgs/repair/context-ch/repairContext.jpg';
+const CH_RUNDOWN_IMG_PATH = 'imgs/repair/context-ch/repairRundown.jpg';
+const EN_CONTEXT_IMG_PATH = 'imgs/repair/context-en/repairContextUS.jpg';
+const EN_RUNDOWN_IMG_PATH = 'imgs/repair/context-en/repairRundownEN.jpg';
+const PRICE_IMG_PATH = 'imgs/repair/price/AllenRepairPrice0609.jpg';
+const KEY_REPORT_DOC_PATH = 'src/KeyReport.doc';
 
 $uploadErrors = [];
 
-// Helper function to handle file uploads
-function handleUpload($fileKey, $targetPath, $allowedMimeTypes, $allowedExtensions)
+/**
+ * 處理單一檔案上傳
+ *
+ * @param string $fileKey            表單欄位名稱
+ * @param string $relativePath       相對於專案根目錄的路徑
+ * @param array  $allowedMimeTypes   允許的 MIME 類型
+ * @param array  $allowedExtensions  允許的副檔名
+ */
+function handleUpload(string $fileKey, string $relativePath, array $allowedMimeTypes, array $allowedExtensions): void
 {
-    global $uploadErrors;
-    if (isset($_FILES[$fileKey]) && $_FILES[$fileKey]['error'] === UPLOAD_ERR_OK) {
-        $fileTmpPath = $_FILES[$fileKey]['tmp_name'];
-        $fileName = $_FILES[$fileKey]['name'];
-        $fileSize = $_FILES[$fileKey]['size'];
-        $fileType = $_FILES[$fileKey]['type'];
-        $fileExtension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
+    global $uploadErrors, $projectRoot;
 
-        // Validate file type and extension
-        if (!in_array($fileType, $allowedMimeTypes) || !in_array($fileExtension, $allowedExtensions)) {
-            $uploadErrors[] = "檔案 '{$fileName}' 的類型 ({$fileType}, .{$fileExtension}) 不被允許上傳至 {$fileKey}。";
-            return;
-        }
+    if (!isset($_FILES[$fileKey])) {
+        return;                     // 沒該欄位
+    }
+    if ($_FILES[$fileKey]['error'] === UPLOAD_ERR_NO_FILE) {
+        return;                     // 未選檔
+    }
+    if ($_FILES[$fileKey]['error'] !== UPLOAD_ERR_OK) {
+        $uploadErrors[] = "上傳 {$fileKey} 時錯誤（代碼 {$_FILES[$fileKey]['error']}）";
+        return;
+    }
 
-        // Validate file size (e.g., max 5MB)
-        if ($fileSize > 5 * 1024 * 1024) {
-            $uploadErrors[] = "檔案 '{$fileName}' 過大 (超過 5MB)。";
-            return;
-        }
+    $fileName = $_FILES[$fileKey]['name'];
+    $fileTmpPath = $_FILES[$fileKey]['tmp_name'];
+    $fileSize = $_FILES[$fileKey]['size'];
+    $fileType = $_FILES[$fileKey]['type'];
+    $fileExt = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-        // Ensure target directory exists (it should, based on project structure)
-        $targetDir = dirname($targetPath);
-        if (!is_dir($targetDir)) {
-            if (!mkdir($targetDir, 0755, true)) {
-                $uploadErrors[] = "無法建立目標資料夾：{$targetDir}";
-                return;
-            }
-        }
+    // 類型與副檔名檢查
+    if (
+        !in_array($fileType, $allowedMimeTypes, true) ||
+        !in_array($fileExt, $allowedExtensions, true)
+    ) {
+        $uploadErrors[] = "檔案「{$fileName}」的型態（{$fileType}, .{$fileExt}）不被允許。";
+        return;
+    }
 
-        // Move the uploaded file to the target path, overwriting the existing file
-        if (!move_uploaded_file($fileTmpPath, $targetPath)) {
-            $uploadErrors[] = "無法移動上傳的檔案 '{$fileName}' 到 {$targetPath}. 請檢查權限及路徑。";
-        }
-    } elseif (isset($_FILES[$fileKey]) && $_FILES[$fileKey]['error'] !== UPLOAD_ERR_NO_FILE) {
-        // Handle other upload errors
-        $uploadErrors[] = "上傳檔案 '{$fileKey}' 時發生錯誤，錯誤代碼: " . $_FILES[$fileKey]['error'];
+    // 大小限制（5 MB）
+    if ($fileSize > 5 * 1024 * 1024) {
+        $uploadErrors[] = "檔案「{$fileName}」過大（> 5 MB）。";
+        return;
+    }
+
+    // 組合目標絕對路徑
+    $targetAbsPath = "{$projectRoot}/{$relativePath}";
+    $targetDir = dirname($targetAbsPath);
+
+    // 建立資料夾
+    if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true)) {
+        $uploadErrors[] = "無法建立資料夾：{$targetDir}";
+        return;
+    }
+
+    // 搬移檔案
+    if (!move_uploaded_file($fileTmpPath, $targetAbsPath)) {
+        $uploadErrors[] = "無法將檔案「{$fileName}」搬到 {$relativePath}，請檢查權限。";
     }
 }
 
-// --- Handle Image and Document Uploads ---
+/* ---------- 執行上傳 ---------- */
 
-// Allowed image types
-$allowedImageMimeTypes = ['image/jpeg', 'image/png'];
-$allowedImageExtensions = ['jpg', 'jpeg', 'png'];
+// 圖片限制
+$imageMimeTypes = ['image/jpeg', 'image/png'];
+$imageExtensions = ['jpg', 'jpeg', 'png'];
 
-// Allowed document types for KeyReport
-$allowedDocMimeTypes = ['application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
-$allowedDocExtensions = ['doc', 'docx'];
+// Word 文件限制
+$docMimeTypes = [
+    'application/msword',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+];
+$docExtensions = ['doc', 'docx'];
 
-// Process uploads
-handleUpload('ch_context_img', CH_CONTEXT_IMG_TARGET_PATH, $allowedImageMimeTypes, $allowedImageExtensions);
-handleUpload('ch_rundown_img', CH_RUNDOWN_IMG_TARGET_PATH, $allowedImageMimeTypes, $allowedImageExtensions);
-handleUpload('en_context_img', EN_CONTEXT_IMG_TARGET_PATH, $allowedImageMimeTypes, $allowedImageExtensions);
-handleUpload('en_rundown_img', EN_RUNDOWN_IMG_TARGET_PATH, $allowedImageMimeTypes, $allowedImageExtensions);
-handleUpload('price_img', PRICE_IMG_TARGET_PATH, $allowedImageMimeTypes, $allowedImageExtensions);
-handleUpload('key_report_doc', KEY_REPORT_DOC_TARGET_PATH, $allowedDocMimeTypes, $allowedDocExtensions);
+handleUpload('ch_context_img', CH_CONTEXT_IMG_PATH, $imageMimeTypes, $imageExtensions);
+handleUpload('ch_rundown_img', CH_RUNDOWN_IMG_PATH, $imageMimeTypes, $imageExtensions);
+handleUpload('en_context_img', EN_CONTEXT_IMG_PATH, $imageMimeTypes, $imageExtensions);
+handleUpload('en_rundown_img', EN_RUNDOWN_IMG_PATH, $imageMimeTypes, $imageExtensions);
+handleUpload('price_img', PRICE_IMG_PATH, $imageMimeTypes, $imageExtensions);
+handleUpload('key_report_doc', KEY_REPORT_DOC_PATH, $docMimeTypes, $docExtensions);
 
-// Return JSON response
+/* ---------- 回傳結果 ---------- */
 header('Content-Type: application/json');
-if (empty($uploadErrors)) {
-    echo json_encode(['success' => true, 'message' => '內容已成功更新！']);
-} else {
-    $errorMessage = implode("\n", array_map('htmlspecialchars', $uploadErrors));
-    echo json_encode(['success' => false, 'message' => $errorMessage]);
-}
+
+echo json_encode(
+    empty($uploadErrors)
+    ? ['success' => true, 'message' => '內容已成功更新！']
+    : ['success' => false, 'message' => implode("\n", array_map('htmlspecialchars', $uploadErrors))]
+);
+
 exit();
 ?>
