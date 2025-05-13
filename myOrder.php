@@ -8,24 +8,23 @@ function h(mixed $val): string
     return htmlspecialchars((string) $val, ENT_QUOTES, 'UTF-8');
 }
 
-/* ---------- 登入 & 角色驗證 ---------- */
+/* ---------- 登入驗證 ---------- */
 if (empty($_SESSION['logged_in'])) {
     header('Location: login.php');
     exit;
 }
 
-/* ---------- 相依檔 ---------- */
+/* ---------- 載入依賴 ---------- */
 require_once __DIR__ . '/api/Member.php';
 require_once __DIR__ . '/api/order.php';
-require_once __DIR__. '/api/error_handler.php';
-/* ---------- 取資料 ---------- */
+require_once __DIR__ . '/api/error_handler.php';
+
+/* ---------- 撈取資料 ---------- */
 $memberId = (int) $_SESSION['user_id'];
-$currentMember = getMemberByID($memberId);       // 來自 Member.php（已使用 PDO）
-$orders = getMemberOrders($memberId);     // 來自 order.php  （已使用 PDO）
-
+$currentMember = getMemberByID($memberId);
+$orders = getMemberOrders($memberId);
 ?>
-
-<?php include __DIR__. '/fixedFile/header.php';?>
+<?php include __DIR__ . '/fixedFile/header.php'; ?>
 
 <!-- ========= Main ========= -->
 <div class="container text-center border-bottom border-black">
@@ -45,15 +44,8 @@ $orders = getMemberOrders($memberId);     // 來自 order.php  （已使用 PDO�
                 </div>
                 <div class="card-body">
                     <h4><?= h($currentMember['membername']) ?></h4>
-                    <p class="mb-0"><strong>身份：</strong><?php 
-                    if ($currentMember['role'] == 0) {
-                        echo '一般會員';
-                    } elseif ($currentMember['role'] == 1) {
-                        echo '員工';
-                    } else {
-                        echo '管理員';
-                    }
-                    ?></p>
+                    <p class="mb-0"><strong>身份：</strong><?= ['一般會員', '員工', '管理員'][$currentMember['role']] ?? '一般會員' ?>
+                    </p>
                     <p class="mb-0"><strong>手機號碼：</strong><?= h($currentMember['phonenum']) ?></p>
                     <p class="mb-0"><strong>電子郵件：</strong><?= h($currentMember['memberemail']) ?></p>
                     <p class="mb-0"><strong>地址：</strong><?= h($currentMember['City'] . $currentMember['Address']) ?></p>
@@ -69,16 +61,11 @@ $orders = getMemberOrders($memberId);     // 來自 order.php  （已使用 PDO�
                 </div>
                 <div class="card-body">
                     <ul class="nav nav-tabs mb-3" id="orderTabs">
-                        <li class="nav-item">
-                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pending"
-                                type="button">進行中</button>
-                        </li>
-                        <li class="nav-item">
-                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#completed"
-                                type="button">已完成</button>
-                        </li>
+                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab"
+                                data-bs-target="#pending">進行中</button></li>
+                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
+                                data-bs-target="#completed">已完成</button></li>
                     </ul>
-
                     <div class="tab-content" id="orderTabsContent">
                         <?php renderOrderTab($orders, 'Pending', '進行中'); ?>
                         <?php renderOrderTab($orders, 'Completed', '已完成'); ?>
@@ -89,7 +76,7 @@ $orders = getMemberOrders($memberId);     // 來自 order.php  （已使用 PDO�
     </div>
 </div>
 
-<!-- ========== 共用訊息 Modal ========== -->
+<!-- ---------- 共用訊息 Modal ---------- -->
 <div class="modal fade" id="messageModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -97,13 +84,12 @@ $orders = getMemberOrders($memberId);     // 來自 order.php  （已使用 PDO�
                 <h5 class="modal-title">系統訊息</h5>
             </div>
             <div class="modal-body" id="modalMessage"></div>
-            <div class="modal-footer"><button type="button" class="btn btn-primary" data-bs-dismiss="modal">確定</button>
-            </div>
+            <div class="modal-footer"><button class="btn btn-primary" data-bs-dismiss="modal">確定</button></div>
         </div>
     </div>
 </div>
 
-<!-- 付款確認 Modal -->
+<!-- ---------- 付款確認 Modal ---------- -->
 <div class="modal fade" id="paymentConfirmModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -113,24 +99,13 @@ $orders = getMemberOrders($memberId);     // 來自 order.php  （已使用 PDO�
             <div class="modal-body" id="paymentModalBody"></div>
             <div class="modal-body">
                 <h6 class="mb-3">選擇付款方式</h6>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="paymentMethod" id="creditCard" value="信用卡" checked>
-                    <label class="form-check-label" for="creditCard">
-                        信用卡
-                    </label>
-                </div>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="paymentMethod" id="atmTransfer" value="ATM轉帳">
-                    <label class="form-check-label" for="atmTransfer">
-                        ATM轉帳
-                    </label>
-                </div>
-                <div class="form-check mb-2">
-                    <input class="form-check-input" type="radio" name="paymentMethod" id="linePay" value="LinePay">
-                    <label class="form-check-label" for="linePay">
-                        LinePay
-                    </label>
-                </div>
+                <?php foreach (['信用卡' => 'creditCard', 'ATM轉帳' => 'atmTransfer', 'LinePay' => 'linePay'] as $label => $id): ?>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="<?= $id ?>"
+                            value="<?= $label ?>" <?= $id === 'creditCard' ? 'checked' : '' ?>>
+                        <label class="form-check-label" for="<?= $id ?>"><?= $label ?></label>
+                    </div>
+                <?php endforeach; ?>
             </div>
             <div class="modal-footer">
                 <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
@@ -140,7 +115,7 @@ $orders = getMemberOrders($memberId);     // 來自 order.php  （已使用 PDO�
     </div>
 </div>
 
-<!-- 編輯會員資料 Modal -->
+<!-- ---------- 編輯會員資料 Modal ---------- -->
 <div class="modal fade" id="editMemberModal" tabindex="-1">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -150,22 +125,23 @@ $orders = getMemberOrders($memberId);     // 來自 order.php  （已使用 PDO�
                 </div>
                 <div class="modal-body">
                     <?php
-                    $fields = [
+                    $map = [
                         'name' => ['姓名', 'membername'],
                         'phone' => ['電話', 'phonenum'],
                         'email' => ['電子郵件', 'memberemail'],
                         'city' => ['城市', 'City'],
-                        'address' => ['地址', 'Address'],
+                        'address' => ['地址', 'Address']
                     ];
-                    foreach ($fields as $name => [$label, $src]): ?>
+                    foreach ($map as $name => [$label, $col]): ?>
                         <div class="mb-3">
                             <label class="form-label"><?= $label ?></label>
-                            <input type="<?= $name === 'email' ? 'email' : 'text' ?>" class="form-control" name="<?= $name ?>"
-                                value="<?= h($currentMember[$src]) ?>">
+                            <input class="form-control" name="<?= $name ?>" value="<?= h($currentMember[$col]) ?>"
+                                <?= $name === 'email' ? 'type=email' : '' ?>>
                         </div>
                     <?php endforeach; ?>
                 </div>
                 <div class="modal-footer">
+                    <button type="button" class="btn btn-warning me-auto" id="openResetPwdModal">重設密碼</button>
                     <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
                     <button class="btn btn-primary" id="saveMemberChanges">儲存變更</button>
                 </div>
@@ -174,133 +150,144 @@ $orders = getMemberOrders($memberId);     // 來自 order.php  （已使用 PDO�
     </div>
 </div>
 
-<?php
-include __DIR__ . '/fixedFile/footer.php';
+<!-- ---------- 重設密碼 Modal ---------- -->
+<div class="modal fade" id="resetPasswordModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="passwordResetForm">
+                <div class="modal-header">
+                    <h5 class="modal-title">重設密碼</h5>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3"><label class="form-label">舊密碼</label><input name="oldPassword" type="password"
+                            class="form-control" required></div>
+                    <div class="mb-3"><label class="form-label">新密碼</label><input name="newPassword" type="password"
+                            class="form-control" required minlength="8"></div>
+                    <div class="mb-3"><label class="form-label">確認新密碼</label><input name="confirmPassword"
+                            type="password" class="form-control" required minlength="8"></div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button class="btn btn-primary">儲存</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
-/* ---------- 將 PHP 參數輸出到 JS ---------- */
-echo '<script>';
-echo 'const CONFIG = ' . json_encode([
+<?php include __DIR__ . '/fixedFile/footer.php'; ?>
+
+<!-- ---------- 將 PHP 變數輸出到 JS ---------- -->
+<script>const CONFIG = <?= json_encode([
     'memberId' => $memberId,
-    'isAdmin' => $_SESSION['user_role'] === 'admin',
-    'orderAmountMap' => array_column($orders, 'TotalAmount', 'OrderID'),
-], JSON_UNESCAPED_UNICODE) . ';';
-echo '</script>';
-?>
+    'isAdmin' => ($_SESSION['user_role'] ?? '') === 'admin',
+    'orderAmountMap' => array_column($orders, 'TotalAmount', 'OrderID')
+], JSON_UNESCAPED_UNICODE); ?>;</script>
 
-<!-- ========== 功能腳本 ========== -->
+<!-- ---------- 功能腳本 ---------- -->
 <script>
     (() => {
         const msgModal = new bootstrap.Modal('#messageModal');
         const payModal = new bootstrap.Modal('#paymentConfirmModal');
+        const resetPwdModal = new bootstrap.Modal('#resetPasswordModal');
         let currentOrderId = null;
 
-        const showMsg = t => {
-            document.getElementById('modalMessage').textContent = t;
-            msgModal.show();
-        };
+        /* === 核心：若有任何 modal 要顯示，先把其他已開的 modal 關掉 === */
+        document.addEventListener('show.bs.modal', e => {
+            document.querySelectorAll('.modal.show').forEach(el => {
+                if (el !== e.target) bootstrap.Modal.getInstance(el)?.hide();
+            });
+        });
 
-        /* 事件委派：再買一次 / 付款 */
+        const showMsg = t => { document.getElementById('modalMessage').textContent = t; msgModal.show(); };
+
+        /* -------- 再買一次 / 付款 -------- */
         document.addEventListener('click', async ev => {
             const el = ev.target.closest('[data-action]');
             if (!el) return;
-            const act = el.dataset.action;
-
-            if (act === 'reorder') {
-                await reorder(el.dataset.orderId);
-            } else if (act === 'pay') {
-                preparePay(el.dataset.orderId);
-            }
+            if (el.dataset.action === 'reorder') return reorder(el.dataset.orderId);
+            if (el.dataset.action === 'pay') return preparePay(el.dataset.orderId);
         });
 
         async function reorder(orderId) {
             try {
-                const res = await fetch('api/order.php?action=reorder', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                const r = await fetch('api/order.php?action=reorder', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ memberId: CONFIG.memberId, orderId })
                 });
-                const data = await res.json();
-                if (data.success) location.href = 'cart.php';
-                else showMsg(`再買一次失敗：${data.message}`);
-            } catch (e) {
-                console.error(e); showMsg('發生錯誤，請稍後再試');
-            }
+                const d = await r.json();
+                d.success ? location.href = 'cart.php' : showMsg('再買一次失敗：' + d.message);
+            } catch (e) { console.error(e); showMsg('發生錯誤，請稍後再試'); }
         }
 
         function preparePay(orderId) {
             currentOrderId = orderId;
-            const amt = CONFIG.orderAmountMap[orderId] ?? 0;
             document.getElementById('paymentConfirmModalLabel').textContent = `訂單編號: ORD-${orderId}`;
-            document.getElementById('paymentModalBody').innerHTML = `<p>訂單總金額: NT$${amt.toLocaleString()}</p>`;
+            document.getElementById('paymentModalBody').innerHTML = `<p>訂單總金額: NT$${(CONFIG.orderAmountMap[orderId] ?? 0).toLocaleString()}</p>`;
             payModal.show();
         }
 
         document.getElementById('confirmPaymentBtn').addEventListener('click', async () => {
             if (!currentOrderId) return;
             try {
-                // 獲取選擇的付款方式
-                const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
-                
                 const res = await fetch('api/order.php?action=updateOrderStatus', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        memberId: CONFIG.memberId,
-                        order_id: currentOrderId,
-                        new_status: 'Completed',
-                        paymentMethod: paymentMethod
+                        memberId: CONFIG.memberId, order_id: currentOrderId, new_status: 'Completed',
+                        paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value
                     })
                 });
-                const data = await res.json();
+                const d = await res.json();
                 payModal.hide();
-                if (data.success) {
+                if (d.success) {
                     showMsg('付款成功！');
                     document.getElementById('messageModal').addEventListener('hidden.bs.modal', () => location.reload(), { once: true });
-                } else showMsg(`更新失敗：${data.message}`);
-            } catch (e) {
-                console.error(e); payModal.hide(); showMsg('發生錯誤，請稍後再試');
-            }
+                } else showMsg('更新失敗：' + d.message);
+            } catch (e) { console.error(e); payModal.hide(); showMsg('發生錯誤，請稍後再試'); }
         });
 
-        /* 會員編輯 */
+        /* -------- 會員資料更新 -------- */
         document.getElementById('memberEditForm').addEventListener('submit', async ev => {
             ev.preventDefault();
             const payload = Object.fromEntries(new FormData(ev.target).entries());
-            payload.memberId = CONFIG.memberId;
-            payload.isAdmin = CONFIG.isAdmin ? 1 : 0;
-
-            if (!payload.name || !payload.phone || !payload.email)
-                return showMsg('請填寫所有必填欄位');
-
+            if (!payload.name || !payload.phone || !payload.email) { showMsg('請填寫所有必填欄位'); return; }
+            payload.memberId = CONFIG.memberId; payload.isAdmin = CONFIG.isAdmin ? 1 : 0;
             try {
-                const res = await fetch('api/order.php?action=updateMember', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                const r = await fetch('api/order.php?action=updateMember', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
                 });
-                const data = await res.json();
-                const editModal = bootstrap.Modal.getInstance('#editMemberModal');
-                
-                if (data.success) {
-                    editModal.hide();
+                const d = await r.json();
+                bootstrap.Modal.getInstance('#editMemberModal').hide();
+                if (d.success) {
                     showMsg('會員資料更新成功！');
                     document.getElementById('messageModal').addEventListener('hidden.bs.modal', () => location.reload(), { once: true });
                 } else {
-                    editModal.hide();
-                    showMsg(`更新失敗：${data.message ?? '未知錯誤'}`);
-                    document.getElementById('messageModal').addEventListener('hidden.bs.modal', () => {
-                        editModal.show();
-                    }, { once: true });
+                    showMsg('更新失敗：' + (d.message ?? '未知錯誤'));
                 }
-            } catch (e) {
-                console.error(e); 
-                const editModal = bootstrap.Modal.getInstance('#editMemberModal');
-                editModal.hide();
-                showMsg('發生錯誤，請稍後再試');
-                document.getElementById('messageModal').addEventListener('hidden.bs.modal', () => {
-                    editModal.show();
-                }, { once: true });
-            }
+            } catch (e) { console.error(e); showMsg('發生錯誤，請稍後再試'); }
+        });
+
+        /* -------- 開啟重設密碼 -------- */
+        document.getElementById('openResetPwdModal').addEventListener('click', () => resetPwdModal.show());
+
+        /* -------- 密碼重設 -------- */
+        document.getElementById('passwordResetForm').addEventListener('submit', async ev => {
+            ev.preventDefault();
+            const fd = Object.fromEntries(new FormData(ev.target).entries());
+            if (fd.newPassword !== fd.confirmPassword) { showMsg('新密碼與確認密碼不一致'); return; }
+            try {
+                const res = await fetch('api/order.php?action=resetPassword', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ memberId: CONFIG.memberId, oldPassword: fd.oldPassword, newPassword: fd.newPassword })
+                });
+                let data;
+                try { data = await res.json(); } catch { showMsg('伺服器回傳非 JSON：\n' + await res.text()); return; }
+                if (data.success) {
+                    resetPwdModal.hide();
+                    showMsg('密碼已更新，請使用新密碼重新登入');
+                    document.getElementById('messageModal').addEventListener('hidden.bs.modal', () => location.href = 'logout.php', { once: true });
+                } else showMsg('密碼更新失敗：' + data.message);
+            } catch (e) { console.error(e); showMsg('網路或伺服器錯誤，請稍後再試'); }
         });
     })();
 </script>

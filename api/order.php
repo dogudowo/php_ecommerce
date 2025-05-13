@@ -104,6 +104,49 @@ if ($method === 'POST' && $action === 'updateMember') {
     echo json_encode($result);
     exit;
 }
+if ($action === 'resetPassword' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    header('Content-Type: application/json; charset=utf-8');
+
+    $input = json_decode(file_get_contents('php://input'), true);
+    if (!$input) {
+        echo json_encode(['success' => false, 'message' => '未收到有效 JSON']);
+        exit;
+    }
+
+    $memberId = (int) ($input['memberId'] ?? 0);
+    $oldPassword = $input['oldPassword'] ?? '';
+    $newPassword = $input['newPassword'] ?? '';
+
+    if (!$memberId || !$oldPassword || !$newPassword) {
+        echo json_encode(['success' => false, 'message' => '資訊不足']);
+        exit;
+    }
+
+    try {
+        $pdo = getDBConnection();
+
+        /* 1) 驗證舊密碼 */
+        $stmt = $pdo->prepare('SELECT Password FROM Member WHERE MemberID = ?');
+        $stmt->execute([$memberId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$row || !password_verify($oldPassword, $row['Password'])) {
+            echo json_encode(['success' => false, 'message' => '舊密碼錯誤']);
+            exit;
+        }
+
+        /* 2) 更新成新密碼 */
+        $newHash = password_hash($newPassword, PASSWORD_DEFAULT);
+        $upd = $pdo->prepare('UPDATE Member SET Password = ? WHERE MemberID = ?');
+        $upd->execute([$newHash, $memberId]);
+
+        echo json_encode(['success' => true]);
+    } catch (Throwable $e) {
+        error_log('resetPassword: ' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => '伺服器錯誤，請稍後再試']);
+    }
+    exit;
+}
 
 /* =========  共用工具  ========= */
 function getStatusClass(string $status): string
