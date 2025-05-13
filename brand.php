@@ -4,11 +4,7 @@ require_once __DIR__ . '/api/brand.php';
 
 $brandInfo = BrandModel::getBrandInfo();
 ?>
-<style>
-    p {
-        text-indent: 1.5rem;
-    }
-</style>
+
 <div class="container text-center border-bottom border-black">
     <img src="imgs/title.png" alt="歐印精品" img-fluid>
     <h1 class="h1">品牌介紹</h1>
@@ -50,7 +46,7 @@ $brandInfo = BrandModel::getBrandInfo();
 
                     <div class="container text-start my-3 col-lg-9">
                         <?php if (!empty($brandData['content'])): ?>
-                            <p><?= $brandData['content'] ?></p>
+                            <p><?= nl2br($brandData['content']) ?></p>
                         <?php endif; ?>
                     </div>
 
