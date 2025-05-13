@@ -37,8 +37,8 @@ require_once __DIR__ . '/fixedFile/header.php';
         <div class="tab-pane fade" id="qaContent" role="tabpanel" aria-labelledby="qa-tab">
             <!-- 購物Q&A內容 -->
             <?php
-            require_once __DIR__ . '/api/qa.php';
-            $qaItems = QAModel::getQAItems();
+            require_once __DIR__ . '/api/instruction.php';
+            $qaItems = InstructionModel::getQAItems();
             ?>
             <div class="accordion" id="accordionExample">
                 <?php foreach ($qaItems as $index => $item): ?>

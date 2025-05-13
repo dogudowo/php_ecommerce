@@ -1,11 +1,11 @@
 <?php
 require_once __DIR__ . '/../../api/error_handler.php';
-require_once __DIR__ . '/functions/instruction/InstructionHandler.php';
+require_once __DIR__ . '/../../api/instruction.php';
 
 // 處理圖片上傳
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])) {
     $type = $_POST['image_type'];
-    if (InstructionHandler::updateInstructionImage($type, $_FILES['instruction_image'])) {
+    if (InstructionModel::updateInstructionImage($type, $_FILES['instruction_image'])) {
         echo '<div class="alert alert-success">圖片更新成功</div>';
     } else {
         echo '<div class="alert alert-danger">圖片更新失敗</div>';
@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <h5>購物說明圖片</h5>
-                    <img src="<?= InstructionHandler::getInstructionImages()['buyContext'] ?>" class="img-fluid mb-3"
+                    <img src="<?= InstructionModel::getInstructionImages()['buyContext'] ?>" class="img-fluid mb-3"
                         style="max-height: 300px;">
                     <form method="post" enctype="multipart/form-data">
                         <input type="hidden" name="image_type" value="buyContext">
@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
                 </div>
                 <div class="col-md-6 mb-3">
                     <h5>購物流程圖片</h5>
-                    <img src="<?= InstructionHandler::getInstructionImages()['order'] ?>" class="img-fluid mb-3"
+                    <img src="<?= InstructionModel::getInstructionImages()['order'] ?>" class="img-fluid mb-3"
                         style="max-height: 300px;">
                     <form method="post" enctype="multipart/form-data">
                         <input type="hidden" name="image_type" value="order">
@@ -164,7 +164,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
 </div>
 
 <script>
-    const handlerUrl = 'models/backend/functions/instruction/InstructionHandler.php';
+    const handlerUrl = 'api/instruction.php';
 
     // 載入 QA 列表
     async function loadQAList() {
