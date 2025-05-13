@@ -115,9 +115,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <form method="post" action="forgotPassword.php">
             <h1 class="h3 mb-3 fw-normal text-center">重設密碼</h1>
             <div class="form-floating mb-3">
-                <input type="password" class="form-control" id="new_password" name="new_password" placeholder="輸入新密碼"
-                    required>
-                <label for="new_password">新密碼</label>
+                <input type="password" class="form-control" id="new_password" name="new_password" placeholder="輸入新密碼(至少8位)"
+                    required minlength="8">
+                <label for="new_password">新密碼(至少8位)</label>
             </div>
             <div class="form-floating mb-3">
                 <input type="password" class="form-control" id="confirm_password" name="confirm_password"

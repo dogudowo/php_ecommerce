@@ -71,8 +71,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
 
         <div class="form-floating mb-3">
-            <input type="password" class="form-control" id="password" name="password" placeholder="密碼" required>
-            <label for="password">密碼</label>
+            <input type="password" class="form-control" id="password" name="password" placeholder="密碼(至少8位)" required
+                minlength="8">
+            <label for="password">密碼(至少8位)</label>
         </div>
 
         <div class="form-floating mb-3">
