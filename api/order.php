@@ -311,8 +311,10 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                             <?php
                         else: ?>
                             <button class="btn btn-warning btn-sm" data-action="repair"
-                                data-order-id="<?= $order['OrderID'] ?>">維修</button>
-                            <?php
+                                data-order-id="<?= $order['OrderID'] ?>"
+                                data-bs-toggle="modal" 
+                                data-bs-target="#warrantyModal<?= $order['OrderID'] ?>">維修</button>
+                        <?php
                         endif; ?>
                     </div>
                 </div>
@@ -324,6 +326,73 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
         echo '<div class="no-products-alert alert alert-info text-center mt-4">⚠️ 目前沒有' . $title . '的訂單</div>';
     }
     echo '</div>';
+
+    // 為每個訂單添加保固Modal
+    foreach ($filtered as $order) {
+        $warranties = getOrderWarranties((int) $order['OrderID'], $pdo);
+        ?>
+        <div class="modal fade" id="warrantyModal<?= $order['OrderID'] ?>" tabindex="-1" aria-labelledby="warrantyModalLabel<?= $order['OrderID'] ?>" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="warrantyModalLabel<?= $order['OrderID'] ?>">訂單 #<?= $order['OrderID'] ?> 的保固資訊</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <?php if (empty($warranties)): ?>
+                            <p class="text-center">此訂單尚無保固記錄</p>
+                        <?php else: ?>
+                            <form id="repairForm<?= $order['OrderID'] ?>" class="repair-form">
+                                <div class="table-responsive">
+                                    <table class="table">
+                                        <thead>
+                                            <tr>
+                                                <th>選擇</th>
+                                                <th>商品名稱</th>
+                                                <th>保固ID</th>
+                                                <th>保固到期日</th>
+                                                <th>保固狀態</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <?php foreach ($warranties as $warranty): ?>
+                                                <tr>
+                                                    <td>
+                                                        <input type="checkbox" 
+                                                               class="form-check-input warranty-checkbox" 
+                                                               name="warranty_ids[]" 
+                                                               value="<?= $warranty['WarrantyID'] ?>"
+                                                               <?= !$warranty['WarrantyStatus'] ? 'disabled' : '' ?>>
+                                                    </td>
+                                                    <td><?= htmlspecialchars($warranty['ProductName']) ?></td>
+                                                    <td><?= $warranty['WarrantyID'] ?></td>
+                                                    <td><?= date('Y-m-d', strtotime($warranty['WarrantyDate'])) ?></td>
+                                                    <td>
+                                                        <span class="badge <?= $warranty['WarrantyStatus'] ? 'bg-success' : 'bg-danger' ?>">
+                                                            <?= $warranty['WarrantyStatus'] ? '有效' : '過期' ?>
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            <?php endforeach; ?>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </form>
+                        <?php endif; ?>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                        <?php if (!empty($warranties)): ?>
+                            <button type="button" class="btn btn-primary submit-repair" 
+                                    data-order-id="<?= $order['OrderID'] ?>"
+                                    data-bs-dismiss="modal">送出維修申請</button>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <?php
+    }
 }
 
 /* =========  建立訂單 ========= */
@@ -581,4 +650,117 @@ function updateMember(
         return ['success' => false, 'message' => '操作失敗：' . $e->getMessage()];
     }
 }
+
+// 添加獲取訂單保固資訊的函數
+function getOrderWarranties(int $orderId, ?PDO $pdo = null): array
+{
+    $pdo = $pdo ?? db_connect();
+    
+    $sql = <<<SQL
+        SELECT  w.WarrantyID,
+                w.WarrantyDate,
+                w.WarrantyStatus,
+                orec.ProductName
+        FROM    Orders o
+        JOIN    OrderRecord orec ON o.OrderID = orec.OrderID
+        JOIN    ReceiptItem ri ON orec.RecordID = ri.OrderRecordID
+        JOIN    Warranty w ON ri.WarrantyID = w.WarrantyID
+        WHERE   o.OrderID = :orderId
+        ORDER BY w.WarrantyID
+    SQL;
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(['orderId' => $orderId]);
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// 添加處理維修申請的函數
+function createRepairRequest(array $warrantyIds, ?PDO $pdo = null): array
+{
+    $pdo = $pdo ?? db_connect();
+    try {
+        $pdo->beginTransaction();
+
+        // 獲取最大RepairID
+        $stmt = $pdo->query("SELECT MAX(RepairID) as maxId FROM Repairs");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $repairId = $result['maxId'] ? $result['maxId'] + 1 : 1;
+
+        $createRepair = $pdo->prepare("
+            INSERT INTO Repairs (RepairID, WarrantyID, RepairDate, RepairStatus, RepairCommit) 
+            VALUES (:repairId, :warrantyId, NOW(), '待處理', '')
+        ");
+
+        foreach ($warrantyIds as $warrantyId) {
+            $createRepair->execute([
+                'repairId' => $repairId,
+                'warrantyId' => $warrantyId
+            ]);
+            $repairId++;
+        }
+
+        $pdo->commit();
+        return ['success' => true, 'message' => '維修申請已送出'];
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        error_log('創建維修申請失敗：' . $e->getMessage());
+        return ['success' => false, 'message' => '操作失敗：' . $e->getMessage()];
+    }
+}
+
+// 添加API端點處理維修申請
+if ($method === 'POST' && $action === 'createRepair') {
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    if (empty($input['warrantyIds'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => '請選擇要維修的商品']);
+        exit;
+    }
+    $result = createRepairRequest($input['warrantyIds']);
+    echo json_encode($result);
+    exit;
+}
 ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 處理維修申請提交
+    document.querySelectorAll('.submit-repair').forEach(button => {
+        button.addEventListener('click', function() {
+            const orderId = this.dataset.orderId;
+            const form = document.getElementById(`repairForm${orderId}`);
+            const selectedWarranties = Array.from(form.querySelectorAll('input[name="warranty_ids[]"]:checked'))
+                .map(checkbox => checkbox.value);
+
+            if (selectedWarranties.length === 0) {
+                alert('請選擇要維修的商品');
+                return;
+            }
+
+            // 發送維修申請
+            fetch('api/order.php?action=createRepair', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    warrantyIds: selectedWarranties
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('維修申請已成功送出');
+                    // 可以選擇重新載入頁面或更新UI
+                    location.reload();
+                } else {
+                    alert(data.message || '送出失敗，請稍後再試');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('發生錯誤，請稍後再試');
+            });
+        });
+    });
+});
+</script>
