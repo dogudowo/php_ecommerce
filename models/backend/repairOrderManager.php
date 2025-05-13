@@ -16,7 +16,7 @@ function getAllRepairOrders()
 {
     $pdo = getDBConnection();
     try {
-        $stmt = $pdo->prepare("SELECT r.RepairID, r.RepairDate, r.RepairStatus, 
+        $stmt = $pdo->prepare("SELECT r.RepairID, r.RepairDate, r.RepairStatus, r.RepairCommit,
                               w.WarrantyID, w.WarrantyDate, w.WarrantyStatus, 
                               m.Name as MemberName, orec.ProductName 
                               FROM Repairs r 
@@ -197,9 +197,6 @@ try {
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
-                    <button type="button" class="btn btn-primary" id="printRepairDetail">
-                        <i class="bi bi-printer me-2"></i>列印維修單
-                    </button>
                 </div>
             </div>
         </div>
