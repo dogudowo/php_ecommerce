@@ -153,52 +153,76 @@ $adLink = $adLinkObj->adLink;
         // 不同實體對應的 API
         const apiMap = {
             company: {
-                getAll: apiBaseUrl + 'getAllCompanies.php',
-                get: apiBaseUrl + 'getCompany.php',
-                add: apiBaseUrl + 'addCompany.php',
-                update: apiBaseUrl + 'updateCompany.php',
-                delete: apiBaseUrl + 'deleteCompany.php'
+                getAll: 'companyFunctions.php',
+                get: 'companyFunctions.php',
+                add: 'companyFunctions.php',
+                update: 'companyFunctions.php',
+                delete: 'companyFunctions.php'
             },
             store: {
-                getAll: apiBaseUrl + 'getAllStores.php',
-                get: apiBaseUrl + 'getStore.php',
-                add: apiBaseUrl + 'addStore.php',
-                update: apiBaseUrl + 'updateStore.php',
-                delete: apiBaseUrl + 'deleteStore.php'
+                getAll: 'storeFunctions.php',
+                get: 'storeFunctions.php',
+                add: 'storeFunctions.php',
+                update: 'storeFunctions.php',
+                delete: 'storeFunctions.php'
             }
         };
 
         // 載入表格資料
         function loadTableData(entity, tableBodyId) {
-            $.getJSON(apiMap[entity].getAll, function (response) {
-                if (response.success) {
-                    const tableBody = $('#' + tableBodyId).empty();
-                    response.data.forEach(function (row) {
-                        let cells = '';
-                        if (entity === 'company') {
-                            cells += `<td>${row.tax_id || ''}</td>`;
-                            cells += `<td>${row.name || ''}</td>`;
-                            cells += `<td>${row.email || ''}</td>`;
-                            cells += `<td>${row.phone || ''}</td>`;
-                            cells += `<td>${row.fax || ''}</td>`;
-                        } else if (entity === 'store') {
-                            cells += `<td>${row.tax_id || ''}</td>`;
-                            cells += `<td>${row.name || ''}</td>`;
-                            cells += `<td>${row.phone || ''}</td>`;
-                            cells += `<td>${row.location || ''}</td>`;
-                            cells += `<td>${escapeHtml(row.opening_time || '', 'url')}</td>`;
-                        }
-                        cells += `<td>
-                                    <button class="btn btn-sm btn-warning btn-action" data-op="edit" data-entity="${entity}" data-id="${escapeHtml(row.tax_id)}">編輯</button>
-                                    <button class="btn btn-sm btn-danger btn-action" data-op="delete" data-entity="${entity}" data-id="${escapeHtml(row.tax_id)}">刪除</button>
-                                </td>`;
-                        tableBody.append(`<tr>${cells}</tr>`);
-                    });
-                } else {
-                    showToast('載入' + (entity === 'company' ? '公司' : '門市') + '資料失敗: ' + escapeHtml(response.message), 'danger');
+            const config = apiMap[entity];
+            if (!config) return;
+
+            let ajaxUrl;
+            let ajaxData = {};
+            let ajaxType = 'GET';
+
+            if (entity === 'company') {
+                ajaxUrl = apiBaseUrl + config.getAll;
+                ajaxData = { action: 'getAllCompanies' };
+            } else if (entity === 'store') {
+                ajaxUrl = apiBaseUrl + config.getAll;
+                ajaxData = { action: 'getAllStores' };
+            } else {
+                return;
+            }
+
+            $.ajax({
+                url: ajaxUrl,
+                type: ajaxType,
+                data: ajaxData,
+                dataType: 'json',
+                success: function (response) {
+                    if (response.success) {
+                        const tableBody = $('#' + tableBodyId).empty();
+                        response.data.forEach(function (row) {
+                            let cells = '';
+                            if (entity === 'company') {
+                                cells += `<td>${row.tax_id || ''}</td>`;
+                                cells += `<td>${row.name || ''}</td>`;
+                                cells += `<td>${row.email || ''}</td>`;
+                                cells += `<td>${row.phone || ''}</td>`;
+                                cells += `<td>${row.fax || ''}</td>`;
+                            } else if (entity === 'store') {
+                                cells += `<td>${row.tax_id || ''}</td>`;
+                                cells += `<td>${row.name || ''}</td>`;
+                                cells += `<td>${row.phone || ''}</td>`;
+                                cells += `<td>${row.location || ''}</td>`;
+                                cells += `<td>${escapeHtml(row.opening_time || '', 'url')}</td>`;
+                            }
+                            cells += `<td>
+                                        <button class="btn btn-sm btn-warning btn-action" data-op="edit" data-entity="${entity}" data-id="${escapeHtml(row.tax_id)}">編輯</button>
+                                        <button class="btn btn-sm btn-danger btn-action" data-op="delete" data-entity="${entity}" data-id="${escapeHtml(row.tax_id)}">刪除</button>
+                                    </td>`;
+                            tableBody.append(`<tr>${cells}</tr>`);
+                        });
+                    } else {
+                        showToast('載入' + (entity === 'company' ? '公司' : '門市') + '資料失敗: ' + escapeHtml(response.message), 'danger');
+                    }
+                },
+                fail: function () {
+                    showToast('載入' + (entity === 'company' ? '公司' : '門市') + '資料時發生錯誤', 'danger');
                 }
-            }).fail(function () {
-                showToast('載入' + (entity === 'company' ? '公司' : '門市') + '資料時發生錯誤', 'danger');
             });
         }
 
@@ -217,7 +241,7 @@ $adLink = $adLinkObj->adLink;
             const form = $('#entityForm').empty();
             const fields = entity === 'company'
                 ? ['tax_id', 'name', 'email', 'phone', 'fax']
-                : ['tax_id', 'name', 'phone', 'location', 'opening_time', 'url'];
+                : ['name', 'phone', 'location', 'opening_time', 'url']; // 移除 'tax_id' for store edit
 
             fields.forEach(function (f) {
                 let fieldName = (entity === 'store' && f === 'url') ? 'map_url' : f;
@@ -237,22 +261,40 @@ $adLink = $adLinkObj->adLink;
                 form.append($('<div>').addClass('mb-3').append(label, input));
             });
 
-            // 預填資料
-            $.getJSON(apiMap[entity].get, { tax_id: id }, function (res) {
-                if (res.success) {
-                    Object.entries(res.data).forEach(function ([k, v]) {
-                        if ($('#' + k).length) $('#' + k).val(v);
-                    });
-                } else {
-                    showToast('載入編輯資料失敗: ' + escapeHtml(res.message), 'danger');
+            let ajaxUrl;
+            let ajaxData = {};
+
+            if (entity === 'company') {
+                ajaxUrl = apiBaseUrl + apiMap[entity].get;
+                ajaxData = { action: 'getCompany', tax_id: id };
+            } else if (entity === 'store') {
+                ajaxUrl = apiBaseUrl + apiMap[entity].get;
+                ajaxData = { action: 'getStore', tax_id: id };
+            } else {
+                return;
+            }
+
+            $.ajax({
+                url: ajaxUrl,
+                type: 'GET',
+                data: ajaxData,
+                dataType: 'json',
+                success: function (res) {
+                    if (res.success) {
+                        Object.entries(res.data).forEach(function ([k, v]) {
+                            if ($('#' + k).length) $('#' + k).val(v);
+                        });
+                    } else {
+                        showToast('載入編輯資料失敗: ' + escapeHtml(res.message), 'danger');
+                        $('#addModal').modal('hide');
+                    }
+                },
+                fail: function () {
+                    showToast('載入編輯資料時發生錯誤', 'danger');
                     $('#addModal').modal('hide');
                 }
-            }).fail(function () {
-                showToast('載入編輯資料時發生錯誤', 'danger');
-                $('#addModal').modal('hide');
             });
 
-            // 設定儲存按鈕事件
             $('#saveEntityBtn').off('click').on('click', function () {
                 saveEntity(entity, 'update', id);
             });
@@ -296,12 +338,24 @@ $adLink = $adLinkObj->adLink;
         // 儲存函式：處理新增與更新
         function saveEntity(entity, op, id = null) {
             let formData = $('#entityForm').serializeArray();
-            if (op === 'update' && id) {
-                if (!formData.some(item => item.name === 'tax_id')) {
-                    formData.push({ name: 'tax_id', value: id });
-                }
+            let ajaxUrl;
+            let actionValue;
+
+            if (entity === 'company') {
+                ajaxUrl = apiBaseUrl + apiMap[entity][op];
+                actionValue = op === 'add' ? 'addCompany' : 'updateCompany';
+            } else if (entity === 'store') {
+                ajaxUrl = apiBaseUrl + apiMap[entity][op];
+                actionValue = op === 'add' ? 'addStore' : 'updateStore';
+            } else {
+                return;
             }
-            $.post(apiMap[entity][op], $.param(formData), function (res) {
+            formData.push({ name: 'action', value: actionValue });
+            if (op === 'update' && id) {
+                formData.push({ name: 'tax_id', value: id });
+            }
+
+            $.post(ajaxUrl, $.param(formData), function (res) {
                 showToast(res.success ? '操作成功' : '操作失敗: ' + escapeHtml(res.message || ''), res.success ? 'success' : 'danger');
                 if (res.success) {
                     $('#addModal').modal('hide');
@@ -321,7 +375,20 @@ $adLink = $adLinkObj->adLink;
             if (!confirm('確定要刪除嗎？')) return;
             const entity = this.dataset.entity;
             const id = this.dataset.id;
-            $.post(apiMap[entity].delete, { tax_id: id }, function (res) {
+            let ajaxUrl;
+            let ajaxData = {};
+
+            if (entity === 'company') {
+                ajaxUrl = apiBaseUrl + apiMap[entity].delete;
+                ajaxData = { action: 'deleteCompany', tax_id: id };
+            } else if (entity === 'store') {
+                ajaxUrl = apiBaseUrl + apiMap[entity].delete;
+                ajaxData = { action: 'deleteStore', tax_id: id };
+            } else {
+                return;
+            }
+
+            $.post(ajaxUrl, ajaxData, function (res) {
                 showToast(res.success ? '刪除成功' : '刪除失敗: ' + escapeHtml(res.message || ''), res.success ? 'success' : 'danger');
                 if (res.success) {
                     loadTableData(entity, entity === 'company' ? 'companyTableBody' : 'storeTableBody');
