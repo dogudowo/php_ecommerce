@@ -1,269 +1,162 @@
 <?php
-require_once __DIR__ . '/../../../../api/error_handler.php';
-// 訂單管理函數文件
+declare(strict_types=1);
 
-// 引入數據庫連接
+require_once __DIR__ . '/../../../../api/error_handler.php';
 require_once __DIR__ . '/../../../../api/db.php';
 
-// 檢查是否是 API 請求
-if (basename($_SERVER['SCRIPT_NAME']) === 'orderFunctions.php') {
-    // 設置 JSON 頭
-    header('Content-Type: application/json');
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
-    // 定義常量，表示此文件是從管理後台訪問的
-    define('INCLUDED_FROM_ADMIN', true);
+$isDirectCall = basename($_SERVER['SCRIPT_NAME']) === basename(__FILE__);
 
-    // 處理訂單詳情請求
-    handleOrderDetailsRequest();
-    exit;
-} else {
-    // 防止直接訪問此文件
-    if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
-        header('Location: ../../../../login.php');
+if ($isDirectCall) {
+    header('Content-Type: application/json; charset=utf-8');
+    if (!($_SESSION['logged_in'] ?? false)) {
+        http_response_code(401);
+        echo json_encode(['success' => false, 'message' => '未授權的存取']);
         exit;
     }
+    handleOrderApi();
+    exit;
+} elseif (!defined('INCLUDED_FROM_ADMIN') && !($_SESSION['logged_in'] ?? false)) {
+    header('Location: ../../../../login.php');
+    exit;
 }
 
-function findProductImageUrl(int $productId): string
-{
-    // 伺服器上的實體路徑
-    $dir = __DIR__ . "/../../../../imgs/products/{$productId}";
-    // glob 依序找 main.jpg, main.jpeg, main.png, main.gif
-    error_log("Searching for images in: " . $dir);
-    $files = glob($dir . '/main.{jpg,jpeg,png,gif}', GLOB_BRACE);
-    error_log("Found files: " . print_r($files, true));
-    if (!empty($files)) {
-        // 只取第一個，轉成 URL 路徑
-        $filename = basename($files[0]);
-        return "/public_html/imgs/products/{$productId}/{$filename}";
-    }
-    // 找不到就用預設圖
-    return "/public_html/imgs/products/default-placeholder.png";
-}
-
+/** 取得訂單詳情 */
 function getOrderDetailsBackend(int $orderId, ?PDO $pdo = null): array
 {
-    $pdo = $pdo ?? getDBConnection();
+    $pdo ??= getDBConnection();
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 
-    // 1. 獲取訂單基本信息（訂單ID、會員名稱、訂單日期）
-    $orderInfoSql = <<<SQL
-        SELECT 
-            o.OrderID,
-            m.Name as MemberName,
-            o.OrderDate,
-            o.Status
-        FROM Orders o
-        JOIN Member m ON o.MembersID = m.MemberID
-        WHERE o.OrderID = :orderId
-    SQL;
-    $stmt = $pdo->prepare($orderInfoSql);
-    $stmt->execute(['orderId' => $orderId]);
-    $orderInfo = $stmt->fetch(PDO::FETCH_ASSOC);
+    // 1. 訂單基本資料
+    $baseSql = "\n        SELECT  o.OrderID, m.Name AS MemberName, o.OrderDate, o.Status\n        FROM    Orders o\n        JOIN    Member m ON m.MemberID = o.MemberID\n        WHERE   o.OrderID = :id\n        LIMIT   1";
+    $stmt = $pdo->prepare($baseSql);
+    $stmt->execute(['id' => $orderId]);
+    $order = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$orderInfo) {
+    if (!$order) {
         return ['error' => '找不到訂單'];
     }
 
-    $status = $orderInfo['Status'];
-
-    // 2. 明細
-    $detailSql = <<<SQL
-        SELECT
-            p.ProductName,
-            p.ProductID,
-            opt.Color,
-            opt.Size,
-            opt.SizeDescription,
-            opt.Price,
-            oi.Quantity,
-            (opt.Price * oi.Quantity) AS Subtotal
-        FROM OrderItem oi
-        JOIN Options opt ON oi.OptionID   = opt.OptionID
-        JOIN Product p   ON opt.ProductID = p.ProductID
-        WHERE oi.OrderID = :orderId
-    SQL;
+    // 2. 訂單明細
+    $detailSql = "\n        SELECT  r.RecordID,\n                COALESCE(p.ProductID, 0)        AS ProductID,\n                r.ProductName,\n                r.ProductType,\n                r.ProductColor                 AS Color,\n                r.ProductSize                  AS Size,\n                r.ProductPrice                 AS Price,\n                i.Quantity,\n                (r.ProductPrice * i.Quantity)  AS Subtotal\n        FROM        OrderItem   i\n        JOIN        OrderRecord r ON r.RecordID = i.OrderRecordID\n        LEFT JOIN   Product     p ON p.ProductName = r.ProductName\n                                 AND p.Type        = r.ProductType\n        WHERE       i.OrderID   = :id";
     $stmt = $pdo->prepare($detailSql);
-    $stmt->execute(['orderId' => $orderId]);
+    $stmt->execute(['id' => $orderId]);
+    $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    $items = [];
-    while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
-        $productId = (int) $row['ProductID'];
-        // **直接從資料夾尋找**，並回傳 URL
-        $row['image'] = findProductImageUrl($productId);
-        $items[] = $row;
-    }
-
-    // 樣式 & 文字
-    $statusClass = match ($status) {
-        'Completed' => 'bg-success',
-        'Pending' => 'bg-info text-dark',
-        'Shipping' => 'bg-primary',
-        'Cancel' => 'bg-warning',
-        'abnormal' => 'bg-danger',
-        default => 'bg-secondary',
-    };
-    $statusText = getOrderStatusList()[$status] ?? $status;
+    // 3. 狀態
+    $statusClass = getOrderStatusClass($order['Status']);
+    $statusText = getStatusText($order['Status']);
 
     return [
-        'order_id' => $orderInfo['OrderID'],
-        'member_name' => $orderInfo['MemberName'],
-        'order_date' => $orderInfo['OrderDate'],
+        'order_id' => (int) $order['OrderID'],
+        'member_name' => $order['MemberName'],
+        'order_date' => $order['OrderDate'],
         'items' => $items,
         'total_amount' => array_sum(array_column($items, 'Subtotal')),
-        'status' => $status,
+        'status' => $order['Status'],
         'statusClass' => $statusClass,
         'statusText' => $statusText,
     ];
 }
 
-// 更新訂單狀態
-function updateOrderStatus($orderId, $status)
+/** 更新訂單狀態 */
+function updateOrderStatus(int $orderId, string $status): bool
 {
     $pdo = getDBConnection();
     try {
-        $stmt = $pdo->prepare("UPDATE Orders SET Status = ? WHERE OrderID = ?");
-        $result = $stmt->execute([$status, $orderId]);
-        return $result;
+        $stmt = $pdo->prepare('UPDATE Orders SET Status = ? WHERE OrderID = ?');
+        return $stmt->execute([$status, $orderId]);
     } catch (PDOException $e) {
-        error_log("Error updating order status: " . $e->getMessage());
+        error_log('[updateOrderStatus] ' . $e->getMessage());
         return false;
     }
 }
 
-// 獲取訂單狀態列表
-function getOrderStatusList()
+/** 訂單狀態列表（英文 → 中文） */
+function getOrderStatusList(): array
 {
     return [
         'Completed' => '已完成',
         'Pending' => '處理中',
         'Shipping' => '運送中',
         'Cancel' => '已取消',
-        'abnormal' => '異常'
+        'abnormal' => '異常',
     ];
 }
 
-// 獲取訂單狀態樣式
-function getOrderStatusClass($status)
+function getOrderStatusClass(string $status): string
 {
-    return match ($status) {
+    return [
         'Completed' => 'bg-success',
         'Pending' => 'bg-info text-dark',
         'Shipping' => 'bg-primary',
         'Cancel' => 'bg-warning',
         'abnormal' => 'bg-danger',
-        default => 'bg-secondary'
-    };
+    ][$status] ?? 'bg-secondary';
 }
 
-// 獲取訂單狀態文字
-function getStatusText($status)
+function getStatusText(string $status): string
 {
-    $statusList = getOrderStatusList();
-    return $statusList[$status] ?? $status;
+    return getOrderStatusList()[$status] ?? $status;
 }
-
-// 處理訂單詳情請求
-function handleOrderDetailsRequest()
+function handleOrderApi(): void
 {
-    // 檢查請求方法
-    $requestMethod = $_SERVER['REQUEST_METHOD'];
-
-    if ($requestMethod === 'GET') {
-        // 處理獲取訂單詳情請求
-        handleGetOrderDetails();
-    } elseif ($requestMethod === 'POST') {
-        // 處理更新訂單狀態請求
-        handleUpdateOrderStatus();
-    } else {
-        // 不支持的請求方法
-        echo json_encode([
-            'success' => false,
-            'message' => '不支持的請求方法: ' . $requestMethod
-        ]);
-    }
-}
-
-// 處理獲取訂單詳情請求
-function handleGetOrderDetails()
-{
-    // 檢查是否提供了訂單ID
-    if (!isset($_GET['orderId']) || empty($_GET['orderId'])) {
-        echo json_encode([
-            'success' => false,
-            'message' => '缺少訂單ID參數'
-        ]);
-        return;
-    }
-
-    // 獲取訂單ID
-    $orderId = (int) $_GET['orderId'];
+    $method = strtoupper($_SERVER['REQUEST_METHOD']);
 
     try {
-        // 使用 getOrderDetailsBackend 函數獲取訂單詳情
-        $orderDetails = getOrderDetailsBackend($orderId);
-
-        // 返回訂單詳情
-        echo json_encode([
-            'success' => true,
-            'data' => $orderDetails
-        ]);
-    } catch (Exception $e) {
-        // 記錄錯誤
-        error_log("Error getting order details: " . $e->getMessage());
-
-        // 返回錯誤信息
-        echo json_encode([
-            'success' => false,
-            'message' => '獲取訂單詳情時發生錯誤: ' . $e->getMessage()
-        ]);
+        match ($method) {
+            'GET' => handleGetOrderDetails(),
+            'POST' => handleUpdateOrderStatus(),
+            default => jsonResponse(['success' => false, 'message' => "不支持的請求方法: $method"], 405),
+        };
+    } catch (Throwable $e) {
+        error_log('[handleOrderApi] ' . $e->getMessage());
+        jsonResponse(['success' => false, 'message' => '服務端發生錯誤，請稍後再試'], 500);
     }
 }
 
-// 處理更新訂單狀態請求
-function handleUpdateOrderStatus()
+/* GET /?orderId=123 */
+function handleGetOrderDetails(): void
 {
-    // 獲取 POST 數據
-    $postData = json_decode(file_get_contents('php://input'), true);
-
-    // 檢查是否提供了必要參數
-    if (
-        !isset($postData['orderId']) || empty($postData['orderId']) ||
-        !isset($postData['status']) || empty($postData['status'])
-    ) {
-        echo json_encode([
-            'success' => false,
-            'message' => '缺少必要參數: orderId 或 status'
-        ]);
-        return;
+    $orderId = isset($_GET['orderId']) ? (int) $_GET['orderId'] : 0;
+    if ($orderId <= 0) {
+        jsonResponse(['success' => false, 'message' => '缺少或無效的 orderId 參數'], 400);
     }
 
-    // 獲取參數
-    $orderId = (int) $postData['orderId'];
-    $status = $postData['status'];
-
-    try {
-        // 更新訂單狀態
-        $result = updateOrderStatus($orderId, $status);
-
-        if ($result) {
-            echo json_encode([
-                'success' => true,
-                'message' => '訂單狀態已成功更新'
-            ]);
-        } else {
-            echo json_encode([
-                'success' => false,
-                'message' => '更新訂單狀態失敗'
-            ]);
-        }
-    } catch (Exception $e) {
-        // 記錄錯誤
-        error_log("Error updating order status: " . $e->getMessage());
-
-        // 返回錯誤信息
-        echo json_encode([
-            'success' => false,
-            'message' => '更新訂單狀態時發生錯誤: ' . $e->getMessage()
-        ]);
+    $data = getOrderDetailsBackend($orderId);
+    if (isset($data['error'])) {
+        jsonResponse(['success' => false, 'message' => $data['error']], 404);
     }
+    jsonResponse(['success' => true, 'data' => $data]);
 }
+
+/* POST JSON {orderId, status} */
+function handleUpdateOrderStatus(): void
+{
+    $payload = json_decode(file_get_contents('php://input'), true) ?? [];
+    $orderId = (int) ($payload['orderId'] ?? 0);
+    $status = (string) ($payload['status'] ?? '');
+
+    if ($orderId <= 0 || $status === '') {
+        jsonResponse(['success' => false, 'message' => '缺少或無效的 orderId 或 status'], 400);
+    }
+    if (!array_key_exists($status, getOrderStatusList())) {
+        jsonResponse(['success' => false, 'message' => '無效的訂單狀態'], 422);
+    }
+
+    $ok = updateOrderStatus($orderId, $status);
+    jsonResponse([
+        'success' => $ok,
+        'message' => $ok ? '訂單狀態已更新' : '更新失敗',
+    ], $ok ? 200 : 500);
+}
+function jsonResponse(array $data, int $httpCode = 200): never
+{
+    http_response_code($httpCode);
+    echo json_encode($data, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+?>

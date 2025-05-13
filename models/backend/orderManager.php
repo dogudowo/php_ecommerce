@@ -330,7 +330,6 @@ $statusList = getOrderStatusList();
                 <table class="table table-bordered table-hover">
                     <thead class="table-light">
                         <tr>
-                            <th>商品圖片</th>
                             <th>商品名稱</th>
                             <th>顏色</th>
                             <th>尺寸</th>
@@ -346,9 +345,6 @@ $statusList = getOrderStatusList();
         items.forEach(item => {
             html += `
                 <tr>
-                    <td>
-                        <img src="../../${item.image}" alt="${item.ProductName}" class="img-thumbnail" style="max-width: 80px;">
-                    </td>
                     <td>${item.ProductName}</td>
                     <td>${item.Color}</td>
                     <td>${item.Size}${item.SizeDescription ? ` (${item.SizeDescription})` : ''}</td>
@@ -364,7 +360,7 @@ $statusList = getOrderStatusList();
                     </tbody>
                     <tfoot class="table-light">
                         <tr>
-                            <th colspan="6" class="text-end">總計：</th>
+                            <th colspan="5" class="text-end">總計：</th>
                             <th>$${Number(total_amount).toLocaleString()}</th>
                         </tr>
                     </tfoot>
