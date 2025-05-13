@@ -88,7 +88,7 @@ define('KEY_REPORT_DOC_PATH', 'src/KeyReport.doc');
                 <label for="key_report_doc" class="form-label">鑰匙價格表文件 (KeyReport.doc):</label>
                 <input class="form-control" type="file" id="key_report_doc" name="key_report_doc"
                     accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-                <p class="current-img-label mt-2">目前文件: <a href="<?php echo KEY_REPORT_DOC_PATH; ?>"
+                <p class="current-img-label mt-2">目前文件: <a href="<?php echo 'src/KeyReport.doc'; ?>"
                         target="_blank">KeyReport.doc</a></p>
             </div>
         </div>
@@ -96,13 +96,15 @@ define('KEY_REPORT_DOC_PATH', 'src/KeyReport.doc');
 
     <button type="button" class="btn btn-primary mt-3" onclick="handleFormSubmit()">儲存變更</button>
 </form>
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
 <script>
     async function handleFormSubmit() {
         const form = document.getElementById('repairForm');
         const formData = new FormData(form);
 
         try {
-            const response = await fetch('models/backend/functions/repairPage/repairPageHandler.php', {
+            const response = await fetch('api/repairPageHandler.php', {
                 method: 'POST',
                 body: formData
             });
@@ -115,30 +117,91 @@ define('KEY_REPORT_DOC_PATH', 'src/KeyReport.doc');
                     img.src = img.src.split('?')[0] + '?t=' + new Date().getTime();
                 });
 
-                // 顯示成功訊息
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-success';
-                alertDiv.setAttribute('role', 'alert');
-                alertDiv.textContent = '內容已成功更新！';
-                document.querySelector('form').before(alertDiv);
+                // 顯示成功toast通知
+                const toastContainer = document.createElement('div');
+                toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '11';
 
-                // 3秒後自動消失
-                setTimeout(() => alertDiv.remove(), 3000);
+                toastContainer.innerHTML = `
+                    <div class="toast align-items-center text-white bg-success border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi bi-check-circle me-2"></i>內容已成功更新！
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(toastContainer);
+
+                // 自動顯示toast
+                const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'));
+                toast.show();
+
+                // 3秒後自動移除
+                setTimeout(() => {
+                    toast.dispose();
+                    toastContainer.remove();
+                }, 3000);
             } else {
-                // 顯示錯誤訊息
-                const alertDiv = document.createElement('div');
-                alertDiv.className = 'alert alert-danger';
-                alertDiv.setAttribute('role', 'alert');
-                alertDiv.textContent = '更新失敗：' + result.message;
-                document.querySelector('form').before(alertDiv);
+                // 顯示錯誤toast通知
+                const toastContainer = document.createElement('div');
+                toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+                toastContainer.style.zIndex = '11';
+
+                toastContainer.innerHTML = `
+                    <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="d-flex">
+                            <div class="toast-body">
+                                <i class="bi bi-exclamation-triangle me-2"></i>更新失敗：${result.message}
+                            </div>
+                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                        </div>
+                    </div>
+                `;
+
+                document.body.appendChild(toastContainer);
+
+                // 自動顯示toast
+                const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'));
+                toast.show();
+
+                // 3秒後自動移除
+                setTimeout(() => {
+                    toast.dispose();
+                    toastContainer.remove();
+                }, 3000);
             }
         } catch (error) {
             console.error('Error:', error);
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert alert-danger';
-            alertDiv.setAttribute('role', 'alert');
-            alertDiv.textContent = '更新失敗：發生未知錯誤';
-            document.querySelector('form').before(alertDiv);
+            // 顯示錯誤toast通知
+            const toastContainer = document.createElement('div');
+            toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '11';
+
+            toastContainer.innerHTML = `
+                <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi bi-exclamation-triangle me-2"></i>更新失敗：發生未知錯誤
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(toastContainer);
+
+            // 自動顯示toast
+            const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'));
+            toast.show();
+
+            // 3秒後自動移除
+            setTimeout(() => {
+                toast.dispose();
+                toastContainer.remove();
+            }, 3000);
         }
     }
 </script>

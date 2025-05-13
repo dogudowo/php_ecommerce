@@ -1,7 +1,7 @@
 <?php
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /models/backend/repairManager.php?status=error&message=Invalid_request_method');
+    header('Location: ../models/backend/repairManager.php?status=error&message=Invalid_request_method');
     exit();
 }
 
@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
  * 例：/htdocs/public_html/models/backend → /htdocs/public_html
  * 如果您的實際層級不同，調整 dirname(__DIR__, 2) 的第二個參數即可。
  */
-$projectRoot = dirname(__DIR__, 4);
+$projectRoot = dirname(__DIR__, 1);
 
 /* ---------- 目標檔案（相對）路徑 ---------- */
 const CH_CONTEXT_IMG_PATH = 'imgs/repair/context-ch/repairContext.jpg';
