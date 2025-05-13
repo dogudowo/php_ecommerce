@@ -212,7 +212,7 @@
 <script>
     (function ($, bootstrap) {
         'use strict';
-        const API_URL = 'models/backend/functions/brand/brandIntroductionHandler.php';
+        const API_URL = 'api/brand.php';
 
         function showToast(title, msg, type = 'success') {
             $('#toastTitle').text(title);
