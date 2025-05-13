@@ -3,7 +3,7 @@
 require_once 'fixedFile/header.php';
 require_once __DIR__ . '/api/about.php';
 
-$storeLocations = StoreLocationModel::getStoreLocations();
+$storeLocations = AboutFunctions::getStoreLocations();
 ?>
 
 <div class="container text-center border-bottom border-black">
@@ -57,7 +57,7 @@ $social_links = json_decode(file_get_contents(__DIR__ . '/src/social_links.json'
     <h3 class="text-decoration-underline text-center">客服電話 & 聯絡信箱</h3>
     <div class="container text-left">
         <?php
-        $companies = StoreLocationModel::getCompanyInfo();
+        $companies = AboutFunctions::getCompanyInfo();
         foreach ($companies as $company):
             $emails = explode(',', $company['email']);
             $phones = explode(',', $company['phone']);
@@ -109,11 +109,14 @@ $social_links = json_decode(file_get_contents(__DIR__ . '/src/social_links.json'
             <div class="container">
                 <?php foreach ($storeLocations as $store): ?>
                     <h3 class="text-decoration-underline text-center"><?php echo $store['name']; ?></h3>
-
-                    <p class="text-left h6">服務時間</p>
-                    <?php foreach ($store['service_time'] as $time): ?>
-                        <p><?php echo nl2br($time); ?></p>
-                    <?php endforeach; ?>
+                    <?php if (!empty(array_filter($store['service_time']))): ?>
+                        <p class="text-left h6">服務時間</p>
+                        <?php foreach ($store['service_time'] as $time): ?>
+                            <?php if (!empty(trim($time))): ?>
+                                <p><?php echo nl2br($time); ?></p>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    <?php endif; ?>
 
                     <?php if (!empty($store['phone'])): ?>
                         <p class="h6">聯絡電話</p>
