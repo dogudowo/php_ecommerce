@@ -1,4 +1,3 @@
-連
 <?php
 require_once 'fixedFile/header.php';
 require_once __DIR__ . '/api/about.php';
