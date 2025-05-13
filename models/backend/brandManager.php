@@ -257,29 +257,29 @@
         }
 
         const introTpl = intro => `
-      <div class="card mb-3" data-id="${intro.brand_introduction_id}">
-        <div class="card-body d-flex justify-content-between align-items-center">
-          <p class="mb-0">${intro.introdution}</p>
-          <div>
-            <button class="btn btn-sm btn-outline-primary edit-intro"><i class="bi bi-pencil"></i></button>
-            <button class="btn btn-sm btn-outline-danger delete-intro ms-2"><i class="bi bi-trash"></i></button>
-          </div>
-        </div>
-      </div>`;
+        <div class="card mb-3" data-id="${intro.brand_introduction_id}">
+            <div class="card-body d-flex justify-content-between align-items-center">
+            <p class="mb-0 pe-1">${intro.introdution}</p>
+            <div>
+                <button class="btn btn-sm btn-outline-primary edit-intro"><i class="bi bi-pencil"></i></button>
+                <button class="btn btn-sm btn-outline-danger delete-intro"><i class="bi bi-trash"></i></button>
+            </div>
+            </div>
+        </div>`;
 
         const brandTpl = brand => `
-      <div class="card mb-3" data-id="${brand.brand_id}">
-        <div class="card-body d-flex justify-content-between align-items-center">
-          <div>
-            <h5 class="mb-1">${brand.brand_name}</h5>
-            <p class="text-muted mb-0">${brand.brand_content}</p>
-          </div>
-          <div>
-            <button class="btn btn-sm btn-outline-primary edit-brand"><i class="bi bi-pencil"></i></button>
-            <button class="btn btn-sm btn-outline-danger delete-brand ms-2"><i class="bi bi-trash"></i></button>
-          </div>
-        </div>
-      </div>`;
+        <div class="card mb-3" data-id="${brand.brand_id}">
+            <div class="card-body d-flex align-items-center">
+                <div>
+                    <h5 class="mb-1">${brand.brand_name}</h5>
+                    <p class="text-muted mb-0 pe-1">${brand.brand_content}</p>
+                </div>
+                <div>
+                    <button class="btn btn-sm btn-outline-primary edit-brand"><i class="bi bi-pencil"></i></button>
+                    <button class="btn btn-sm btn-outline-danger delete-brand "><i class="bi bi-trash"></i></button>
+                </div>
+            </div>
+        </div>`;
 
         async function renderList(container, tplFn, action) {
             const $c = $(container);
