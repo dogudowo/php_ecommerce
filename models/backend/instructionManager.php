@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
                     </div>
                     <div class="mb-3">
                         <label class="form-label">回答</label>
-                        <textarea class="form-control" id="answer" rows="3" required></textarea>
+                        <textarea class="form-control" id="answer" rows="8" required></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">新增</button>
                 </form>
@@ -101,7 +101,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
                     </div>
                     <div class="mb-3">
                         <label class="form-label">回答</label>
-                        <textarea class="form-control" id="editAnswer" rows="3" required></textarea>
+                        <textarea class="form-control" id="editAnswer" rows="8" required></textarea>
                     </div>
                 </div>
                 <div class="modal-footer">

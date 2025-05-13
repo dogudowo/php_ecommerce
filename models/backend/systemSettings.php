@@ -2,12 +2,13 @@
 require_once __DIR__ . '/../../api/error_handler.php';
 // 系統設置管理文件
 
-// 防止直接訪問此文件
+// 只有後台登入者可存取
 if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
     header('Location: ../../login.php');
     exit;
 }
 ?>
+
 <div class="d-flex justify-content-between align-items-center mb-4">
     <h3><i class="bi bi-sliders me-2"></i>社群連結設置</h3>
 </div>
@@ -16,26 +17,26 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
         <div class="col-12">
             <div class="card">
                 <div class="card-body">
-                    <form id="systemSettingsForm">
+                    <form id="systemSettingsForm" novalidate>
                         <div class="mb-3">
                             <label for="lineLink" class="form-label">Line 連結</label>
-                            <input type="url" class="form-control" id="lineLink"
-                                value="https://line.me/R/ti/p/_idjyEv115">
+                            <input type="url" class="form-control" id="lineLink" placeholder="https://line.me/..."
+                                required>
                         </div>
                         <div class="mb-3">
                             <label for="facebookLink" class="form-label">Facebook 連結</label>
                             <input type="url" class="form-control" id="facebookLink"
-                                value="https://www.facebook.com/legendwalkertaiwan/">
+                                placeholder="https://facebook.com/..." required>
                         </div>
                         <div class="mb-3">
                             <label for="instagramLink" class="form-label">Instagram 連結</label>
                             <input type="url" class="form-control" id="instagramLink"
-                                value="https://www.instagram.com/all_en.boutique/">
+                                placeholder="https://instagram.com/..." required>
                         </div>
                         <div class="mb-3">
                             <label for="youtubeLink" class="form-label">YouTube 連結</label>
                             <input type="url" class="form-control" id="youtubeLink"
-                                value="https://www.youtube.com/user/legendwalker6000">
+                                placeholder="https://youtube.com/..." required>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
                             <button type="button" class="btn btn-secondary" id="resetSettingsBtn">
@@ -53,128 +54,107 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', async () => { // Make async for await
-        // Toast 容器
+    document.addEventListener('DOMContentLoaded', () => {
+        /** ================= 常量 ================= */
+        const API_URL = 'models/backend/functions/system/updateSettings.php';
+        const FIELDS = ['line', 'facebook', 'instagram', 'youtube'];
+        const inputIds = FIELDS.map(k => `${k}Link`);
+
+        /** ================= Toast ================= */
         let $toastContainer = $('.toast-container');
         if (!$toastContainer.length) {
-            $toastContainer = $('<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;"></div>').appendTo('body');
+            $toastContainer = $('<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1055"></div>').appendTo('body');
         }
-
-        const defaults = {
-            line: 'https://line.me/R/ti/p/_idjyEv115',
-            facebook: 'https://www.facebook.com/legendwalkertaiwan/',
-            instagram: 'https://www.instagram.com/all_en.boutique/',
-            youtube: 'https://www.youtube.com/user/legendwalker6000'
+        const showToast = (msg, lvl = 'info', delay = 5000) => {
+            const bg = { success: 'bg-success', danger: 'bg-danger', warning: 'bg-warning', info: 'bg-info' }[lvl] || 'bg-info';
+            const $toast = $(
+                `<div class="toast text-white ${bg} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="${delay}">
+                    <div class="d-flex align-items-center">
+                        <div class="toast-body flex-grow-1">${msg}</div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>`
+            ).appendTo($toastContainer);
+            new bootstrap.Toast($toast[0]).show();
+            $toast.on('hidden.bs.toast', () => $toast.remove());
         };
 
-        await loadSettings(); // Load settings on page load
-        const form = document.getElementById('systemSettingsForm');
+        /** ================= DOM ================= */
         const resetBtn = document.getElementById('resetSettingsBtn');
         const saveBtn = document.getElementById('saveSettingsBtn');
-        // 表單預設值
 
-        // Function to load settings from the server
-        async function loadSettings() {
-            try {
-                const response = await fetch('models/backend/functions/system/updateSettings.php?action=getSystemSettings', {
-                    method: 'GET',
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                const settings = await response.json();
-                if (settings.success && settings.data) {
-                    document.getElementById('lineLink').value = settings.data.line || defaults.line;
-                    document.getElementById('facebookLink').value = settings.data.facebook || defaults.facebook;
-                    document.getElementById('instagramLink').value = settings.data.instagram || defaults.instagram;
-                    document.getElementById('youtubeLink').value = settings.data.youtube || defaults.youtube;
-                } else {
-                    // Load defaults if fetching fails or no data
-                    loadDefaultSettings();
-                    showToast(settings.message || '無法載入目前設定，已載入預設值。', 'warning');
-                }
-            } catch (error) {
-                console.error('Error loading settings:', error);
-                loadDefaultSettings();
-                showToast('載入設定時發生錯誤，已載入預設值。', 'danger');
-            }
-        }
+        /** ================= 狀態 ================= */
+        let loadedLinks = {};
 
-        // Function to load default settings into the form
-        function loadDefaultSettings() {
-            document.getElementById('lineLink').value = defaults.line;
-            document.getElementById('facebookLink').value = defaults.facebook;
-            document.getElementById('instagramLink').value = defaults.instagram;
-            document.getElementById('youtubeLink').value = defaults.youtube;
-        }
+        /** ================= 工具函式 ================= */
+        const fillForm = links => {
+            inputIds.forEach(id => {
+                const key = id.replace('Link', '');
+                document.getElementById(id).value = links[key] ?? '';
+            });
+        };
+        const collectForm = () => {
+            const obj = {};
+            inputIds.forEach(id => {
+                const key = id.replace('Link', '');
+                obj[key] = document.getElementById(id).value.trim();
+            });
+            return obj;
+        };
+        const hasInvalidUrl = links => FIELDS.some(k => !/^https?:\/\//i.test(links[k]));
 
+        /** ================= 事件 ================= */
         resetBtn.addEventListener('click', () => {
-            document.getElementById('lineLink').value = defaults.line;
-            document.getElementById('facebookLink').value = defaults.facebook;
-            document.getElementById('instagramLink').value = defaults.instagram;
-            document.getElementById('youtubeLink').value = defaults.youtube;
-            showToast('表單已重置為預設值。', 'info');
+            fillForm(loadedLinks); // 回復為載入時的設定
+            showToast('已還原為目前設定值。', 'info');
         });
 
         saveBtn.addEventListener('click', async () => {
-            const payload = {
-                action: 'saveSystemSettings',
-                socialLinks: {
-                    line: document.getElementById('lineLink').value,
-                    facebook: document.getElementById('facebookLink').value,
-                    instagram: document.getElementById('instagramLink').value,
-                    youtube: document.getElementById('youtubeLink').value
-                }
-            };
-
+            const socialLinks = collectForm();
+            if (hasInvalidUrl(socialLinks)) {
+                showToast('請輸入有效的 URL。', 'danger');
+                return;
+            }
             saveBtn.disabled = true;
-            saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 保存中...';
-
+            saveBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> 保存中...';
             try {
-                const res = await fetch('models/backend/functions/system/updateSettings.php', {
+                const res = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify({ action: 'saveSystemSettings', socialLinks })
                 });
-                const result = await res.json();
-                showToast(result.success ? (result.message || '系統設置已成功更新！') : (result.message || '系統設置更新失敗。'),
-                    result.success ? 'success' : 'danger');
-
-                if (result.success) {
-                    // 派發自定義事件通知 footer 更新
-                    const event = new CustomEvent('socialLinksUpdated');
-                    document.dispatchEvent(event);
+                const json = await res.json();
+                showToast(json.message || (json.success ? '更新成功！' : '更新失敗。'), json.success ? 'success' : 'danger');
+                if (json.success) {
+                    loadedLinks = { ...socialLinks }; // 更新快取
+                    document.dispatchEvent(new CustomEvent('socialLinksUpdated', { detail: loadedLinks }));
                 }
             } catch (err) {
                 console.error(err);
-                showToast('保存系統設置時發生錯誤，請稍後再試。', 'danger');
+                showToast('連線錯誤，請稍後再試。', 'danger');
             } finally {
                 saveBtn.disabled = false;
                 saveBtn.innerHTML = '<i class="bi bi-save me-1"></i>保存設置';
             }
         });
 
-        function showToast(message, type = 'info') {
-            const toastId = 'toast-' + Date.now();
-            const toastClass = type === 'success' ? 'bg-success' : (type === 'danger' ? 'bg-danger' : 'bg-info');
-            const toastIcon = type === 'success' ? '<i class="bi bi-check-circle-fill me-2"></i>' : (type === 'danger' ? '<i class="bi bi-x-circle-fill me-2"></i>' : '<i class="bi bi-info-circle-fill me-2"></i>');
-
-            const $toast = $(`
-                <div class="toast align-items-center text-white ${toastClass} border-0" role="alert" aria-live="assertive" aria-atomic="true" id="${toastId}" data-bs-delay="5000">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            ${toastIcon} ${message}
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                    </div>
-                </div>
-            `);
-
-            $toastContainer.append($toast);
-            const toast = new bootstrap.Toast($toast[0]);
-            toast.show();
-
-            $toast.on('hidden.bs.toast', function () {
-                $(this).remove();
-            });
-        }
+        /** ================= 初始化 ================= */
+        (async () => {
+            try {
+                const res = await fetch(`${API_URL}?action=getSystemSettings`);
+                const json = await res.json();
+                if (json.success) {
+                    loadedLinks = { ...json.data };
+                } else {
+                    showToast(json.message || '無法讀取設定。', 'warning');
+                    loadedLinks = FIELDS.reduce((o, k) => (o[k] = '', o), {});
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('初始化失敗，請稍後重試。', 'warning');
+                loadedLinks = FIELDS.reduce((o, k) => (o[k] = '', o), {});
+            }
+            fillForm(loadedLinks);
+        })();
     });
 </script>

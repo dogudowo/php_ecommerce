@@ -1,7 +1,7 @@
 連
 <?php
 require_once 'fixedFile/header.php';
-require_once __DIR__ . '/models/frontend/StoreLocationModel.php';
+require_once __DIR__ . '/api/about.php';
 
 $storeLocations = StoreLocationModel::getStoreLocations();
 ?>
@@ -11,7 +11,7 @@ $storeLocations = StoreLocationModel::getStoreLocations();
     <h1 class="h1">關於我們</h1>
 </div>
 <?php
-$social_links = json_decode(file_get_contents(__DIR__ . '/fixedFile/social_links.json'), true);
+$social_links = json_decode(file_get_contents(__DIR__ . '/src/social_links.json'), true);
 ?>
 <div class="row justify-content-center my-3">
     <div class="col-auto d-flex align-items-center">

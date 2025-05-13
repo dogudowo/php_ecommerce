@@ -1,11 +1,11 @@
 <?php
-require_once __DIR__ . '/../../api/error_handler.php';
+require_once __DIR__ . '/error_handler.php';
 class QAModel
 {
     public static function getQAItems()
     {
         // 引入數據庫連接
-        require_once __DIR__ . '/../../api/db.php';
+        require_once __DIR__ . '/db.php';
 
         try {
             // 獲取數據庫連接

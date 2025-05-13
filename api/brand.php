@@ -1,10 +1,10 @@
 <?php
-require_once __DIR__ . '/../../api/error_handler.php';
+require_once __DIR__ . '/error_handler.php';
 class BrandModel
 {
     public static function getBrandInfo()
     {
-        require_once __DIR__ . '/../../api/db.php';
+        require_once __DIR__ . '/db.php';
 
         // $db = new DB();
         $conn = getDBConnection();
@@ -34,8 +34,8 @@ class BrandModel
 
             // 獲取品牌logo (路徑格式為brand/$brand_id/logo-*.png或.jpg)
             $logoDir = "imgs/brand/{$brandId}/";
-            if (is_dir(__DIR__ . "/../../$logoDir")) {
-                $logos = glob(__DIR__ . "/../../$logoDir" . "logo-*.{png,jpg,jpeg}", GLOB_BRACE);
+            if (is_dir(__DIR__ . "/../$logoDir")) {
+                $logos = glob(__DIR__ . "/../$logoDir" . "logo-*.{png,jpg,jpeg}", GLOB_BRACE);
                 foreach ($logos as $logo) {
                     $brands[$brandId]['logos'][] = basename($logo);
                 }
@@ -43,8 +43,8 @@ class BrandModel
 
             // 獲取品牌圖片 (路徑格式為brand/$brand_id/newAbout/newabout-*.jpg)
             $newAboutDir = "imgs/brand/{$brandId}/newAbout/";
-            if (is_dir(__DIR__ . "/../../$newAboutDir")) {
-                $images = glob(__DIR__ . "/../../$newAboutDir" . "newabout-*.jpg", GLOB_BRACE);
+            if (is_dir(__DIR__ . "/../$newAboutDir")) {
+                $images = glob(__DIR__ . "/../$newAboutDir" . "newabout-*.jpg", GLOB_BRACE);
                 foreach ($images as $image) {
                     $brands[$brandId]['images'][] = "brand/{$brandId}/newAbout/" . basename($image);
                 }

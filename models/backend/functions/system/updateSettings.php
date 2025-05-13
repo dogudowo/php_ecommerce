@@ -1,95 +1,100 @@
 <?php
+/**
+ * 系統社群連結設定 API
+ * - GET  ?action=getSystemSettings : 取得設定
+ * - POST body:{ action:'saveSystemSettings', socialLinks:{...} } : 儲存設定
+ */
+
 require_once __DIR__ . '/../../../../api/error_handler.php';
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
-// Define the path to the social_links.json file
-$socialLinksJsonPath = __DIR__ . '/../../../../fixedFile/social_links.json';
+// 設定檔路徑
+const SOCIAL_LINK_FILE = __DIR__ . '/../../../../src/social_links.json';
+const REQUIRED_KEYS = ['line', 'facebook', 'instagram', 'youtube'];
 
-// Function to send JSON response
-function sendJsonResponse($success, $message = '', $data = [])
+// 統一輸出格式
+function respond(bool $success, string $message = '', array $data = []): never
 {
-    echo json_encode(['success' => $success, 'message' => $message, 'data' => $data]);
+    echo json_encode([
+        'success' => $success,
+        'message' => $message,
+        'data' => $data,
+    ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
     exit;
 }
 
-
-
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    if (isset($_GET['action']) && $_GET['action'] === 'getSystemSettings') {
-        if (!file_exists($socialLinksJsonPath)) {
-            // If the JSON file doesn't exist, create it with default empty values
-            $defaultLinks = ['line' => '', 'facebook' => '', 'instagram' => '', 'youtube' => ''];
-            if (file_put_contents($socialLinksJsonPath, json_encode($defaultLinks, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES)) === false) {
-                sendJsonResponse(false, '無法建立 social_links.json 檔案。');
-            }
-            sendJsonResponse(true, 'social_links.json 不存在，已建立預設檔案。', $defaultLinks);
-        }
-        $socialLinksJson = file_get_contents($socialLinksJsonPath);
-        if ($socialLinksJson === false) {
-            sendJsonResponse(false, '無法讀取 social_links.json。');
-        }
-        $currentLinks = json_decode($socialLinksJson, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            sendJsonResponse(false, 'social_links.json 內容格式錯誤。');
-        }
-        sendJsonResponse(true, '成功獲取系統設定。', $currentLinks);
-    } else {
-        sendJsonResponse(false, '無效的 GET 請求操作。');
+// 讀取設定，如檔案不存在則回傳空值陣列
+function read_social_links(): array
+{
+    if (!file_exists(SOCIAL_LINK_FILE)) {
+        return array_fill_keys(REQUIRED_KEYS, '');
     }
-    exit;
+    $json = file_get_contents(SOCIAL_LINK_FILE);
+    $data = json_decode($json, true);
+    if (json_last_error() !== JSON_ERROR_NONE || !is_array($data)) {
+        return array_fill_keys(REQUIRED_KEYS, '');
+    }
+    return array_merge(array_fill_keys(REQUIRED_KEYS, ''), $data);
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+// 寫入設定
+function write_social_links(array $links): bool
+{
+    $json = json_encode($links, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+    return file_put_contents(SOCIAL_LINK_FILE, $json, LOCK_EX) !== false;
+}
+
+// 驗證 URL
+function validate_links(array $links): ?string
+{
+    foreach (REQUIRED_KEYS as $key) {
+        if (empty($links[$key]) || !filter_var($links[$key], FILTER_VALIDATE_URL)) {
+            return ucfirst($key) . ' 連結無效或為空。';
+        }
+    }
+    return null;
+}
+
+$method = $_SERVER['REQUEST_METHOD'];
+
+if ($method === 'GET') {
+    $action = $_GET['action'] ?? '';
+    if ($action !== 'getSystemSettings') {
+        respond(false, '無效的 GET 請求。');
+    }
+    respond(true, '讀取成功。', read_social_links());
+}
+
+if ($method === 'POST') {
     $input = json_decode(file_get_contents('php://input'), true);
-
-    if (!$input) {
-        sendJsonResponse(false, '無效的請求數據。');
+    if (!is_array($input)) {
+        respond(false, '無效的 JSON 請求。');
     }
 
-    $action = $input['action'] ?? null;
-    $socialLinks = $input['socialLinks'] ?? null;
-
-    if ($action !== 'saveSystemSettings' || !$socialLinks) {
-        sendJsonResponse(false, '請求無效或未提供社群連結數據。');
+    if (($input['action'] ?? '') !== 'saveSystemSettings' || !isset($input['socialLinks'])) {
+        respond(false, '缺少必要參數。');
     }
 
-    // Validate URLs
-    $requiredLinks = ['line', 'facebook', 'instagram', 'youtube'];
-    foreach ($requiredLinks as $key) {
-        if (empty($socialLinks[$key]) || !filter_var($socialLinks[$key], FILTER_VALIDATE_URL)) {
-            sendJsonResponse(false, ucfirst($key) . ' 的連結格式不正確或為空。');
-        }
+    $links = (array) $input['socialLinks'];
+    $err = validate_links($links);
+    if ($err) {
+        respond(false, $err);
     }
 
-    // Ensure the config directory exists and is writable
-    $configDir = dirname($socialLinksJsonPath);
-    if (!is_dir($configDir)) {
-        if (!mkdir($configDir, 0755, true)) {
-            sendJsonResponse(false, '無法建立 config 目錄。');
-        }
+    // 確保資料夾存在且可寫入
+    $dir = dirname(SOCIAL_LINK_FILE);
+    if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
+        respond(false, '無法建立設定資料夾。');
     }
-    if (!is_writable($configDir)) {
-        sendJsonResponse(false, 'config 目錄不可寫。');
-    }
-    if (file_exists($socialLinksJsonPath) && !is_writable($socialLinksJsonPath)) {
-        sendJsonResponse(false, 'social_links.json 文件不可寫。請檢查文件權限。');
+    if (!is_writable($dir)) {
+        respond(false, '設定資料夾不可寫。');
     }
 
-    try {
-        // Write the new social links to social_links.json
-        $jsonData = json_encode($socialLinks, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-        if (file_put_contents($socialLinksJsonPath, $jsonData) === false) {
-            sendJsonResponse(false, '無法寫入更新到 social_links.json。');
-        }
-        sendJsonResponse(true, '社群連結已成功更新！');
-
-    } catch (Exception $e) {
-        error_log('更新 social_links.json 時發生錯誤: ' . $e->getMessage());
-        sendJsonResponse(false, '更新社群連結時發生內部錯誤。');
+    if (!write_social_links($links)) {
+        respond(false, '寫入設定失敗，請檢查檔案權限。');
     }
-    exit;
+
+    respond(true, '社群連結已更新成功！');
 }
 
-sendJsonResponse(false, '不支援的請求方法。');
-
-?>
+respond(false, '不支援的請求方法。');

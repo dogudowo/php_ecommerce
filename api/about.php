@@ -1,6 +1,6 @@
 <?php
-require_once __DIR__ . '/../../api/db.php';
-require_once __DIR__ . '/../../api/error_handler.php';
+require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/error_handler.php';
 class StoreLocationModel
 {
     public static function getCompanyInfo()

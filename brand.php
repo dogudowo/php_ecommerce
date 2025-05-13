@@ -1,6 +1,6 @@
 <?php
 require_once 'fixedFile/header.php';
-require_once __DIR__ . '/models/frontend/BrandModel.php';
+require_once __DIR__ . '/api/brand.php';
 
 $brandInfo = BrandModel::getBrandInfo();
 ?>

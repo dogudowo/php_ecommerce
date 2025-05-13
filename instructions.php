@@ -37,7 +37,7 @@ require_once __DIR__ . '/fixedFile/header.php';
         <div class="tab-pane fade" id="qaContent" role="tabpanel" aria-labelledby="qa-tab">
             <!-- 購物Q&A內容 -->
             <?php
-            require_once __DIR__ . '/models/frontend/QAModel.php';
+            require_once __DIR__ . '/api/qa.php';
             $qaItems = QAModel::getQAItems();
             ?>
             <div class="accordion" id="accordionExample">
@@ -47,13 +47,13 @@ require_once __DIR__ . '/fixedFile/header.php';
                             <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
                                 data-bs-target="#collapse<?= $index ?>" aria-expanded="false"
                                 aria-controls="collapse<?= $index ?>">
-                                <?= $item['question'] ?>
+                                <?= nl2br($item['question']) ?>
                             </button>
                         </h2>
                         <div id="collapse<?= $index ?>" class="accordion-collapse collapse collapsed"
                             aria-labelledby="heading<?= $index ?>" data-bs-parent="#accordionExample">
                             <div class="accordion-body">
-                                <?= $item['answer'] ?>
+                                <?= nl2br($item['answer']) ?>
                             </div>
                         </div>
                     </div>
