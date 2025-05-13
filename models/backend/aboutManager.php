@@ -231,7 +231,7 @@ $adLink = $adLinkObj->adLink ?? '';
         document.getElementById('saveAdLinkBtn').addEventListener('click', async () => {
             const adLink = document.getElementById('adLinkInput').value.trim();
             try {
-                const res = await fetch('models/backend/functions/about/updateAdLink.php', { method: 'POST', body: new URLSearchParams({ adLink }) });
+                const res = await fetch('api/UpdateLink.php', { method: 'POST', body: JSON.stringify({ action: 'saveAdLink', adLink }) });
                 const json = await res.json();
                 if (!json.success) throw Error(json.message);
                 toast('更新成功');

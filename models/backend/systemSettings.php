@@ -52,11 +52,12 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
         </div>
     </div>
 </div>
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
 
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         /** ================= 常量 ================= */
-        const API_URL = 'models/backend/functions/system/updateSettings.php';
+        const API_URL = 'api/UpdateLink.php';
         const FIELDS = ['line', 'facebook', 'instagram', 'youtube'];
         const inputIds = FIELDS.map(k => `${k}Link`);
 
@@ -67,16 +68,20 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
         }
         const showToast = (msg, lvl = 'info', delay = 5000) => {
             const bg = { success: 'bg-success', danger: 'bg-danger', warning: 'bg-warning', info: 'bg-info' }[lvl] || 'bg-info';
-            const $toast = $(
-                `<div class="toast text-white ${bg} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="${delay}">
-                    <div class="d-flex align-items-center">
-                        <div class="toast-body flex-grow-1">${msg}</div>
+            const toastHtml = `
+                <div class="toast align-items-center text-white ${bg} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="${delay}">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            <i class="bi ${lvl === 'danger' ? 'bi-exclamation-triangle' : lvl === 'success' ? 'bi-check-circle' : 'bi-info-circle'} me-2"></i>${msg}
+                        </div>
                         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                     </div>
-                </div>`
-            ).appendTo($toastContainer);
-            new bootstrap.Toast($toast[0]).show();
-            $toast.on('hidden.bs.toast', () => $toast.remove());
+                </div>
+            `;
+            $toastContainer.html(toastHtml).css('z-index', '2000');
+            const toastEl = $toastContainer.find('.toast')[0];
+            new bootstrap.Toast(toastEl).show();
+            $(toastEl).on('hidden.bs.toast', () => $(toastEl).remove());
         };
 
         /** ================= DOM ================= */
@@ -105,7 +110,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
 
         /** ================= 事件 ================= */
         resetBtn.addEventListener('click', () => {
-            fillForm(loadedLinks); // 回復為載入時的設定
+            fillForm(loadedLinks);
             showToast('已還原為目前設定值。', 'info');
         });
 
@@ -121,12 +126,12 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                 const res = await fetch(API_URL, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'saveSystemSettings', socialLinks })
+                    body: JSON.stringify({ action: 'saveSocialLinks', socialLinks })
                 });
                 const json = await res.json();
                 showToast(json.message || (json.success ? '更新成功！' : '更新失敗。'), json.success ? 'success' : 'danger');
                 if (json.success) {
-                    loadedLinks = { ...socialLinks }; // 更新快取
+                    loadedLinks = { ...socialLinks };
                     document.dispatchEvent(new CustomEvent('socialLinksUpdated', { detail: loadedLinks }));
                 }
             } catch (err) {
@@ -141,20 +146,21 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
         /** ================= 初始化 ================= */
         (async () => {
             try {
-                const res = await fetch(`${API_URL}?action=getSystemSettings`);
+                const res = await fetch(`${API_URL}?action=getLinks`);
                 const json = await res.json();
-                if (json.success) {
-                    loadedLinks = { ...json.data };
+                if (json.success && json.data.socialLinks) {
+                    loadedLinks = { ...json.data.socialLinks };
                 } else {
                     showToast(json.message || '無法讀取設定。', 'warning');
                     loadedLinks = FIELDS.reduce((o, k) => (o[k] = '', o), {});
                 }
+                fillForm(loadedLinks);
             } catch (e) {
                 console.error(e);
                 showToast('初始化失敗，請稍後重試。', 'warning');
                 loadedLinks = FIELDS.reduce((o, k) => (o[k] = '', o), {});
+                fillForm(loadedLinks);
             }
-            fillForm(loadedLinks);
         })();
     });
 </script>
