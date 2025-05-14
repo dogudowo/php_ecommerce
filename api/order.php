@@ -745,7 +745,7 @@ function createRepairRequest(array $warrantyIds, ?PDO $pdo = null): array
 
         $createRepair = $pdo->prepare("
             INSERT INTO Repairs (RepairID, WarrantyID, RepairDate, RepairStatus, RepairCommit) 
-            VALUES (:repairId, :warrantyId, NOW(), '待處理', '')
+            VALUES (:repairId, :warrantyId, NOW(), 'Pending', '')
         ");
 
         foreach ($warrantyIds as $warrantyId) {
