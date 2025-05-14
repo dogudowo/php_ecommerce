@@ -435,79 +435,104 @@ function getCartItems(int $memberId, ?PDO $pdo = null): array
 }
 
 /* =========  更新訂單狀態 ========= */
+
 function updateOrderStatus(int $memberId, int $orderId, string $newStatus, string $paymentMethod = '信用卡'): array
 {
     $pdo = db_connect();
+
     try {
         $pdo->beginTransaction();
 
-        // 1. 檢查訂單是否存在且屬於該會員
-        $checkOrder = $pdo->prepare("SELECT OrderID FROM Orders WHERE OrderID = :orderId AND MemberID = :memberId");
+        // 1. 確認訂單歸屬
+        $checkOrder = $pdo->prepare(
+            "SELECT OrderID FROM Orders WHERE OrderID = :orderId AND MemberID = :memberId"
+        );
         $checkOrder->execute(['orderId' => $orderId, 'memberId' => $memberId]);
         if (!$checkOrder->fetch()) {
+            $pdo->rollBack();
             return ['success' => false, 'message' => '訂單不存在或不屬於該會員'];
         }
 
         // 2. 更新訂單狀態
-        $updateOrder = $pdo->prepare("UPDATE Orders SET Status = :status WHERE OrderID = :orderId");
+        $updateOrder = $pdo->prepare(
+            "UPDATE Orders SET Status = :status WHERE OrderID = :orderId"
+        );
         $updateOrder->execute(['status' => $newStatus, 'orderId' => $orderId]);
 
-        // 3. 如果狀態為已完成，創建收據
+        // 3. 若完成付款，建立收據與保固
         if ($newStatus === 'Completed') {
-            // 獲取最大ReceiptID並加1
-            $stmt = $pdo->query("SELECT MAX(ReceiptID) as maxId FROM Receipt");
-            $result = $stmt->fetch(PDO::FETCH_ASSOC);
-            $receiptId = $result['maxId'] ? $result['maxId'] + 1 : 1;
+            // 3-1. 產生收據 ID
+            $receiptId = $pdo->query(
+                "SELECT IFNULL(MAX(CAST(ReceiptID AS UNSIGNED)), 0) + 1 AS newId FROM Receipt"
+            )->fetchColumn();
 
-            // 創建收據
-            $createReceipt = $pdo->prepare("INSERT INTO Receipt (ReceiptID, OrderRecordID, MemberID, PaymentMethod, PaymentDate) VALUES (:receiptId, :orderId, :memberId, :paymentMethod, NOW())");
+            // 3-2. 新增收據
+            $createReceipt = $pdo->prepare(
+                "INSERT INTO Receipt
+                 (ReceiptID, OrderID, MemberID, PaymentMethod, PaymentDate)
+                 VALUES (:receiptId, :orderId, :memberId, :paymentMethod, NOW())"
+            );
             $createReceipt->execute([
                 'receiptId' => $receiptId,
-                'memberId' => $memberId,
                 'orderId' => $orderId,
+                'memberId' => $memberId,
                 'paymentMethod' => $paymentMethod
             ]);
 
-            // 獲取訂單項目並創建收據項目
-            $getItems = $pdo->prepare("SELECT OrderRecordID FROM OrderItem WHERE OrderID = :orderId");
-            $getItems->execute(['orderId' => $orderId]);
-            $items = $getItems->fetchAll(PDO::FETCH_ASSOC);
+            // 3-3. 建立保固並關聯到收據項目
+            $items = $pdo->prepare(
+                "SELECT OrderRecordID, Quantity FROM OrderItem WHERE OrderID = :orderId"
+            );
+            $items->execute(['orderId' => $orderId]);
+            $items = $items->fetchAll(PDO::FETCH_ASSOC);
 
-            // 為每個商品創建保固記錄
-            $createWarranty = $pdo->prepare("INSERT INTO warranty (WarrantyID, WarrantyDate, WarrantyStatus) VALUES (:warrantyId, DATE_ADD(NOW(), INTERVAL 1 YEAR), true)");
-
-            $createReceiptItem = $pdo->prepare("INSERT INTO ReceiptItem (ReceiptID, OrderRecordID, WarrantyID) VALUES (:receiptId, :orderRecordId, :warrantyId)");
+            $createWarranty = $pdo->prepare(
+                "INSERT INTO warranty (WarrantyID, WarrantyDate, WarrantyStatus)
+                 VALUES (:warrantyId, DATE_ADD(NOW(), INTERVAL 1 YEAR), true)"
+            );
+            $createReceiptItem = $pdo->prepare(
+                "INSERT INTO ReceiptItem (ReceiptID, OrderRecordID, WarrantyID)
+                 VALUES (:receiptId, :orderRecordId, :warrantyId)"
+            );
 
             foreach ($items as $item) {
-                // 獲取最大WarrantyID並加1
-                $stmt = $pdo->query("SELECT MAX(WarrantyID) as maxId FROM warranty");
-                $result = $stmt->fetch(PDO::FETCH_ASSOC);
-                $warrantyId = $result['maxId'] ? $result['maxId'] + 1 : 1;
+                for ($i = 0; $i < $item['Quantity']; $i++) {
+                    $warrantyId = $pdo->query(
+                        "SELECT IFNULL(MAX(WarrantyID), 0) + 1 AS newId FROM warranty"
+                    )->fetchColumn();
 
-                // 創建保固記錄
-                $createWarranty->execute(['warrantyId' => $warrantyId]);
-
-                // 創建收據項目並關聯保固ID
-                $createReceiptItem->execute([
-                    'receiptId' => $receiptId,
-                    'orderRecordId' => $item['OrderRecordID'],
-                    'warrantyId' => $warrantyId
-                ]);
+                    $createWarranty->execute(['warrantyId' => $warrantyId]);
+                    $createReceiptItem->execute([
+                        'receiptId' => $receiptId,
+                        'orderRecordId' => $item['OrderRecordID'],
+                        'warrantyId' => $warrantyId
+                    ]);
+                }
             }
         }
 
+        // 關鍵紀錄：交易提交
         $pdo->commit();
         return ['success' => true, 'message' => '訂單狀態已更新'];
     } catch (Throwable $e) {
+        // 關鍵紀錄：交易回滾
         $pdo->rollBack();
-        error_log('更新訂單狀態失敗：' . $e->getMessage());
+        error_log('[updateOrderStatus] Rollback due to error: ' . $e->getMessage());
         return ['success' => false, 'message' => '操作失敗：' . $e->getMessage()];
     }
 }
 
-/* =========  更新會員資料 ========= */
-function updateMember(int $memberId, string $name, string $phone, string $email, string $city = '', string $address = '', bool $isAdmin = false): array
-{
+/* ========= 更新會員資料 ========= */
+function updateMember(
+    int $memberId,
+    string $name,
+    string $phone,
+    string $email,
+    string $city = '',
+    string $address =
+    '',
+    bool $isAdmin = false
+): array {
     $pdo = db_connect();
     try {
         // 檢查會員是否存在
@@ -532,7 +557,8 @@ function updateMember(int $memberId, string $name, string $phone, string $email,
         }
 
         // 更新會員資料
-        $updateMember = $pdo->prepare("UPDATE Member SET Name = :name, Phone = :phone, Email = :email, City = :city, Address = :address WHERE MemberID = :memberId");
+        $updateMember = $pdo->prepare("UPDATE Member SET Name = :name, Phone = :phone, Email = :email, City = :city, Address =
+:address WHERE MemberID = :memberId");
         $updateMember->execute([
             'name' => $name,
             'phone' => $phone,
