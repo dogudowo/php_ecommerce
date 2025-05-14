@@ -1,12 +1,10 @@
 <?php
-require_once __DIR__ . '/../../api/error_handler.php';
-// admin/products.php
-
+require_once __DIR__ . '/../api/error_handler.php';
 // 防止直接訪問此文件
-defined('INCLUDED_FROM_ADMIN') || exit(header('Location: ../../login.php'));
+defined('INCLUDED_FROM_ADMIN') || exit(header('Location: ../login.php'));
 
-require_once __DIR__ . '/../../api/db.php';
-require_once __DIR__ . '/../../api/product.php';
+require_once __DIR__ . '/../api/db.php';
+require_once __DIR__ . '/../api/product.php';
 
 // 處理 GET 參數
 $page = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
@@ -251,7 +249,7 @@ $products = [];
 
         /* ----------  常數 ---------- */
         const API_BASE = "api/product.php";
-        const GET_URL = "models/backend/functions/product/getProducts.php";
+        const GET_URL = "api/getProducts.php";
         const TYPE_OPTIONS = {
             aluminum: "鋁框款",
             zipper: "拉鍊款",

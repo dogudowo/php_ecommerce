@@ -139,7 +139,7 @@ define('INCLUDED_FROM_ADMIN', true);
                     <!-- 商品管理 -->
                     <div class="tab-pane fade <?php echo (!isset($_GET['page']) || (isset($_GET['page']) && $_GET['page'] === 'productManager')) ? 'show active' : ''; ?>"
                         id="products" role="tabpanel" aria-labelledby="v-pills-products-tab">
-                        <?php include "models/backend/productManager.php"; ?>
+                        <?php include "models/productManager.php"; ?>
                     </div>
                     <!-- 訂單管理 -->
                     <div class="tab-pane fade <?php echo (isset($_GET['page']) && $_GET['page'] === 'orderManager') ? 'show active' : ''; ?>"

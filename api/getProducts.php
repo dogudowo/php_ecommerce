@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../../../../api/error_handler.php';
+require_once __DIR__ . '/error_handler.php';
 header('Content-Type: application/json');
-require_once __DIR__ . '/../../../../api/db.php';
+require_once __DIR__ . '/db.php';
 
 // 只接受 GET、且必須帶 action 參數
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action'])) {
@@ -119,7 +119,7 @@ function getProductByIdBackend($productId)
 
     if ($product) {
         // 獲取商品圖片
-        $product['mainImage'] = file_exists(__DIR__ . '/../../../../imgs/products/' . $productId . '/main.jpg')
+        $product['mainImage'] = file_exists(__DIR__ . '/../imgs/products/' . $productId . '/main.jpg')
             ? 'imgs/products/' . $productId . '/main.jpg'
             : null;
 
@@ -129,7 +129,7 @@ function getProductByIdBackend($productId)
         $product['sizeOptions'] = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
         // 獲取商品圖庫圖片
-        $productDir = __DIR__ . '/../../../../imgs/products/' . $productId . '/';
+        $productDir = __DIR__ . '/../imgs/products/' . $productId . '/';
         $product['galleryImage'] = [];
 
         if (file_exists($productDir)) {
