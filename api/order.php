@@ -404,6 +404,10 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                                         </tbody>
                                     </table>
                                 </div>
+                                <div class="mb-3">
+                                    <label for="repairCommit<?= $order['OrderID'] ?>" class="form-label">維修描述</label>
+                                    <textarea class="form-control" id="repairCommit<?= $order['OrderID'] ?>" name="repairCommit<?= $order['OrderID'] ?>" rows="3" placeholder="請輸入維修說明"></textarea>
+                                </div>
                             </form>
                         <?php endif; ?>
                     </div>
@@ -732,26 +736,26 @@ function getOrderWarranties(int $orderId, ?PDO $pdo = null): array
 }
 
 // 添加處理維修申請的函數
-function createRepairRequest(array $warrantyIds, ?PDO $pdo = null): array
+function createRepairRequest(array $warrantyIds, ?PDO $pdo = null, string $repairCommit = ''): array
 {
     $pdo = $pdo ?? db_connect();
     try {
         $pdo->beginTransaction();
 
-        // 獲取最大RepairID
         $stmt = $pdo->query("SELECT MAX(RepairID) as maxId FROM Repairs");
         $result = $stmt->fetch(PDO::FETCH_ASSOC);
         $repairId = $result['maxId'] ? $result['maxId'] + 1 : 1;
 
         $createRepair = $pdo->prepare("
             INSERT INTO Repairs (RepairID, WarrantyID, RepairDate, RepairStatus, RepairCommit) 
-            VALUES (:repairId, :warrantyId, NOW(), 'Pending', '')
+            VALUES (:repairId, :warrantyId, NOW(), 'Pending', :repairCommit)
         ");
 
         foreach ($warrantyIds as $warrantyId) {
             $createRepair->execute([
                 'repairId' => $repairId,
-                'warrantyId' => $warrantyId
+                'warrantyId' => $warrantyId,
+                'repairCommit' => $repairCommit
             ]);
             $repairId++;
         }
@@ -773,7 +777,8 @@ if ($method === 'POST' && $action === 'createRepair') {
         echo json_encode(['success' => false, 'message' => '請選擇要維修的商品']);
         exit;
     }
-    $result = createRepairRequest($input['warrantyIds']);
+    $repairCommit = $input['repairCommit'] ?? '';
+    $result = createRepairRequest($input['warrantyIds'], null, $repairCommit);
     echo json_encode($result);
     exit;
 }
@@ -815,13 +820,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
 
             // 發送維修申請
+            const repairCommit = document.getElementById(`repairCommit${orderId}`).value;
             fetch('api/order.php?action=createRepair', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({
-                    warrantyIds: selectedWarranties
+                    warrantyIds: selectedWarranties,
+                    repairCommit: repairCommit
                 })
             })
             .then(response => response.json())
