@@ -47,9 +47,11 @@ $social_links = json_decode(file_get_contents(__DIR__ . '/src/social_links.json'
 
 <div class="container my-4">
     <h3 class="text-decoration-underline text-center">官方FaceBook</h3>
-    <a class="text-left" href="<?php echo $social_links['facebook']; ?>" target="_blank">
-        Legend Walker 台灣代理 歐印精品
-    </a>
+    <div class="container">
+        <a class="text-left" href="<?php echo $social_links['facebook']; ?>" target="_blank">
+            Legend Walker 台灣代理 歐印精品
+        </a>
+    </div>
 </div>
 
 <div class="container my-4">

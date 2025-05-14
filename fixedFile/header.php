@@ -126,4 +126,4 @@ require_once __DIR__ . '/../api/error_handler.php';
             </div>
         </div>
     </div>
-    <div class="container-fluid pt-5 mt-3 flex-grow-1 mx-auto" style="max-width: 1920px;">
+    <div class="container-fluid pt-5 mt-3 flex-grow-1 mx-auto m-0 p-1" style="max-width: 1920px;">

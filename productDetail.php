@@ -22,12 +22,6 @@ $product_id = isset($_GET['product_id']) ? (int) $_GET['product_id'] : 1;
 <!-- 先把 PHP 變數傳給 JS -->
 <script>
     const productId = <?= $product_id ?>;
-</script>
-
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.1/dist/js/bootstrap.bundle.min.js"
-    integrity="sha384-/bQdsTh/da6pkI1MST/rWKFNjaCP5gBSY4sEBT38Q/9RBh9AH40zEOg7Hlq2THRZ"
-    crossorigin="anonymous"></script>
-<script>
     let productData = null;
 
     async function loadProductDetails() {
@@ -50,7 +44,6 @@ $product_id = isset($_GET['product_id']) ? (int) $_GET['product_id'] : 1;
         document.getElementById('product-name').textContent = p.ProductName || '無商品名稱';
         const mainImg = p.mainImage || '';
         const intro = p.Introdution || '';
-        // 用第一個 sizeOptions 填初始價格
         const firstSize = p.sizeOptions[0] || {};
         const initPrice = firstSize.Price || 0;
         const initOrig = Math.round(initPrice * 1.2);
@@ -116,7 +109,7 @@ $product_id = isset($_GET['product_id']) ? (int) $_GET['product_id'] : 1;
                 </div>
             </div>
             <!-- 圖庫 -->
-            <div class="row mt-5 col-12 col-lg-9 mx-auto" id="gallery-container">
+            <div class="row mt-5 col-12 col-lg-9 mx-auto m-0 p-0" id="gallery-container">
                 ${p.galleryImages.map(img => `
                 <div class="text-center">
                     <img src="${img.url}" class="img-fluid" alt="gallery image" />
