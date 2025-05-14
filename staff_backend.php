@@ -83,7 +83,7 @@ if (!in_array($current_page, $staff_accessible)) {
                     <!-- 會員管理 -->
                     <div class="tab-pane fade <?php echo ($current_page === 'memberManager') ? 'show active' : ''; ?>"
                         id="members" role="tabpanel" aria-labelledby="v-pills-members-tab">
-                        <?php include "models/backend/memberManager.php"; ?>
+                        <?php include "models/memberManager.php"; ?>
                     </div>
                 </div>
             </div>

@@ -153,7 +153,7 @@ define('INCLUDED_FROM_ADMIN', true);
                     </div>
                     <!-- 會員管理 -->
                     <div class="tab-pane fade" id="members" role="tabpanel" aria-labelledby="v-pills-members-tab">
-                        <?php include "models/backend/memberManager.php"; ?>
+                        <?php include "models/memberManager.php"; ?>
                     </div>
                     <!-- 系統設置 -->
                     <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
