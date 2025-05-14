@@ -291,9 +291,9 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                     <?php
                 endforeach; ?>
                 <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                    <span class="badge fs-6 <?= getStatusClass($order['Status']) ?>">
-                        <?= getStatusText($order['Status']) ?>
-                    </span>
+                    <div class="badge <?= getStatusClass($order['Status']) ?>">
+                        <?php echo htmlspecialchars(getStatusText($order['Status'])); ?>
+                    </div>
                     <div class="text-center fw-bold fs-5 text-danger">總計 $<?= number_format($detail['total_amount']) ?></div>
                     <div class="d-flex align-items-center">
                         <?php
@@ -308,13 +308,23 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                                     disabled>付款</button>
                                 <?php
                             endif; ?>
-                            <?php
-                        else: ?>
-                            <button class="btn btn-warning btn-sm" data-action="repair"
-                                data-order-id="<?= $order['OrderID'] ?>"
-                                data-bs-toggle="modal" 
-                                data-bs-target="#warrantyModal<?= $order['OrderID'] ?>">維修</button>
-                            <?php
+                        <?php
+                        else:
+                            // 檢查所有商品的 Type 是否都為 aluminum 或 zipper
+                            $showRepair = false;
+                            foreach ($detail['items'] as $item) {
+                                // 這裡假設 ProductID 就是 Type，若不是請改成 $item['Type']
+                                if (isset($item['ProductID']) && in_array(strtolower($item['ProductID']), ['aluminum', 'zipper'])) {
+                                    $showRepair = true;
+                                    break;
+                                }
+                            }
+                            if ($showRepair): ?>
+                                <button class="btn btn-warning btn-sm" data-action="repair"
+                                    data-order-id="<?= $order['OrderID'] ?>"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#warrantyModal<?= $order['OrderID'] ?>">維修</button>
+                            <?php endif;
                         endif; ?>
                     </div>
                 </div>
