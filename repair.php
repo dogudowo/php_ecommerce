@@ -1,6 +1,6 @@
 <?php require_once 'fixedFile/header.php'; ?>
 
-<div class="container">
+<div class="container m-0 p-0">
     <div class="container text-center border-bottom border-black">
         <img src="imgs/title.png" alt="歐印精品" img-fluid>
         <h1 class="h1">保固維修</h1>
@@ -12,8 +12,8 @@
         <a class="btn btn-outline-success" style="border-radius: 20px;" href="src/KeyReport.doc">鑰匙價格表</a>
     </div>
 
-    <div class="container">
-        <ul class="nav nav-pills justify-content-end" id="brandTab" role="tablist">
+    <div class="container m-0 p-0">
+        <ul class="nav nav-pills justify-content-end mt-2" id="brandTab" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active " id="TW-tab" data-bs-toggle="pill" data-bs-target="#TWContent"
                     type="button" role="tab" aria-controls="TWContent" aria-selected="true">中文</button>
@@ -31,7 +31,7 @@
                         <img src="imgs/repair/context-ch/repairContext.jpg" alt="" class="img-fluid">
                     </div>
 
-                    <h3 class="text-decoration-underline">維修流程</h3>
+                    <h3>維修流程</h3>
                     <div class="container my-3 d-flex justify-content-center">
                         <img src="imgs/repair/context-ch/repairRundown.jpg" alt="" class="img-fluid">
                     </div>
