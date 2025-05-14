@@ -1,13 +1,4 @@
 <?php
-/**
- * MemberBackend.php
- *  ├─ action=list      取得會員清單 (GET)
- *  ├─ action=get       取得單一會員詳情 (GET, 參數 id)
- *  ├─ action=update    更新會員 IsAdmin 欄位 (POST, JSON)
- *  └─ action=delete    刪除會員與所有關聯資料 (POST, JSON)
- *
- * 所有回應皆為 application/json
- */
 require_once __DIR__ . '/error_handler.php';
 require_once __DIR__ . '/db.php';
 
@@ -72,6 +63,30 @@ function listMembers(): void
 {
     $pdo = db();
 
+    $city = $_GET['city'] ?? null;
+    $type = $_GET['type'] ?? null;
+    $search = $_GET['search'] ?? null;
+
+    $where = [];
+    $params = [];
+
+    if ($city) {
+        $where[] = "m.City LIKE :city";
+        $params['city'] = "%$city%";
+    }
+
+    if ($type !== null) {
+        $where[] = "m.IsAdmin = :type";
+        $params['type'] = (int) $type;
+    }
+
+    if ($search) {
+        $where[] = "(m.Name LIKE :search OR m.Email LIKE :search OR m.Phone LIKE :search)";
+        $params['search'] = "%$search%";
+    }
+
+    $whereClause = $where ? 'WHERE ' . implode(' AND ', $where) : '';
+
     $sql = "SELECT 
                 m.MemberID,
                 m.Name,
@@ -82,9 +97,11 @@ function listMembers(): void
                 m.IsAdmin,
                 (SELECT COUNT(*) FROM Orders o WHERE o.MemberID = m.MemberID) AS OrderCount
             FROM Member m
+            $whereClause
             ORDER BY m.MemberID ASC";
 
-    $stmt = $pdo->query($sql);
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute($params);
     $members = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
     jsonExit([
@@ -93,9 +110,7 @@ function listMembers(): void
     ]);
 }
 
-/**
- * 取得單一會員詳情
- */
+
 function getMemberDetails(?string $memberId): void
 {
     if (!$memberId) {
@@ -116,14 +131,7 @@ function getMemberDetails(?string $memberId): void
     jsonExit(['success' => false, 'message' => '找不到指定的會員'], 404);
 }
 
-/**
- * 更新會員 IsAdmin 欄位
- * 接收 JSON:
- * {
- *   "memberId": 1,
- *   "isAdmin": 2
- * }
- */
+
 function updateMember(array $data): void
 {
     if (empty($data['memberId'])) {
@@ -148,13 +156,6 @@ function updateMember(array $data): void
     jsonExit(['success' => false, 'message' => '更新會員資料失敗'], 500);
 }
 
-/**
- * 刪除會員與其關聯資料
- * 接收 JSON:
- * {
- *   "memberId": 1
- * }
- */
 function deleteMember(array $data): void
 {
     if (empty($data['memberId'])) {

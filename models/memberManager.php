@@ -73,7 +73,19 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
     <div class="card">
         <div class="card-body">
             <div class="table-responsive">
-                <table class="table table-hover">
+                <table id="memberTable" class="table table-hover align-middle">
+                    <!-- 固定欄寬 -->
+                    <colgroup>
+                        <col style="width: 6%;"> <!-- ID -->
+                        <col style="width: 14%;"> <!-- 姓名 -->
+                        <col style="width: 22%;"> <!-- Email -->
+                        <col style="width: 14%;"> <!-- 電話 -->
+                        <col style="width: 10%;"> <!-- 城市 -->
+                        <col style="width: 10%;"> <!-- 訂單數 -->
+                        <col style="width: 12%;"> <!-- 類型 -->
+                        <col style="width: 12%;"> <!-- 操作 -->
+                    </colgroup>
+
                     <thead>
                         <tr>
                             <th>ID</th>
@@ -87,18 +99,10 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                         </tr>
                     </thead>
                     <tbody id="memberTableBody">
-                        <tr>
-                            <td colspan="8" class="text-center">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">載入中...</span>
-                                </div>
-                            </td>
-                        </tr>
+                        <!-- 由 JS 動態產生 -->
                     </tbody>
                 </table>
             </div>
-
-
         </div>
     </div>
 
@@ -186,8 +190,36 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
     document.getElementById('filterCity').addEventListener('change', filterMembers);
     document.getElementById('filterAdmin').addEventListener('change', filterMembers);
     document.getElementById('searchMember').addEventListener('input', filterMembers);
-    function filterMembers() {
-        console.log('篩選會員功能尚未實現');
+
+    async function filterMembers() {
+        const city = document.getElementById('filterCity').value;
+        const memberType = document.getElementById('filterAdmin').value;
+        const searchTerm = document.getElementById('searchMember').value;
+
+        const tbody = document.getElementById('memberTableBody');
+        tbody.innerHTML = spinnerRow();
+
+        try {
+            const params = new URLSearchParams();
+            if (city) params.append('city', city);
+            if (memberType) params.append('type', memberType);
+            if (searchTerm) params.append('search', searchTerm);
+
+            const res = await fetch(`${MEMBER_API}?action=list&${params.toString()}`);
+            if (!res.ok) throw new Error(res.status);
+            const json = await res.json();
+
+            if (json.success && json.members?.length) {
+                tbody.innerHTML = '';
+                json.members.forEach(m => tbody.appendChild(buildRow(m)));
+                rebindEventListeners();
+            } else {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center">沒有符合條件的會員資料</td></tr>`;
+            }
+        } catch (err) {
+            console.error('篩選會員失敗：', err);
+            tbody.innerHTML = `<tr><td colspan="8" class="text-danger text-center">篩選會員失敗</td></tr>`;
+        }
     }
 
     /* ====================
