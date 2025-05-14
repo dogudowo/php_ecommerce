@@ -78,22 +78,6 @@ class BrandModel
                     echo json_encode(['success' => true]);
                     break;
 
-                case 'delete_intro':
-                    $id = (int) $_POST['id'];
-                    $stmt = $conn->prepare("DELETE FROM brand_introduction WHERE brand_introduction_id = ?");
-                    $stmt->execute([$id]);
-                    echo json_encode(['success' => true]);
-                    break;
-
-                case 'create_intro':
-                    $content = htmlspecialchars($_POST['content']);
-                    $maxId = $conn->query("SELECT MAX(brand_introduction_id) AS max_id FROM brand_introduction")->fetch(PDO::FETCH_ASSOC)['max_id'];
-                    $newId = ($maxId ? $maxId : 0) + 1;
-                    $stmt = $conn->prepare("INSERT INTO brand_introduction (brand_introduction_id, introdution) VALUES (?, ?)");
-                    $stmt->execute([$newId, $content]);
-                    echo json_encode(['success' => true, 'id' => $newId]);
-                    break;
-
                 case 'create_brand':
                     try {
                         $transactionStarted = false;

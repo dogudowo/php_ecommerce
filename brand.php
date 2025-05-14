@@ -12,7 +12,7 @@ $brandInfo = BrandModel::getBrandInfo();
 
 <div class="container text-center my-3 border-bottom border-black d-flex-column justify-content-center">
     <?php foreach ($brandInfo['company_intro'] as $paragraph): ?>
-        <p class="px-2 text-start mx-0"><?= $paragraph ?></p>
+        <p class="px-2 text-start mx-0"><?= nl2br($paragraph) ?></p>
     <?php endforeach; ?>
 </div>
 <div class="container text-center my-3 w-100">
