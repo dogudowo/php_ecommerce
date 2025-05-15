@@ -106,7 +106,7 @@ $adLink = $adLinkObj->adLink ?? '';
         const FIELD_CFG = {
             tax_id: { label: "統一編號", hideFor: ["store"] },
             name: { label: { company: "公司名稱", store: "門市名稱" } },
-            email: { label: "電子郵件" },
+            email: { label: "電子郵件", textarea: true },
             phone: { label: "電話" },
             fax: { label: "傳真" },
             location: { label: "地址" },
@@ -172,7 +172,7 @@ $adLink = $adLinkObj->adLink ?? '';
                 const wrap = document.createElement('div');
                 wrap.className = 'mb-3';
                 wrap.innerHTML = `<label class="form-label" for="${f}">${labelTxt}</label>
-                ${cfg.textarea ? `<textarea id="${f}" name="${f}" rows="4" class="form-control"></textarea>` : `<input id="${f}" name="${f}" class="form-control">`}`;
+                ${cfg.textarea ? `<textarea id="${f}" name="${f}" rows="6" class="form-control"></textarea>` : `<input id="${f}" name="${f}" class="form-control">`}`;
                 form.appendChild(wrap);
             });
             if (entity === 'store' && !form.tax_id) {
