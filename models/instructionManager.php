@@ -177,13 +177,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
             let html = '<table class="table table-striped"><thead><tr><th>問題</th><th>回答</th><th>操作</th></tr></thead><tbody>';
             qaItems.forEach(item => {
                 html += `<tr>
-                    <td>${escapeHtml(item.question)}</td>
-                    <td>${escapeHtml(item.answer)}</td>
+                    <td>${item.question}</td>
+                    <td>${item.answer}</td>
                     <td>
                         <button class="btn btn-sm btn-warning edit-btn"
                             data-id="${item.QA_id}"
-                            data-question="${escapeHtml(item.question)}"
-                            data-answer="${escapeHtml(item.answer)}">
+                            data-question="${item.question}"
+                            data-answer="${item.answer}">
                             編輯
                         </button>
                         <button class="btn btn-sm btn-danger delete-btn" data-id="${item.QA_id}">刪除</button>
@@ -280,16 +280,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
         const toastEl = document.getElementById('notificationToast');
         toastEl.className = `toast bg-${type} text-white`;
         new bootstrap.Toast(toastEl).show();
-    }
-
-    // HTML 轉義
-    function escapeHtml(unsafe) {
-        return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
     }
 
     // 初始載入

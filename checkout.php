@@ -108,11 +108,11 @@ include __DIR__ . "/fixedFile/header.php";
                         <img src="imgs/products/${item.ProductID}/main.jpg" class="img-fluid" alt="商品圖片">
                     </div>
                     <div class="col-6">
-                        <h6>${escapeHtml(item.ProductName)}</h6>
+                        <h6>${item.ProductName}</h6>
                         <p class="mb-1">
                             <small class="text-muted">
-                                ${escapeHtml(item.Color)}
-                                ${item.Size != -1 ? ' - ' + escapeHtml(item.SizeDescription) : ''}
+                                ${item.Color}
+                                ${item.Size != -1 ? ' - ' + item.SizeDescription : ''}
                             </small>
                         </p>
                         <p class="mb-1">數量: ${item.Quantity}</p>
@@ -261,19 +261,6 @@ include __DIR__ . "/fixedFile/header.php";
     function numberFormat(number) {
         return new Intl.NumberFormat().format(number);
     }
-
-    // HTML轉義函數
-    function escapeHtml(text) {
-        const map = {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#039;'
-        };
-        return text.replace(/[&<>"']/g, function (m) { return map[m]; });
-    }
-
     // 頁面加載時獲取購物車數據
     document.addEventListener('DOMContentLoaded', loadCartData);
 </script>
