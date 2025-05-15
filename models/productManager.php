@@ -493,24 +493,55 @@ $products = [];
         }
 
         /* --- 尺寸 / 顏色增刪 --- */
-        function addSizeRow(data = {}) {
-            modalEl.querySelector("#sizePriceContainer").appendChild(createSizeBlock(data));
-        }
-        function removeSizeRow(btn) {
-            btn.closest(".size-price-block")?.remove();
+        function updateSizeButtons() {
+            const blocks = modalEl.querySelectorAll('.size-price-block');
+            const removeBtns = modalEl.querySelectorAll('.size-price-block .remove-size-btn');
+            removeBtns.forEach(btn => btn.disabled = (blocks.length <= 1));
         }
 
+        function updateColorButtons(block) {
+            const rows = block.querySelectorAll('.color-row');
+            const removeBtns = block.querySelectorAll('.remove-color-btn');
+            removeBtns.forEach(btn => btn.disabled = (rows.length <= 1));
+        }
+
+        // 新增尺寸：加入後更新按鈕狀態
+        function addSizeRow(data = {}) {
+            const newBlock = createSizeBlock(data);
+            modalEl.querySelector('#sizePriceContainer').appendChild(newBlock);
+            updateSizeButtons();
+            updateColorButtons(newBlock);
+        }
+
+        // 刪除尺寸：刪除後更新按鈕狀態
+        function removeSizeRow(btn) {
+            btn.closest('.size-price-block').remove();
+            updateSizeButtons();
+        }
+
+        // 新增顏色：加入後更新該 block 的按鈕狀態
         function addColorRow(btn) {
-            const colorCt = btn.closest(".size-price-block")?.querySelector(".color-stock-container");
-            if (colorCt) colorCt.appendChild(createColorRow());
+            const block = btn.closest('.size-price-block');
+            const colorCt = block.querySelector('.color-stock-container');
+            colorCt.appendChild(createColorRow());
+            updateColorButtons(block);
         }
+
+        // 刪除顏色：刪除後更新該 block 的按鈕狀態
         function removeColorRow(btn) {
-            const row = btn.closest(".color-row");
-            const colorCt = row?.parentElement;
-            row?.remove();
-            /* 若刪到 0 列，補一列空的 */
-            if (colorCt && !colorCt.querySelector(".color-row")) colorCt.appendChild(createColorRow());
+            const row = btn.closest('.color-row');
+            const block = btn.closest('.size-price-block');
+            row.remove();
+            updateColorButtons(block);
         }
+
+        // 初始時呼叫一次，以確保一開始就正確 disable
+        modalEl.addEventListener('shown.bs.modal', () => {
+            updateSizeButtons();
+            modalEl.querySelectorAll('.size-price-block').forEach(block => {
+                updateColorButtons(block);
+            });
+        });
 
         /* --- 其他 UI --- */
         const updateStatusText = chk => modalEl.querySelector("#statusText").textContent = chk.checked ? "上架" : "下架";
