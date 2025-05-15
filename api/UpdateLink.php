@@ -122,7 +122,7 @@ if ($method === 'POST') {
 
         // 確保資料夾存在且可寫入
         $dir = dirname(SOCIAL_LINK_FILE);
-        if (!is_dir($dir) && !mkdir($dir, 0755, true)) {
+        if (!is_dir($dir) && !mkdir($dir, 0777, true)) {
             respond(false, '無法建立設定資料夾。');
         }
         if (!is_writable($dir)) {

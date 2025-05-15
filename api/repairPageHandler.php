@@ -71,7 +71,7 @@ function handleUpload(string $fileKey, string $relativePath, array $allowedMimeT
     $targetDir = dirname($targetAbsPath);
 
     // 建立資料夾
-    if (!is_dir($targetDir) && !mkdir($targetDir, 0755, true)) {
+    if (!is_dir($targetDir) && !mkdir($targetDir, 0777, true)) {
         $uploadErrors[] = "無法建立資料夾：{$targetDir}";
         return;
     }

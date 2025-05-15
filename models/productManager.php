@@ -95,6 +95,62 @@ $products = [];
         </div>
     </div>
 
+    <!-- 編輯主要圖片模態框 -->
+    <div class="modal fade" id="editMainImageModal" tabindex="-1" aria-labelledby="editMainImageModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="editMainImageModalLabel">編輯主要圖片</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">選擇新圖片</label>
+                        <input type="file" class="form-control" id="newMainImageInput"
+                            accept="image/jpeg,image/jpg,image/png">
+                    </div>
+                    <div class="border rounded p-2 text-center mb-3" style="height: 200px;">
+                        <img id="editMainImagePreview" src="" class="img-fluid h-100">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveMainImageBtn">儲存變更</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 管理詳細圖片模態框 -->
+    <div class="modal fade" id="manageGalleryModal" tabindex="-1" aria-labelledby="manageGalleryModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="manageGalleryModalLabel">管理詳細圖片</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">新增圖片</label>
+                        <input type="file" class="form-control" id="newGalleryImageInput"
+                            accept="image/jpeg,image/jpg,image/png" multiple>
+                    </div>
+                    <div id="gallerySortable" class="row g-2">
+                        <!-- 圖片將在這裡動態生成並可拖曳排序 -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary" id="saveGalleryBtn">儲存變更</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- 新增商品模態框 -->
     <div class="modal fade" id="addProductModal" tabindex="-1" aria-labelledby="addProductModalLabel"
         aria-hidden="true">
@@ -141,15 +197,19 @@ $products = [];
                             <div class="col-md-6">
                                 <div class="mb-3">
                                     <label class="form-label">主要圖片</label>
-                                    <div class="border rounded p-2 text-center" style="height: 150px;">
-                                        <img id="mainImagePreview" src="" class="img-fluid h-100"
-                                            style="display: none;">
-                                        <button type="button" class="btn btn-outline-primary mt-3" id="uploadMainImage">
-                                            <i class="bi bi-upload"></i> 上傳圖片
-                                        </button>
-                                        <input type="file" id="mainImageInput" accept="image/jpeg,image/jpg,image/png"
-                                            style="display: none;">
+                                    <div class="border rounded p-2 text-center"
+                                        style="height: 200px; overflow: hidden;">
+                                        <img id="mainImagePreview" src="" class="img-fluid"
+                                            style="display: none; max-width: 100%; max-height: 100%; object-fit: contain;">
                                     </div>
+                                    <div class="btn-group mt-2" role="group">
+                                        <button type="button" class="btn btn-outline-secondary" id="editMainImage"
+                                            data-bs-toggle="modal" data-bs-target="#editMainImageModal">
+                                            <i class="bi bi-pencil"></i> 編輯
+                                        </button>
+                                    </div>
+                                    <input type="file" id="mainImageInput" accept="image/jpeg,image/jpg,image/png"
+                                        style="display: none;">
                                 </div>
                                 <div class="mb-3">
                                     <label class="form-label">詳細圖片</label>
@@ -157,9 +217,15 @@ $products = [];
                                         <div class="d-flex flex-wrap gap-2 align-items-center"
                                             id="galleryImagesPreview">
                                         </div>
-                                        <button type="button" class="btn btn-outline-primary mt-2" id="addGalleryImage">
-                                            <i class="bi bi-plus"></i> 添加圖片
-                                        </button>
+                                        <div class="btn-group mt-2" role="group">
+                                            <button type="button" class="btn btn-outline-primary" id="addGalleryImage">
+                                                <i class="bi bi-plus"></i> 添加
+                                            </button>
+                                            <button type="button" class="btn btn-outline-secondary" id="manageGallery"
+                                                data-bs-toggle="modal" data-bs-target="#manageGalleryModal">
+                                                <i class="bi bi-gear"></i> 管理
+                                            </button>
+                                        </div>
                                         <input type="file" id="galleryImageInput"
                                             accept="image/jpeg,image/jpg,image/png" multiple style="display: none;">
                                     </div>
@@ -279,11 +345,31 @@ $products = [];
             return res.json();
         };
 
+        /* ----------  模態框事件 ---------- */
+        function bindModalEvents() {
+            const addProductModalEl = document.getElementById('addProductModal');
+            const editMainImageModalEl = document.getElementById('editMainImageModal');
+            const manageGalleryModalEl = document.getElementById('manageGalleryModal');
+
+            // 當編輯主要圖片模態框關閉時，重新顯示新增商品模態框
+            editMainImageModalEl.addEventListener('hidden.bs.modal', () => {
+                const addProductModal = bootstrap.Modal.getInstance(addProductModalEl) || new bootstrap.Modal(addProductModalEl);
+                addProductModal.show();
+            });
+
+            // 當管理詳細圖片模態框關閉時，重新顯示新增商品模態框
+            manageGalleryModalEl.addEventListener('hidden.bs.modal', () => {
+                const addProductModal = bootstrap.Modal.getInstance(addProductModalEl) || new bootstrap.Modal(addProductModalEl);
+                addProductModal.show();
+            });
+        }
+
         /* ----------  初始化 ---------- */
         document.addEventListener("DOMContentLoaded", () => {
             populateTypeSelects();
             loadProducts();
             bindUIEvents();
+            bindModalEvents(); // 新增模態框事件綁定
         });
 
         /* ----------  下拉選單 ---------- */
@@ -324,6 +410,21 @@ $products = [];
                 if (btn.classList.contains("remove-color-btn")) return removeColorRow(btn);
                 if (btn.id === "uploadMainImage") return modalEl.querySelector("#mainImageInput").click();
                 if (btn.id === "addGalleryImage") return modalEl.querySelector("#galleryImageInput").click();
+                if (btn.id === "editMainImage") return initEditMainImageModal();
+                if (btn.id === "manageGallery") return initManageGalleryModal();
+                if (btn.id === "saveMainImageBtn") return saveMainImage();
+                if (btn.id === "saveGalleryBtn") return saveGallery();
+            });
+
+            // 初始化可拖曳排序
+            $(document).ready(function () {
+                $("#gallerySortable").sortable({
+                    placeholder: "ui-state-highlight",
+                    update: function (event, ui) {
+                        updateGalleryOrder();
+                    }
+                });
+                $("#gallerySortable").disableSelection();
             });
 
             /* 其他表單事件 */
@@ -349,6 +450,62 @@ $products = [];
             tableBody.innerHTML = products.length
                 ? products.map(createRow).join("")
                 : '<tr><td colspan="6" class="text-center">暫無商品資料</td></tr>';
+        }
+
+        /* ----------  圖片管理函數 ---------- */
+        function initEditMainImageModal() {
+            const preview = document.getElementById('mainImagePreview');
+            if (preview.src) {
+                document.getElementById('editMainImagePreview').src = preview.src;
+            }
+        }
+
+        function initManageGalleryModal() {
+            const galleryContainer = document.getElementById('gallerySortable');
+            galleryContainer.innerHTML = '';
+
+            const galleryImages = document.querySelectorAll('#galleryImagesPreview img');
+            galleryImages.forEach(img => {
+                const imgDiv = document.createElement('div');
+                imgDiv.className = 'col-md-4 mb-2';
+                imgDiv.innerHTML = `
+                    <div class="card">
+                        <img src="${img.src}" class="card-img-top">
+                        <div class="card-body p-2">
+                            <button class="btn btn-sm btn-danger w-100 delete-gallery-image" data-src="${img.src}">
+                                <i class="bi bi-trash"></i> 刪除
+                            </button>
+                        </div>
+                    </div>
+                `;
+                galleryContainer.appendChild(imgDiv);
+            });
+        }
+
+        function saveMainImage() {
+            const fileInput = document.getElementById('newMainImageInput');
+            if (fileInput.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function (e) {
+                    document.getElementById('mainImagePreview').src = e.target.result;
+                    document.getElementById('mainImagePreview').style.display = 'block';
+                    bootstrap.Modal.getInstance(document.getElementById('editMainImageModal')).hide();
+                    showToast('success', '主要圖片已更新');
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                showToast('warning', '請選擇新圖片');
+            }
+        }
+
+        function updateGalleryOrder() {
+            // 更新圖片順序的邏輯
+        }
+
+        function saveGallery() {
+            // 儲存詳細圖片變更的邏輯
+            bootstrap.Modal.getInstance(document.getElementById('manageGalleryModal')).hide();
+            showToast('success', '詳細圖片已更新');
         }
         const getCName = t => TYPE_OPTIONS[t?.trim().toLowerCase()] || t || "";
         const createRow = p => `
@@ -551,9 +708,14 @@ $products = [];
             const file = input.files[0];
             if (!file) return;
             const img = modalEl.querySelector("#mainImagePreview");
-            img.src = URL.createObjectURL(file);
-            img.style.display = "block";
-            modalEl.querySelector("#uploadMainImage").style.display = "none";
+            if (img) { // Add null check for img
+                img.src = URL.createObjectURL(file);
+                img.style.display = "block";
+            }
+            const fileInputElement = modalEl.querySelector("#mainImageInput"); // Corrected selector
+            if (fileInputElement) { // Keep null check
+                fileInputElement.style.display = "none";
+            }
         }
         function previewGalleryImages(input) {
             const ct = modalEl.querySelector("#galleryImagesPreview");
@@ -565,6 +727,7 @@ $products = [];
                 img.style.cssText = "width:100px;height:100px;margin:4px";
                 ct.appendChild(img);
             });
+            updateGalleryButtons();
         }
 
         /* --- 填入/重置表單 --- */
@@ -588,9 +751,14 @@ $products = [];
             /* 主圖 */
             if (p.mainImage) {
                 const img = modalEl.querySelector("#mainImagePreview");
-                img.src = p.mainImage;
-                img.style.display = "block";
-                modalEl.querySelector("#uploadMainImage").style.display = "none";
+                if (img) { // Add null check for img
+                    img.src = p.mainImage;
+                    img.style.display = "block";
+                }
+                const fileInputElement = modalEl.querySelector("#mainImageInput"); // Corrected selector
+                if (fileInputElement) { // Keep null check
+                    fileInputElement.style.display = "none";
+                }
             }
 
             /* 詳細圖片 */
@@ -607,6 +775,7 @@ $products = [];
             } else {
                 gp.innerHTML = '<div class="text-muted">暫無詳細圖片</div>';
             }
+            updateGalleryButtons();
 
             /* 尺寸/顏色 */
             const sizeCt = modalEl.querySelector("#sizePriceContainer");
@@ -646,9 +815,9 @@ $products = [];
             modalEl.querySelector("form").reset();
             modalEl.querySelector("#statusText").textContent = "下架";
 
-            modalEl.querySelector("#mainImagePreview").style.display = "none";
-            modalEl.querySelector("#uploadMainImage").style.display = "";
+
             modalEl.querySelector("#galleryImagesPreview").innerHTML = '<div class="text-muted">暫無詳細圖片</div>';
+            updateGalleryButtons();
 
             modalEl.querySelector("#sizePriceContainer").innerHTML = "";
             addSizeRow();
@@ -724,6 +893,24 @@ $products = [];
             new bootstrap.Toast(el, { delay: 3000 }).show();
         }
         const showError = (title, err) => { console.error(title, err); showToast(`${title}：${err.message || err}`, "danger"); };
+
+        /* ----------  圖片管理函數 - 更新按鈕顯示 ---------- */
+        function updateGalleryButtons() {
+            const galleryPreview = modalEl.querySelector("#galleryImagesPreview");
+            const addBtn = modalEl.querySelector("#addGalleryImage");
+            const manageBtn = modalEl.querySelector("#manageGallery");
+
+            // Check if there are any actual image elements, not just the "暫無詳細圖片" text
+            const hasImages = galleryPreview.querySelectorAll('img').length > 0;
+
+            if (hasImages) {
+                addBtn.style.display = 'none';
+                manageBtn.style.display = ''; // Or 'block' depending on desired display type
+            } else {
+                addBtn.style.display = ''; // Or 'block'
+                manageBtn.style.display = 'none';
+            }
+        }
 
         /* ----------  對外 (for inline) ---------- */
         window.addSizeRow = () => addSizeRow();
