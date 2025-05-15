@@ -177,6 +177,42 @@ function clearCart($memberId)
     }
 }
 
+// 檢查庫存
+function checkStock($memberId)
+{
+    $conn = getDBConnection();
+
+    try {
+        // 獲取購物車商品及其庫存
+        $stmt = $conn->prepare("SELECT c.OptionID, c.Quantity, p.ProductName, p.ProductID, o.Color, o.Size, o.SizeDescription, o.Price, o.Stock 
+                               FROM CartItem c 
+                               JOIN Options o ON c.OptionID = o.OptionID 
+                               JOIN Product p ON o.ProductID = p.ProductID 
+                               WHERE c.MemberID = ?");
+        $stmt->execute([$memberId]);
+        $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        // 檢查哪些商品庫存不足
+        $outOfStockItems = [];
+        foreach ($items as $item) {
+            if ($item['Quantity'] > $item['Stock']) {
+                $outOfStockItems[] = $item;
+            }
+        }
+
+        return [
+            'success' => true,
+            'outOfStockItems' => $outOfStockItems,
+            'hasOutOfStock' => !empty($outOfStockItems)
+        ];
+    } catch (PDOException $e) {
+        return [
+            'success' => false,
+            'message' => '庫存檢查失敗: ' . $e->getMessage()
+        ];
+    }
+}
+
 // 處理請求
 if (isset($_GET['action'])) {
     $action = $_GET['action'];
@@ -253,6 +289,10 @@ if (isset($_GET['action'])) {
 
         case 'clearCart':
             echo json_encode(clearCart($memberId));
+            break;
+
+        case 'checkStock':
+            echo json_encode(checkStock($memberId));
             break;
 
         default:

@@ -1,7 +1,8 @@
 <?php
 // productDetail.php
-// 接收 product_id
-$product_id = isset($_GET['product_id']) ? (int) $_GET['product_id'] : 1;
+// 接收 product_id 和 edit(optionId)
+$product_id = isset($_GET['product_id']) ? (int) $_GET['product_id'] : 0;
+$edit_option_id = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
 ?>
 <?php include "fixedFile/header.php"; ?>
 
@@ -210,6 +211,19 @@ $product_id = isset($_GET['product_id']) ? (int) $_GET['product_id'] : 1;
             const optionId = colorBtn?.dataset.optionId;
             if (!optionId) return alert('請選擇顏色');
             try {
+                // 如果有edit參數，先刪除原有商品
+                <?php if ($edit_option_id > 0): ?>
+                    await fetch('api/cart.php?action=removeFromCart', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            memberId: memberId,
+                            optionId: <?= $edit_option_id ?>
+                        })
+                    });
+                <?php endif; ?>
+
+                // 加入新規格商品
                 const response = await fetch('api/cart.php?action=addToCart', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -249,5 +263,28 @@ $product_id = isset($_GET['product_id']) ? (int) $_GET['product_id'] : 1;
         });
     }
 
-    document.addEventListener('DOMContentLoaded', loadProductDetails);
+    // 如果有edit參數，預先選中對應的規格
+    function preselectOption() {
+        if (!productData || !productData.sizeOptions) return;
+
+        // 找出對應的optionId在sizeOptions中的位置
+        for (let i = 0; i < productData.sizeOptions.length; i++) {
+            const sizeOpt = productData.sizeOptions[i];
+            if (sizeOpt.colors) {
+                for (let j = 0; j < sizeOpt.colors.length; j++) {
+                    if (sizeOpt.colors[j].OptionID == <?= $edit_option_id ?>) {
+                        // 選中對應的尺寸和顏色
+                        selectSize(i);
+                        const colorBtn = document.querySelector(`.color-option[data-option-id="<?= $edit_option_id ?>"]`);
+                        if (colorBtn) colorBtn.click();
+                        return;
+                    }
+                }
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        loadProductDetails().then(preselectOption);
+    });
 </script>

@@ -192,6 +192,99 @@ include __DIR__ . "/fixedFile/header.php";
         bindSubmitOrderEvent();
     }
 
+    // 顯示庫存不足的modal
+    function showOutOfStockModal(outOfStockItems) {
+        const modalHTML = `
+        <div class="modal fade" id="outOfStockModal" tabindex="-1" aria-labelledby="outOfStockModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content">
+                    <div class="modal-header bg-danger text-white">
+                        <h5 class="modal-title" id="outOfStockModalLabel">庫存不足</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <p>以下商品庫存不足，請選擇處理方式：</p>
+                        <ul class="list-group mb-3">
+                            ${outOfStockItems.map(item => `
+                                <li class="list-group-item">
+                                    <div class="row">
+                                        <div class="col-3">
+                                            <img src="imgs/products/${item.ProductID}/main.jpg" class="img-fluid" alt="商品圖片">
+                                        </div>
+                                        <div class="col-6">
+                                            <h6>${item.ProductName}</h6>
+                                            <p class="mb-1">
+                                                <small class="text-muted">
+                                                    ${item.Color}
+                                                    ${item.Size != -1 ? ' - ' + item.SizeDescription : ''}
+                                                </small>
+                                            </p>
+                                            <p class="mb-1">數量: ${item.Quantity}</p>
+                                            <p class="mb-0">庫存: ${item.Stock}</p>
+                                        </div>
+                                    </div>
+                                </li>
+                            `).join('')}
+                        </ul>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">關閉</button>
+                        <button type="button" class="btn btn-danger" id="removeOutOfStockBtn">移除缺貨商品</button>
+                        <button type="button" class="btn btn-primary" id="backToCartBtn">返回購物車</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        const modal = new bootstrap.Modal(document.getElementById('outOfStockModal'));
+        modal.show();
+
+        // 綁定modal按鈕事件
+        document.getElementById('removeOutOfStockBtn').addEventListener('click', async () => {
+            try {
+                // 逐一移除每個缺貨商品
+                for (const item of outOfStockItems) {
+                    const response = await fetch('api/cart.php?action=removeFromCart', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            memberId: <?php echo $memberId; ?>,
+                            optionId: item.OptionID
+                        })
+                    })
+
+                    const data = await response.json();
+                    if (data.success) {
+                        showAlert('已成功移除缺貨商品', 'success');
+                        modal.hide();
+                        loadCartData();
+                    } else {
+                        const errorMsg = data.message || '移除缺貨商品失敗';
+                        showAlert(`移除缺貨商品失敗: ${errorMsg}`, 'danger');
+                        console.error('移除缺貨商品錯誤:', data);
+                    }
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('移除缺貨商品失敗，請稍後再試', 'danger');
+            }
+        });
+
+        document.getElementById('backToCartBtn').addEventListener('click', () => {
+            modal.hide();
+            window.location.href = 'cart.php';
+        });
+
+        // modal關閉時移除DOM元素
+        document.getElementById('outOfStockModal').addEventListener('hidden.bs.modal', () => {
+            document.getElementById('outOfStockModal').remove();
+        });
+    }
+
     // 綁定提交訂單事件
     function bindSubmitOrderEvent() {
         const submitOrder = document.getElementById('submitOrder');
@@ -209,6 +302,30 @@ include __DIR__ . "/fixedFile/header.php";
                 }
 
                 try {
+                    // 先檢查庫存
+                    const stockResponse = await fetch('api/cart.php?action=checkStock', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            memberId: <?php echo $memberId; ?>
+                        })
+                    });
+
+                    const stockData = await stockResponse.json();
+
+                    if (!stockData.success) {
+                        showAlert('檢查庫存失敗', 'danger');
+                        return;
+                    }
+
+                    if (stockData.outOfStockItems && stockData.outOfStockItems.length > 0) {
+                        showOutOfStockModal(stockData.outOfStockItems);
+                        return;
+                    }
+
+                    // 庫存充足，創建訂單
                     const response = await fetch('api/order.php?action=createOrder', {
                         method: 'POST',
                         headers: {

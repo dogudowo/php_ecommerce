@@ -164,7 +164,7 @@ include __DIR__ . "/fixedFile/header.php";
                     const totalSection = `
                         <div class="text-end mt-4">
                             <h4 class="total-price">總金額: $${totalAmount.toLocaleString()}</h4>
-                            <a href="checkout.php" class="btn btn-primary mt-3">結帳</a>
+                            <button id="checkout-btn" class="btn btn-primary mt-3">結帳</button>
                         </div>
                     `;
 
@@ -212,6 +212,9 @@ include __DIR__ . "/fixedFile/header.php";
         document.querySelectorAll('.decrease-qty, .increase-qty').forEach(button => {
             button.addEventListener('click', handleQuantityButton);
         });
+
+        // 綁定結帳按鈕
+        bindCheckoutButton();
     }
 
     // 移除購物車商品
@@ -346,6 +349,128 @@ include __DIR__ . "/fixedFile/header.php";
         const totalElement = document.querySelector('.total-price');
         if (totalElement) {
             totalElement.textContent = `總金額: $${total.toLocaleString()}`;
+        }
+    }
+    // 綁定結帳按鈕點擊事件
+    function bindCheckoutButton() {
+        const checkoutBtn = document.getElementById('checkout-btn');
+        if (checkoutBtn) {
+            checkoutBtn.addEventListener('click', async function () {
+                try {
+                    const response = await fetch(`api/cart.php?action=checkStock&memberId=<?php echo $_SESSION['user_id']; ?>`);
+                    const data = await response.json();
+
+                    if (data.success) {
+                        if (data.outOfStockItems && data.outOfStockItems.length > 0) {
+                            // 顯示缺貨商品modal
+                            showOutOfStockModal(data.outOfStockItems);
+                        } else {
+                            // 庫存充足，跳轉到結帳頁面
+                            window.location.href = 'checkout.php';
+                        }
+                    } else {
+                        console.error('庫存檢查失敗:', data.message);
+                        alert('庫存檢查失敗: ' + data.message);
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('發生錯誤，請稍後再試');
+                }
+            });
+
+            // 顯示缺貨商品modal
+            function showOutOfStockModal(outOfStockItems) {
+                let modalContent = `
+            <div class="modal fade" id="outOfStockModal" tabindex="-1" aria-labelledby="outOfStockModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header bg-warning">
+                            <h5 class="modal-title" id="outOfStockModalLabel">部分商品庫存不足</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <p>以下商品庫存不足，請選擇其他規格或移除商品：</p>
+                            <div class="list-group">
+        `;
+
+                outOfStockItems.forEach(item => {
+                    modalContent += `
+                <div class="list-group-item">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <h6>${item.ProductName}</h6>
+                            <p class="mb-1">
+                                <span class="text-muted">${item.Color || '無顏色'}</span>
+                                ${item.Size != -1 ? `<span class="text-muted"> - ${item.SizeDescription || '無尺寸'}</span>` : ''}
+                            </p>
+                            <p class="mb-0">
+                                目前庫存: ${item.Stock}，您選擇的數量: ${item.Quantity}
+                            </p>
+                        </div>
+                        <div>
+                            <button class="btn btn-outline-primary btn-sm change-spec-btn" 
+                                data-option-id="${item.OptionID}" 
+                                data-product-id="${item.ProductID}">
+                                更改規格
+                            </button>
+                            <button class="btn btn-danger btn-sm remove-item-btn" 
+                                data-option-id="${item.OptionID}">
+                                移除
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+                });
+
+                modalContent += `
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">稍後處理</button>
+                            <button type="button" class="btn btn-primary" id="retry-checkout-btn">重新檢查庫存</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+                // 添加modal到body
+                const modalContainer = document.createElement('div');
+                modalContainer.innerHTML = modalContent;
+                document.body.appendChild(modalContainer);
+
+                // 初始化modal
+                const modal = new bootstrap.Modal(document.getElementById('outOfStockModal'));
+                modal.show();
+
+                // 綁定modal事件
+                document.querySelectorAll('.remove-item-btn').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const optionId = this.getAttribute('data-option-id');
+                        removeCartItem.call({ getAttribute: () => optionId });
+                        modal.hide();
+                    });
+                });
+
+                document.querySelectorAll('.change-spec-btn').forEach(btn => {
+                    btn.addEventListener('click', function () {
+                        const productId = this.getAttribute('data-product-id');
+                        const optionId = this.getAttribute('data-option-id');
+                        window.location.href = `productDetail.php?product_id=${productId}&edit=${optionId}`;
+                    });
+                });
+
+                document.getElementById('retry-checkout-btn').addEventListener('click', function () {
+                    modal.hide();
+                    document.getElementById('checkout-btn').click();
+                });
+
+                // modal隱藏後移除
+                document.getElementById('outOfStockModal').addEventListener('hidden.bs.modal', function () {
+                    modalContainer.remove();
+                });
+            }
         }
     }
 </script>
