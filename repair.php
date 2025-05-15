@@ -1,6 +1,6 @@
 <?php require_once 'fixedFile/header.php'; ?>
 
-<div class="container m-0 p-0">
+<div class="container mx-auto m-0 p-0">
     <div class="container text-center border-bottom border-black">
         <img src="imgs/title.png" alt="歐印精品" img-fluid>
         <h1 class="h1">保固維修</h1>
