@@ -494,86 +494,143 @@ function addProduct($data, $files)
 }
 
 // 更新商品
-function updateProduct($data, $files)
+function updateProduct(array $data, array $files)
 {
     $pdo = getDBConnection();
     try {
         $pdo->beginTransaction();
-        $productId = $data['productId'];
+        $productId = (int) $data['productId'];
 
-        $stmt = $pdo->prepare("UPDATE Product SET ProductName = :name, Type = :type, Introdution = :intro, isActive = :active WHERE ProductID = :id");
+        // ----- 1. 更新 Product 主檔 -----
+        $sql =
+            "UPDATE Product
+             SET ProductName = :name,
+                 Type        = :type,
+                 Introdution = :intro,
+                 isActive    = :active
+             WHERE ProductID = :id";
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([
-            ':id' => $productId,
             ':name' => $data['productName'],
             ':type' => $data['productType'],
             ':intro' => $data['productIntro'],
-            ':active' => $data['productActive']
+            ':active' => isset($data['productActive']) ? 1 : 0,
+            ':id' => $productId,
         ]);
 
-        // 處理主圖片上傳
-        if (isset($files['mainImage']) && $files['mainImage']['error'] === UPLOAD_ERR_OK) {
+        // ----- 2. 處理主圖 -----
+        if (!empty($files['mainImage']['tmp_name']) && $files['mainImage']['error'] === UPLOAD_ERR_OK) {
             handleImageUpload('mainImage', $productId, 'main');
         }
 
-        // 處理畫廊圖片上傳 - 這部分需要更完善的邏輯來決定是新增、替換還是刪除舊圖片
-        // 簡化處理：如果上傳了新的畫廊圖片，先刪除舊的，再新增新的
-        if (isset($files['galleryImages']) && !empty($files['galleryImages']['name'][0])) {
-            // 刪除舊的畫廊圖片
-            $oldGalleryImages = glob(__DIR__ . "/../imgs/products/{$productId}/gallery-*.{jpg,jpeg,png,gif}", GLOB_BRACE);
-            foreach ($oldGalleryImages as $oldImage) {
-                unlink($oldImage);
+        // ----- 3. 處理畫廊圖 -----
+        if (!empty($files['galleryImages']['name'][0])) {
+            foreach (glob(__DIR__ . "/../imgs/products/{$productId}/gallery-*.{jpg,jpeg,png,gif}", GLOB_BRACE) as $f) {
+                @unlink($f);
             }
-            // 上傳新的畫廊圖片
-            $galleryImages = $files['galleryImages'];
-            $galleryOrders = $data['galleryOrders'] ?? [];
-            if (is_array($galleryImages['name'])) {
-                for ($i = 0; $i < count($galleryImages['name']); $i++) {
-                    $_FILES['currentGalleryImage'] = [
-                        'name' => $galleryImages['name'][$i],
-                        'type' => $galleryImages['type'][$i],
-                        'tmp_name' => $galleryImages['tmp_name'][$i],
-                        'error' => $galleryImages['error'][$i],
-                        'size' => $galleryImages['size'][$i]
-                    ];
-                    $order = isset($galleryOrders[$i]) ? (int) $galleryOrders[$i] : ($i + 1);
-                    handleImageUpload('currentGalleryImage', $productId, 'gallery', $order);
-                }
+            $gallery = $files['galleryImages'];
+            $orders = $data['galleryOrders'] ?? [];
+            foreach ($gallery['name'] as $i => $_) {
+                $_FILES['thisGallery'] = [
+                    'name' => $gallery['name'][$i],
+                    'type' => $gallery['type'][$i],
+                    'tmp_name' => $gallery['tmp_name'][$i],
+                    'error' => $gallery['error'][$i],
+                    'size' => $gallery['size'][$i],
+                ];
+                $order = isset($orders[$i]) ? (int) $orders[$i] : ($i + 1);
+                handleImageUpload('thisGallery', $productId, 'gallery', $order);
             }
         }
 
-        // 更新商品選項：先刪除舊的，再新增新的
-        $stmtDelOpt = $pdo->prepare("DELETE FROM Options WHERE ProductID = :pid");
-        $stmtDelOpt->execute([':pid' => $productId]);
+        // ----- 4. 查所有 OptionID (全表) 用以找空洞 -----
+        $allIds = $pdo->query("SELECT OptionID FROM Options ORDER BY OptionID")->fetchAll(PDO::FETCH_COLUMN);
+        $allIds = array_map('intval', $allIds);
 
-        if (isset($data['sizes'])) {
-            $options = json_decode($data['sizes'], true);
-            if (is_array($options)) {
-                // 手動獲取起始 OptionID
-                $stmtMaxOptId = $pdo->query("SELECT MAX(OptionID) as max_opt_id FROM Options");
-                $maxOptIdRow = $stmtMaxOptId->fetch(PDO::FETCH_ASSOC);
-                $currentOptionId = ($maxOptIdRow && $maxOptIdRow['max_opt_id'] !== null) ? (int) $maxOptIdRow['max_opt_id'] + 1 : 1;
+        // 取最小空洞的函式
+        $getFreeId = function () use ($pdo) {
+            $sql = "
+              SELECT COALESCE(
+                (SELECT t1.OptionID + 1
+                   FROM Options t1
+                   LEFT JOIN Options t2 ON t2.OptionID = t1.OptionID + 1
+                  WHERE t2.OptionID IS NULL
+                  ORDER BY t1.OptionID
+                  LIMIT 1),
+                (SELECT MAX(OptionID) + 1 FROM Options)
+              ) AS nextId";
+            $row = $pdo->query($sql)->fetch(PDO::FETCH_ASSOC);
+            return (int) $row['nextId'];
+        };
 
-                $stmtOpt = $pdo->prepare("INSERT INTO Options (OptionID, ProductID, Size, SizeDescription, Price, Color, Stock) VALUES (:optid, :pid, :size, :desc, :price, :color, :stock)");
-                foreach ($options as $opt) {
-                    $stmtOpt->execute([
-                        ':optid' => $currentOptionId,
-                        ':pid' => $productId,
-                        ':size' => $opt['Size'],
-                        ':desc' => $opt['SizeDescription'],
-                        ':price' => $opt['Price'],
-                        ':color' => $opt['Color'],
-                        ':stock' => $opt['Stock']
-                    ]);
-                    $currentOptionId++; // 為下一個選項遞增ID
-                }
+        // ----- 5. 查此商品現有 OptionID -----
+        $stmtExist = $pdo->prepare("SELECT OptionID FROM Options WHERE ProductID = :pid");
+        $stmtExist->execute([':pid' => $productId]);
+        $prodIds = array_map('intval', $stmtExist->fetchAll(PDO::FETCH_COLUMN));
+
+        // ----- 6. 準備 UPDATE 與 INSERT -----
+        $stmtUpd = $pdo->prepare(
+            "UPDATE Options
+             SET Color           = :color,
+                 Size            = :size,
+                 SizeDescription = :sizeDesc,
+                 Price           = :price,
+                 Stock           = :stock
+             WHERE OptionID     = :optid"
+        );
+        $stmtIns = $pdo->prepare(
+            "INSERT INTO Options
+             (OptionID, ProductID, Color, Size, SizeDescription, Price, Stock)
+             VALUES
+             (:optid, :pid, :color, :size, :sizeDesc, :price, :stock)"
+        );
+
+        // ----- 7. 處理前端 sizes 陣列 -----
+        $posted = json_decode($data['sizes'], true) ?: [];
+        $keepIds = [];
+
+        foreach ($posted as $opt) {
+            if (!empty($opt['OptionID']) && in_array((int) $opt['OptionID'], $prodIds, true)) {
+                // 更新既有選項
+                $optid = (int) $opt['OptionID'];
+                $stmtUpd->execute([
+                    ':optid' => $optid,
+                    ':color' => $opt['Color'],
+                    ':size' => $opt['Size'],
+                    ':sizeDesc' => $opt['SizeDescription'],
+                    ':price' => $opt['Price'],
+                    ':stock' => $opt['Stock'],
+                ]);
+            } else {
+                // 插入新選項，帶入最小空洞 ID
+                $optid = $getFreeId();
+                $stmtIns->execute([
+                    ':optid' => $optid,
+                    ':pid' => $productId,
+                    ':color' => $opt['Color'],
+                    ':size' => $opt['Size'],
+                    ':sizeDesc' => $opt['SizeDescription'],
+                    ':price' => $opt['Price'],
+                    ':stock' => $opt['Stock'],
+                ]);
             }
+            $keepIds[] = $optid;
+        }
+
+        // ----- 8. 刪除使用者已移除之選項 -----
+        $toDelete = array_diff($prodIds, $keepIds);
+        if (!empty($toDelete)) {
+            $ph = implode(',', array_fill(0, count($toDelete), '?'));
+            $stmtDel = $pdo->prepare("DELETE FROM Options WHERE OptionID IN ($ph)");
+            $stmtDel->execute(array_values($toDelete));
         }
 
         $pdo->commit();
         return ['success' => true, 'message' => '商品更新成功'];
+
     } catch (Exception $e) {
         $pdo->rollBack();
-        error_log("Update product error: " . $e->getMessage());
+        error_log('UpdateProduct error: ' . $e->getMessage());
         return ['success' => false, 'message' => '更新商品失敗: ' . $e->getMessage()];
     }
 }

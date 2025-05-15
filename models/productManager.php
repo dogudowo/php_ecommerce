@@ -444,46 +444,51 @@ $products = [];
         }
 
         /* --- 生成 DOM：尺寸卡片 --- */
-        function createSizeBlock({ size = "", desc = "", price = "", colors = [] } = {}) {
+        function createSizeBlock({ OptionID = '', size = '', desc = '', price = '', colors = [] } = {}) {
             const wrap = document.createElement("div");
             wrap.className = "card mb-3 size-price-block";
+            wrap.dataset.optionId = OptionID;  // 將 OptionID 暫存於 data-attribute
+
             wrap.innerHTML = `
-            <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-3">
-                        <label class="form-label">尺寸</label>
-                        <input type="number" class="form-control size-input" value="${size}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">尺寸描述</label>
-                        <input type="text" class="form-control size-desc-input" value="${desc}">
-                    </div>
-                    <div class="col-md-3">
-                        <label class="form-label">價格</label>
-                        <input type="number" class="form-control price-input" value="${price}">
-                    </div>
-                    <div class="col-md-3 text-end">
-                        <button type="button" class="btn btn-outline-danger remove-size-btn">
-                            <i class="bi bi-trash"></i> 刪除
-                        </button>
-                    </div>
+        <input type="hidden" class="option-id-input" value="${OptionID}">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">尺寸</label>
+                    <input type="number" class="form-control size-input" value="${size}">
                 </div>
-                <div class="row mt-3">
-                    <div class="col-12">
-                        <button type="button" class="btn btn-outline-primary add-color-btn">
-                            <i class="bi bi-plus"></i> 添加顏色
-                        </button>
-                        <div class="color-stock-container mt-3"></div>
-                    </div>
+                <div class="col-md-3">
+                    <label class="form-label">尺寸描述</label>
+                    <input type="text" class="form-control size-desc-input" value="${desc}">
                 </div>
-            </div>`;
-            /* 填入顏色列 */
+                <div class="col-md-3">
+                    <label class="form-label">價格</label>
+                    <input type="number" class="form-control price-input" value="${price}">
+                </div>
+                <div class="col-md-3 text-end">
+                    <button type="button" class="btn btn-outline-danger remove-size-btn">
+                        <i class="bi bi-trash"></i> 刪除
+                    </button>
+                </div>
+            </div>
+            <div class="row mt-3">
+                <div class="col-12">
+                    <button type="button" class="btn btn-outline-primary add-color-btn">
+                        <i class="bi bi-plus"></i> 添加顏色
+                    </button>
+                    <div class="color-stock-container mt-3"></div>
+                </div>
+            </div>
+        </div>`;
+
+            // 填入顏色列
             const colorCt = wrap.querySelector(".color-stock-container");
             if (colors.length) {
                 colors.forEach(c => colorCt.appendChild(createColorRow(c)));
             } else {
-                colorCt.appendChild(createColorRow()); // 至少一列
+                colorCt.appendChild(createColorRow());
             }
+
             return wrap;
         }
 
@@ -578,12 +583,18 @@ $products = [];
             if (p.sizeOptions?.length) {
                 /* 先依 size/desc/price 分組 */
                 const grouped = p.sizeOptions.reduce((acc, o) => {
-                    const key = `${o.Size}-${o.SizeDescription}-${o.Price}`;
-                    (acc[key] ||= { Size: o.Size, SizeDescription: o.SizeDescription, Price: o.Price, colors: [] })
-                        .colors.push({ color: o.Color, stock: o.Stock });
+                    const key = `${o.OptionID}-${o.Size}-${o.SizeDescription}-${o.Price}`;
+                    (acc[key] ||= {
+                        OptionID: o.OptionID,
+                        Size: o.Size,
+                        SizeDescription: o.SizeDescription,
+                        Price: o.Price,
+                        colors: []
+                    }).colors.push({ color: o.Color, stock: o.Stock });
                     return acc;
                 }, {});
                 Object.values(grouped).forEach(g => addSizeRow({
+                    OptionID: g.OptionID,
                     size: g.Size,
                     desc: g.SizeDescription,
                     price: g.Price,
@@ -628,21 +639,40 @@ $products = [];
 
             [...modalEl.querySelector("#galleryImageInput").files].forEach((f, i) => {
                 fd.append("galleryImages[]", f);
-                fd.append("galleryOrders[]", i + 2);
+                fd.append("galleryOrders[]", i + 1);
             });
 
-            /* 尺寸/顏色 */
+            // 尺寸／顏色
             const options = [];
-            modalEl.querySelectorAll(".size-price-block").forEach(block => {
+            document.querySelectorAll(".size-price-block").forEach(block => {
+                // 1. 先從 data-option-id 或隱藏欄位取得 OptionID
+                let optId = block.dataset.optionId || '';
+                if (!optId) {
+                    const hidden = block.querySelector(".option-id-input");
+                    if (hidden) optId = hidden.value;
+                }
+                // 2. 讀取尺寸資訊
                 const size = block.querySelector(".size-input").value;
                 const desc = block.querySelector(".size-desc-input").value;
                 const price = block.querySelector(".price-input").value;
+
+                // 3. 讀取顏色列
                 block.querySelectorAll(".color-row").forEach(row => {
                     const color = row.querySelector(".color-input").value.trim();
                     const stock = row.querySelector(".stock-input").value || 0;
-                    if (size && color) options.push({ Size: size, SizeDescription: desc, Price: price, Color: color, Stock: stock });
+                    if (size && color) {
+                        options.push({
+                            OptionID: optId,              // 傳給後端
+                            Size: size,
+                            SizeDescription: desc,
+                            Price: price,
+                            Color: color,
+                            Stock: stock
+                        });
+                    }
                 });
             });
+
             fd.append("sizes", JSON.stringify(options));
             return fd;
         }
