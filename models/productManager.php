@@ -806,19 +806,36 @@ $products = [];
         }
 
         function resetForm() {
+            // 標題與按鈕回復
             modalEl.querySelector("#addProductModalLabel").textContent = "新增商品";
             const confirmBtn = modalEl.querySelector("#confirmAddProduct");
             confirmBtn.textContent = "新增商品";
             delete confirmBtn.dataset.editMode;
             delete confirmBtn.dataset.productId;
 
+            // 清空表單欄位
             modalEl.querySelector("form").reset();
             modalEl.querySelector("#statusText").textContent = "下架";
 
+            // 清空主要圖片預覽
+            const mainImg = modalEl.querySelector("#mainImagePreview");
+            if (mainImg) {
+                mainImg.src = "";
+                mainImg.style.display = "none";
+            }
+            // 清空檔案 input（新增用與編輯用）
+            const mainInput = modalEl.querySelector("#mainImageInput");
+            if (mainInput) mainInput.value = "";
+            const newMainInput = document.getElementById("newMainImageInput");
+            if (newMainInput) newMainInput.value = "";
+            const galleryInput = modalEl.querySelector("#galleryImageInput");
+            if (galleryInput) galleryInput.value = "";
 
+            // 清空詳細圖片
             modalEl.querySelector("#galleryImagesPreview").innerHTML = '<div class="text-muted">暫無詳細圖片</div>';
             updateGalleryButtons();
 
+            // 清空尺寸／顏色區塊
             modalEl.querySelector("#sizePriceContainer").innerHTML = "";
             addSizeRow();
         }
