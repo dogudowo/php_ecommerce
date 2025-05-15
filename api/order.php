@@ -391,6 +391,13 @@ function createOrder(int $memberId, string $name, string $phone, string $address
                 'qty' => $item['Quantity']
             ]);
 
+            // 更新商品庫存
+            $pdo->prepare("UPDATE Options SET Stock = Stock - :quantity WHERE OptionID = :optionId")
+                ->execute([
+                    'quantity' => $item['Quantity'],
+                    'optionId' => $item['OptionID']
+                ]);
+
             // 更新 RecordID 為下一個值
             $recordId++;
         }
