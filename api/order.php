@@ -758,7 +758,7 @@ function createRepairRequest(array $warrantyIds, ?PDO $pdo = null, string $repai
 
         $createRepair = $pdo->prepare("
             INSERT INTO Repairs (RepairID, WarrantyID, RepairDate, RepairStatus, RepairCommit) 
-            VALUES (:repairId, :warrantyId, NOW(), 'Pending', :repairCommit)
+            VALUES (:repairId, :warrantyId, NOW(), '待處理', :repairCommit)
         ");
 
         foreach ($warrantyIds as $warrantyId) {
@@ -797,7 +797,7 @@ if ($method === 'POST' && $action === 'createRepair') {
 function getRepairStatusClass(string $status): string
 {
     return [
-        '待處理' => 'bg-warning',
+        '待處理' => 'bg-secondary',
         '處理中' => 'bg-info',
         '已完成' => 'bg-success',
         '已取消' => 'bg-danger'
