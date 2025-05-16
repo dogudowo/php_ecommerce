@@ -138,7 +138,6 @@ function handleDelete(): void
 
 function checkAdmin(): void
 {
-    session_start();
     if (($_SESSION['logged_in'] ?? false) !== true || ($_SESSION['user_role'] ?? -1) !== 2) {
         respondJson(false, '未授權的訪問', 401);
     }

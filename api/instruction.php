@@ -5,7 +5,7 @@ require_once __DIR__ . '/error_handler.php';
 require_once __DIR__ . '/db.php';
 
 /* ===== 主要修改 1：所有請求一律先送 JSON Header ===== */
-header('Content-Type: application/json; charset=utf-8');
+// header('Content-Type: application/json; charset=utf-8');
 
 class InstructionModel
 {
