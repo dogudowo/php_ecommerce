@@ -274,9 +274,17 @@ $products = [];
                                                                         placeholder="顏色描述">
                                                                 </div>
                                                                 <div class="col-md-4">
-                                                                    <input type="number"
-                                                                        class="form-control stock-input"
-                                                                        placeholder="庫存">
+                                                                    <div class="input-group">
+                                                                        <button
+                                                                            class="btn btn-outline-secondary btn-minus"
+                                                                            type="button">-</button>
+                                                                        <input type="number"
+                                                                            class="form-control text-center stock-input"
+                                                                            value="0" min="0">
+                                                                        <button
+                                                                            class="btn btn-outline-secondary btn-plus"
+                                                                            type="button">+</button>
+                                                                    </div>
                                                                 </div>
                                                                 <div class="col-md-2 " style=" align-self: end;">
                                                                     <button type="button"
@@ -362,6 +370,37 @@ $products = [];
                 const addProductModal = bootstrap.Modal.getInstance(addProductModalEl) || new bootstrap.Modal(addProductModalEl);
                 addProductModal.show();
             });
+
+            // 當新增商品模態框顯示時，綁定庫存數量按鈕事件
+            addProductModalEl.addEventListener('shown.bs.modal', () => {
+                const sizePriceContainer = document.getElementById('sizePriceContainer');
+
+                sizePriceContainer.querySelectorAll('.btn-minus').forEach(button => {
+                    button.removeEventListener('click', handleMinusClick);
+                    button.addEventListener('click', handleMinusClick);
+                });
+
+                sizePriceContainer.querySelectorAll('.btn-plus').forEach(button => {
+                    button.removeEventListener('click', handlePlusClick);
+                    button.addEventListener('click', handlePlusClick);
+                });
+            });
+
+            // 處理減號按鈕點擊
+            function handleMinusClick(event) {
+                const input = event.target.closest('.input-group').querySelector('.stock-input');
+                let value = parseInt(input.value, 10);
+                if (value > 0) {
+                    input.value = value - 1;
+                }
+            }
+
+            // 處理加號按鈕點擊
+            function handlePlusClick(event) {
+                const input = event.target.closest('.input-group').querySelector('.stock-input');
+                let value = parseInt(input.value, 10);
+                input.value = value + 1;
+            }
         }
 
         /* ----------  初始化 ---------- */
@@ -483,18 +522,41 @@ $products = [];
         }
 
         function saveMainImage() {
-            const fileInput = document.getElementById('newMainImageInput');
-            if (fileInput.files[0]) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    document.getElementById('mainImagePreview').src = e.target.result;
-                    document.getElementById('mainImagePreview').style.display = 'block';
-                    bootstrap.Modal.getInstance(document.getElementById('editMainImageModal')).hide();
-                    showToast('success', '主要圖片已更新');
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                showToast('warning', '請選擇新圖片');
+            try {
+                const fileInput = document.querySelector('#editMainImageInput');
+
+                if (fileInput.files.length > 0) {
+                    const file = fileInput.files[0];
+                    const mainImageInput = document.querySelector('#mainImageInput');
+                    const mainImagePreview = document.querySelector('#mainImagePreview');
+
+                    if (mainImageInput && mainImagePreview) {
+                        // 將檔案從編輯模態框複製到主表單
+                        const dataTransfer = new DataTransfer();
+                        dataTransfer.items.add(file);
+                        mainImageInput.files = dataTransfer.files;
+
+                        // 更新預覽
+                        const reader = new FileReader();
+                        reader.onload = function (e) {
+                            mainImagePreview.src = e.target.result;
+                            mainImagePreview.style.display = 'block';
+                        };
+                        reader.readAsDataURL(file);
+                    }
+                }
+
+                // 確保模態框關閉
+                const modal = bootstrap.Modal.getInstance(document.getElementById('editMainImageModal'));
+                if (modal) {
+                    modal.hide();
+                } else {
+                    $('#editMainImageModal').modal('hide');
+                }
+
+            } catch (error) {
+                console.error('儲存主要圖片時發生錯誤:', error);
+                $('#editMainImageModal').modal('hide'); // 確保即使出錯也會關閉模態框
             }
         }
 
@@ -505,7 +567,7 @@ $products = [];
         function saveGallery() {
             // 儲存詳細圖片變更的邏輯
             bootstrap.Modal.getInstance(document.getElementById('manageGalleryModal')).hide();
-            showToast('success', '詳細圖片已更新');
+            showToast('詳細圖片已更新', 'success');
         }
         const getCName = t => TYPE_OPTIONS[t?.trim().toLowerCase()] || t || "";
         const createRow = p => `
@@ -589,7 +651,11 @@ $products = [];
                     <input type="text" class="form-control color-input" placeholder="顏色描述" value="${color}">
                 </div>
                 <div class="col-md-4">
-                    <input type="number" class="form-control stock-input" placeholder="庫存" value="${stock}">
+                    <div class="input-group">
+                        <button class="btn btn-outline-secondary btn-minus" type="button">-</button>
+                        <input type="number" class="form-control text-center stock-input" value="${stock}" min="0">
+                        <button class="btn btn-outline-secondary btn-plus" type="button">+</button>
+                    </div>
                 </div>
                 <div class="col-md-2" style="align-self:end;">
                     <button type="button" class="btn btn-sm btn-outline-danger w-100 remove-color-btn">
@@ -751,12 +817,12 @@ $products = [];
             /* 主圖 */
             if (p.mainImage) {
                 const img = modalEl.querySelector("#mainImagePreview");
-                if (img) { // Add null check for img
+                if (img) {
                     img.src = p.mainImage;
                     img.style.display = "block";
                 }
-                const fileInputElement = modalEl.querySelector("#mainImageInput"); // Corrected selector
-                if (fileInputElement) { // Keep null check
+                const fileInputElement = modalEl.querySelector("#mainImageInput");
+                if (fileInputElement) {
                     fileInputElement.style.display = "none";
                 }
             }
@@ -783,9 +849,8 @@ $products = [];
             if (p.sizeOptions?.length) {
                 /* 先依 size/desc/price 分組 */
                 const grouped = p.sizeOptions.reduce((acc, o) => {
-                    const key = `${o.OptionID}-${o.Size}-${o.SizeDescription}-${o.Price}`;
+                    const key = `${o.Size}-${o.SizeDescription}-${o.Price}`; // 移除 OptionID 從分組鍵
                     (acc[key] ||= {
-                        OptionID: o.OptionID,
                         Size: o.Size,
                         SizeDescription: o.SizeDescription,
                         Price: o.Price,
@@ -794,7 +859,6 @@ $products = [];
                     return acc;
                 }, {});
                 Object.values(grouped).forEach(g => addSizeRow({
-                    OptionID: g.OptionID,
                     size: g.Size,
                     desc: g.SizeDescription,
                     price: g.Price,
