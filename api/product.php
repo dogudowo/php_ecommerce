@@ -105,12 +105,22 @@ function getProductById(int $productId): ?array
 
     // 6. 掃描並收集畫廊圖片
     $galleryImages = [];
-    $i = 1;
-    while (file_exists(__DIR__ . "/../imgs/products/{$productId}/gallery-{$i}.jpg")) {
-        $galleryImages[] = [
-            'url' => "imgs/products/{$productId}/gallery-{$i}.jpg"
-        ];
-        $i++;
+    $galleryDir = __DIR__ . "/../imgs/products/{$productId}/";
+    $galleryFiles = glob($galleryDir . "gallery-*.{jpg,jpeg,png,gif}", GLOB_BRACE);
+
+    if ($galleryFiles) {
+        // 根據檔案名稱中的數字排序
+        usort($galleryFiles, function ($a, $b) {
+            $numA = (int) filter_var(basename($a), FILTER_SANITIZE_NUMBER_INT);
+            $numB = (int) filter_var(basename($b), FILTER_SANITIZE_NUMBER_INT);
+            return $numB - $numA; // 由大到小排序
+        });
+
+        foreach ($galleryFiles as $file) {
+            $galleryImages[] = [
+                'url' => "imgs/products/{$productId}/" . basename($file)
+            ];
+        }
     }
     $product['galleryImages'] = $galleryImages;
 
@@ -689,6 +699,68 @@ function deleteProduct($productId)
     }
 }
 
+function updateGallery(array $data, array $files)
+{
+    $productId = isset($data['productId']) ? (int) $data['productId'] : 0;
+    $remainingSrcs = json_decode($data['remainingSrcs'] ?? '[]', true);
+    $uploadDir = __DIR__ . "/../imgs/products/{$productId}/";
+
+    // 確認目錄存在
+    if (!is_dir($uploadDir)) {
+        if (!mkdir($uploadDir, 0777, true)) {
+            return ['success' => false, 'message' => '無法建立圖片目錄'];
+        }
+    }
+
+    // 處理 existing files: 保留 remainingSrcs 內檔案，其他刪除
+    $existingFiles = glob($uploadDir . "gallery-*.{jpg,jpeg,png,gif}", GLOB_BRACE);
+
+    // 轉換成純檔名便於比對
+    $remainingFileNames = array_map('basename', $remainingSrcs);
+
+    foreach ($existingFiles as $file) {
+        $fileName = basename($file);
+        if (!in_array($fileName, $remainingFileNames, true)) {
+            @unlink($file); // 非 remainingSrcs 的檔案刪除
+        }
+    }
+
+    // 找到最大編號以便新增圖片使用
+    $maxOrder = 0;
+    foreach (glob($uploadDir . "gallery-*.{jpg,jpeg,png,gif}", GLOB_BRACE) as $f) {
+        if (preg_match('/gallery-(\d+)\.(jpg|jpeg|png|gif)$/i', basename($f), $matches)) {
+            $order = (int) $matches[1];
+            $maxOrder = max($maxOrder, $order);
+        }
+    }
+
+    // 處理新增的圖片 (newGalleryImages)
+    if (!empty($files['newGalleryImages']['tmp_name']) && is_array($files['newGalleryImages']['tmp_name'])) {
+        foreach ($files['newGalleryImages']['tmp_name'] as $i => $tmpName) {
+            if ($files['newGalleryImages']['error'][$i] !== UPLOAD_ERR_OK) {
+                continue; // 略過上傳錯誤的檔案
+            }
+
+            // 取得原始副檔名
+            $ext = strtolower(pathinfo($files['newGalleryImages']['name'][$i], PATHINFO_EXTENSION));
+            if (!in_array($ext, ['jpg', 'jpeg', 'png', 'gif'], true)) {
+                continue; // 略過不合法格式
+            }
+
+            // 新檔名編號遞增
+            $maxOrder++;
+            $newFileName = "gallery-{$maxOrder}.{$ext}";
+            $destination = $uploadDir . $newFileName;
+
+            if (!move_uploaded_file($tmpName, $destination)) {
+                return ['success' => false, 'message' => "圖片 {$files['newGalleryImages']['name'][$i]} 上傳失敗"];
+            }
+        }
+    }
+
+    return ['success' => true, 'message' => '詳細圖片已成功更新'];
+}
+
 // API 端點處理
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!isset($_POST['action'])) {
@@ -714,6 +786,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $result = deleteProduct((int) $_POST['productId']);
             echo json_encode($result);
             break;
+        case 'updateGallery':
+            $result = updateGallery($_POST, $_FILES);
+            echo json_encode($result);
+            break;
         default:
             echo json_encode(['success' => false, 'message' => '無效的POST操作']);
     }
@@ -734,11 +810,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 echo json_encode(['success' => false, 'message' => '找不到商品']);
             }
             break;
-
-        // GET 請求的 updateProduct 和 delete 保持原樣或移除，因為我們現在用 POST
-        // case 'updateProduct': ... (此處的 GET 請求邏輯可以考慮移除或修改)
-        // case 'delete': ... (此處的 GET 請求邏輯可以考慮移除或修改)
-
 
         case 'getProducts':
             $type = $_GET['type'] ?? '';
