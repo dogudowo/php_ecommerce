@@ -331,12 +331,15 @@ $products = [];
             travel: "旅遊周邊",
             featured: "精選商品",
         };
+        let CURRENT_PRODUCT_ID = null;
 
         /* ----------  DOM 快取 ---------- */
         const body = document.body;
         const tableBody = document.getElementById("productTableBody");
         const modalEl = document.getElementById("addProductModal");
         const modal = new bootstrap.Modal(modalEl);
+        let deletedGallerySrcs = [];
+        let newGalleryFiles = [];
 
         /* Toast 容器 */
         const toastContainer = (() => {
@@ -447,12 +450,21 @@ $products = [];
                 if (btn.classList.contains("remove-size-btn")) return removeSizeRow(btn);
                 if (btn.classList.contains("add-color-btn")) return addColorRow(btn);
                 if (btn.classList.contains("remove-color-btn")) return removeColorRow(btn);
+                if (btn.classList.contains("delete-gallery-image")) return handleDeleteGalleryImage(btn);
                 if (btn.id === "uploadMainImage") return modalEl.querySelector("#mainImageInput").click();
                 if (btn.id === "addGalleryImage") return modalEl.querySelector("#galleryImageInput").click();
                 if (btn.id === "editMainImage") return initEditMainImageModal();
                 if (btn.id === "manageGallery") return initManageGalleryModal();
                 if (btn.id === "saveMainImageBtn") return saveMainImage();
                 if (btn.id === "saveGalleryBtn") return saveGallery();
+                if (e.target.closest(".remove-new-gallery-image")) {
+                    const card = e.target.closest(".col-md-4");
+                    // 根據索引或其它機制，找到對應的 newGalleryFiles 項目並移除
+                    const idx = Array.from(document.querySelectorAll(".new-gallery-card"))
+                        .indexOf(card.querySelector(".new-gallery-card"));
+                    if (idx > -1) newGalleryFiles.splice(idx, 1);
+                    card.remove();
+                }
             });
 
             // 初始化可拖曳排序
@@ -473,6 +485,7 @@ $products = [];
                 if (t.id === "mainImageInput") return previewMainImage(t);
                 if (t.id === "galleryImageInput") return previewGalleryImages(t);
                 if (t.id === "filterType" || t.id === "filterStatus") return filterProducts();
+                if (t.id === "newGalleryImageInput") return handleNewGalleryUpload(t);
             });
 
             document.getElementById("searchProduct")?.addEventListener("input", filterProducts);
@@ -500,6 +513,10 @@ $products = [];
         }
 
         function initManageGalleryModal() {
+            if (!CURRENT_PRODUCT_ID) {
+                return showError("錯誤", new Error("找不到商品ID，請先進入編輯模式"));
+            }
+
             const galleryContainer = document.getElementById('gallerySortable');
             galleryContainer.innerHTML = '';
 
@@ -523,7 +540,21 @@ $products = [];
 
         function saveMainImage() {
             try {
-                const fileInput = document.querySelector('#editMainImageInput');
+                const fileInput = document.querySelector('#newMainImageInput');
+
+                // Add null check for fileInput
+                if (!fileInput) {
+                    console.error('錯誤：找不到主要圖片輸入欄位');
+                    showError('儲存主要圖片失敗', new Error('找不到圖片輸入欄位'));
+                    // 確保模態框關閉
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editMainImageModal'));
+                    if (modal) {
+                        modal.hide();
+                    } else {
+                        $('#editMainImageModal').modal('hide');
+                    }
+                    return; // Exit the function if fileInput is null
+                }
 
                 if (fileInput.files.length > 0) {
                     const file = fileInput.files[0];
@@ -556,6 +587,7 @@ $products = [];
 
             } catch (error) {
                 console.error('儲存主要圖片時發生錯誤:', error);
+                showError('儲存主要圖片失敗', error);
                 $('#editMainImageModal').modal('hide'); // 確保即使出錯也會關閉模態框
             }
         }
@@ -563,12 +595,88 @@ $products = [];
         function updateGalleryOrder() {
             // 更新圖片順序的邏輯
         }
+        function handleNewGalleryUpload(input) {
+            const files = Array.from(input.files);
+            files.forEach(file => {
+                // 1) 把 File 存到 newGalleryFiles
+                newGalleryFiles.push(file);
 
-        function saveGallery() {
-            // 儲存詳細圖片變更的邏輯
-            bootstrap.Modal.getInstance(document.getElementById('manageGalleryModal')).hide();
-            showToast('詳細圖片已更新', 'success');
+                // 2) 建卡片並插入 sortable 容器
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const html = `
+                    <div class="col-md-4 mb-2">
+                    <div class="card new-gallery-card">
+                        <img src="${e.target.result}" class="card-img-top">
+                        <div class="card-body p-2">
+                        <button class="btn btn-sm btn-danger w-100 remove-new-gallery-image">
+                            <i class="bi bi-trash"></i> 刪除
+                        </button>
+                        </div>
+                    </div>
+                    </div>`;
+                    document.getElementById("gallerySortable")
+                        .insertAdjacentHTML("beforeend", html);
+                };
+                reader.readAsDataURL(file);
+            });
+            // 清空 input，以便重覆選同檔也會觸發 change
+            input.value = "";
         }
+
+        function handleDeleteGalleryImage(btn) {
+            const src = btn.dataset.src;
+            // 從排序容器移除
+            const galleryContainer = document.getElementById('gallerySortable');
+            galleryContainer.querySelectorAll('.card img').forEach(img => {
+                if (img.src === src) {
+                    img.closest('.col-md-4').remove();
+                }
+            });
+            deletedGallerySrcs.push(src);
+            updateGalleryButtons();
+        }
+
+        async function saveGallery() {
+            // 1. 先取得排序後剩下的舊圖片 src 清單 (從 sortable 容器中取得)
+            const remainingSrcsInModal = Array.from(
+                document.querySelectorAll('#gallerySortable .card:not(.new-gallery-card) img')
+            ).map(img => img.src);
+
+            // 2. 更新主預覽區的圖片顯示，只保留 remainingSrcsInModal 中的圖片
+            const galleryPreview = document.getElementById('galleryImagesPreview');
+            galleryPreview.innerHTML = ''; // 清空主預覽區
+            remainingSrcsInModal.forEach(src => {
+                const im = document.createElement("img");
+                im.src = src;
+                im.className = "img-thumbnail";
+                im.style.cssText = "width:100px;height:100px;margin:4px";
+                galleryPreview.appendChild(im);
+            });
+
+            // 3. 將新的圖片檔案添加到主預覽區
+            newGalleryFiles.forEach(file => {
+                const reader = new FileReader();
+                reader.onload = e => {
+                    const im = document.createElement("img");
+                    im.src = e.target.result;
+                    im.className = "img-thumbnail";
+                    im.style.cssText = "width:100px;height:100px;margin:4px";
+                    galleryPreview.appendChild(im);
+                };
+                reader.readAsDataURL(file);
+            });
+
+            // 4. 清空暫存的刪除和新增圖片陣列
+            // deletedGallerySrcs = []; // 移除此行
+            // newGalleryFiles = []; // 移除此行
+
+            // 5. 更新詳細圖片按鈕狀態
+            updateGalleryButtons();
+            // 6. 關閉模態框
+            bootstrap.Modal.getInstance(document.getElementById('manageGalleryModal')).hide();
+        }
+
         const getCName = t => TYPE_OPTIONS[t?.trim().toLowerCase()] || t || "";
         const createRow = p => `
         <tr>
@@ -603,6 +711,7 @@ $products = [];
         async function handleEdit(btn) {
             try {
                 const { product } = await jsonFetch(`${GET_URL}?action=getProduct&id=${btn.dataset.id}`);
+                CURRENT_PRODUCT_ID = product.ProductID;
                 fillForm(product);
                 modal.show();
             } catch (err) { showError("獲取商品詳情失敗", err); }
@@ -612,14 +721,37 @@ $products = [];
         async function handleAddOrUpdate() {
             const isEdit = !!this.dataset.editMode;
             const fd = collectFormData(isEdit);
-
             try {
+                // 1) 先更新商品主資料
                 const res = await jsonFetch(API_BASE, { method: "POST", body: fd });
                 if (!res.success) throw new Error(res.message);
-                showToast(isEdit ? "商品已成功更新！" : "商品已成功新增！", "success");
+
+                // 2) 再呼叫 updateGallery
+                const galleryFd = new FormData();
+                galleryFd.append("action", "updateGallery");
+                galleryFd.append("productId", res.productId || modalEl.querySelector("#confirmAddProduct").dataset.productId);
+
+                // 從 collectFormData 那裡取出同樣的 remainingSrcs / deletedSrcs
+                const remaining = fd.get("remainingSrcs");
+                const deleted = fd.get("deletedSrcs");
+                if (remaining) galleryFd.append("remainingSrcs", remaining);
+                if (deleted) galleryFd.append("deletedSrcs", deleted);
+
+                // 檔案要用同名： updateGallery 期待 newGalleryImages[]
+                newGalleryFiles.forEach((file) => {
+                    galleryFd.append("newGalleryImages[]", file, file.name);
+                });
+
+                const gRes = await jsonFetch(API_BASE, { method: "POST", body: galleryFd });
+                if (!gRes.success) throw new Error("圖庫更新失敗：" + gRes.message);
+
+                showToast(isEdit ? "商品更新完成！" : "商品新增完成！", "success");
                 modal.hide();
                 loadProducts();
-            } catch (err) { showError("操作失敗", err); }
+
+            } catch (err) {
+                showError("操作失敗", err);
+            }
         }
 
         /* ----------  篩選 ---------- */
@@ -910,51 +1042,58 @@ $products = [];
             fd.append("action", isEdit ? "updateProduct" : "addProduct");
             if (isEdit) fd.append("productId", modalEl.querySelector("#confirmAddProduct").dataset.productId);
 
+            // 基本欄位
             fd.append("productName", modalEl.querySelector("#productName").value);
             fd.append("productType", modalEl.querySelector("#productType").value);
             fd.append("productIntro", modalEl.querySelector("#productIntro").value);
             fd.append("productActive", modalEl.querySelector("#productActive").checked ? "1" : "0");
 
+            // 主圖
             const mainFile = modalEl.querySelector("#mainImageInput").files[0];
             if (mainFile) fd.append("mainImage", mainFile);
 
-            [...modalEl.querySelector("#galleryImageInput").files].forEach((f, i) => {
-                fd.append("galleryImages[]", f);
-                fd.append("galleryOrders[]", i + 1);
+            // === 詳細圖片（Gallery） ===
+
+            // 1. 取出預覽區「尚存」的舊圖 src（非 blob: 開頭）
+            const currentGalleryImages = Array.from(
+                modalEl.querySelectorAll('#galleryImagesPreview img')
+            ).map(img => img.src);
+            const remainingSrcs = currentGalleryImages.filter(src => !src.startsWith('blob:'));
+            if (remainingSrcs.length) {
+                fd.append("remainingSrcs", JSON.stringify(remainingSrcs));
+            }
+
+            // 2. 剛才刪除的舊圖
+            if (deletedGallerySrcs.length) {
+                fd.append("deletedSrcs", JSON.stringify(deletedGallerySrcs));
+            }
+
+            // 3. 新增上傳的檔案
+            newGalleryFiles.forEach((file, i) => {
+                fd.append("newGalleryFiles[]", file, file.name);
             });
 
-            // 尺寸／顏色
+            // 清空暫存（可視需求保留或移除）
+            // deletedGallerySrcs = [];
+            // newGalleryFiles = [];
+
+            // === 尺寸／顏色 ===
             const options = [];
             document.querySelectorAll(".size-price-block").forEach(block => {
-                // 1. 先從 data-option-id 或隱藏欄位取得 OptionID
-                let optId = block.dataset.optionId || '';
-                if (!optId) {
-                    const hidden = block.querySelector(".option-id-input");
-                    if (hidden) optId = hidden.value;
-                }
-                // 2. 讀取尺寸資訊
+                let optId = block.dataset.optionId || block.querySelector(".option-id-input")?.value || '';
                 const size = block.querySelector(".size-input").value;
                 const desc = block.querySelector(".size-desc-input").value;
                 const price = block.querySelector(".price-input").value;
-
-                // 3. 讀取顏色列
                 block.querySelectorAll(".color-row").forEach(row => {
                     const color = row.querySelector(".color-input").value.trim();
                     const stock = row.querySelector(".stock-input").value || 0;
                     if (size && color) {
-                        options.push({
-                            OptionID: optId,              // 傳給後端
-                            Size: size,
-                            SizeDescription: desc,
-                            Price: price,
-                            Color: color,
-                            Stock: stock
-                        });
+                        options.push({ OptionID: optId, Size: size, SizeDescription: desc, Price: price, Color: color, Stock: stock });
                     }
                 });
             });
-
             fd.append("sizes", JSON.stringify(options));
+
             return fd;
         }
 
