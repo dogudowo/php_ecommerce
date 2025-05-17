@@ -382,6 +382,7 @@ function handleImageUpload($fileInputName, $productId, $imageType = 'main', $gal
         $uploadDir = __DIR__ . "/../imgs/products/{$productId}/";
         if (!is_dir($uploadDir)) {
             mkdir($uploadDir, 0777, true);
+            chmod($uploadDir, 0777);
         }
 
         $fileName = '';
@@ -657,7 +658,7 @@ function updateGallery(array $data, array $files)
             return ['success' => false, 'message' => '無法建立圖片目錄'];
         }
     }
-
+    chmod($uploadDir, 0777);
     // 處理 existing files: 保留 remainingSrcs 內檔案，其他刪除
     $existingFiles = glob($uploadDir . "gallery-*.{jpg,jpeg,png,gif}", GLOB_BRACE);
 

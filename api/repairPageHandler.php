@@ -75,7 +75,7 @@ function handleUpload(string $fileKey, string $relativePath, array $allowedMimeT
         $uploadErrors[] = "無法建立資料夾：{$targetDir}";
         return;
     }
-
+    chmod($targetDir, 0777);
     // 搬移檔案
     if (!move_uploaded_file($fileTmpPath, $targetAbsPath)) {
         $uploadErrors[] = "無法將檔案「{$fileName}」搬到 {$relativePath}，請檢查權限。";
