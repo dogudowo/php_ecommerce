@@ -34,7 +34,7 @@ try {
 $cartItems = [];
 $total = 0;
 
-include __DIR__ . "/fixedFile/header.php";
+include __DIR__ . "/header.php";
 ?>
 
 <div class="container mt-3">
@@ -51,7 +51,7 @@ include __DIR__ . "/fixedFile/header.php";
     </div>
 </div>
 
-<?php include "fixedFile/footer.php"; ?>
+<?php include "footer.php"; ?>
 
 <script>
     // 使用AJAX獲取購物車數據

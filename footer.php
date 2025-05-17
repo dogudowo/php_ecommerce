@@ -4,7 +4,7 @@
         <div class="row justify-content-center mb-3">
             <div class="col-auto d-flex align-items-center">
                 <?php
-                $social_links_path = __DIR__ . '/../src/social_links.json';
+                $social_links_path = __DIR__ . '/src/social_links.json';
                 $social_links_json = file_exists($social_links_path) ? file_get_contents($social_links_path) : '{}';
                 $social_links = json_decode($social_links_json, true);
 

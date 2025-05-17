@@ -44,10 +44,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<?php include __DIR__ . "/fixedFile/header.php"; ?>
+<?php include __DIR__ . "/header.php"; ?>
 
 <div class="container text-center border-bottom border-black">
-    <img src="imgs/title.png" alt="歐印精品" class="img-fluid">
+    <img src="imgs/title.png" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
     <h1 class="h1">會員登入</h1>
 </div>
 
@@ -122,4 +122,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     });
 </script>
 
-<?php include __DIR__ . "/fixedFile/footer.php"; ?>
+<?php include __DIR__ . "/footer.php"; ?>

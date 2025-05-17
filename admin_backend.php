@@ -8,7 +8,7 @@ if (!defined('INCLUDED_FROM_ROUTER') && (!isset($_SESSION['logged_in']) || $_SES
 // 定義常量，表示這是管理員後台
 define('INCLUDED_FROM_ADMIN', true);
 ?>
-<?php require_once 'fixedFile/header.php'; ?>
+<?php require_once 'header.php'; ?>
 <div class="container mt-3">
     <!-- 小螢幕提示訊息 -->
     <div class="d-lg-none mb-4">
@@ -351,4 +351,4 @@ define('INCLUDED_FROM_ADMIN', true);
 
     });
 </script>
-<?php require_once 'fixedFile/footer.php'; ?>
+<?php require_once 'footer.php'; ?>

@@ -24,11 +24,11 @@ $memberId = (int) $_SESSION['user_id'];
 $currentMember = getMemberByID($memberId);
 $orders = getMemberOrders($memberId);
 ?>
-<?php include __DIR__ . '/fixedFile/header.php'; ?>
+<?php include __DIR__ . '/header.php'; ?>
 
 <!-- ========= Main ========= -->
 <div class="container text-center border-bottom border-black">
-    <img src="imgs/title.png" alt="歐印精品" class="img-fluid">
+    <img src="imgs/title.png" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
     <h1 class="h1">我的訂單</h1>
 </div>
 
@@ -100,11 +100,11 @@ $orders = getMemberOrders($memberId);
             <div class="modal-body">
                 <h6 class="mb-3">選擇付款方式</h6>
                 <?php foreach (['信用卡' => 'creditCard', 'ATM轉帳' => 'atmTransfer', 'LinePay' => 'linePay'] as $label => $id): ?>
-                    <div class="form-check mb-2">
-                        <input class="form-check-input" type="radio" name="paymentMethod" id="<?= $id ?>"
-                            value="<?= $label ?>" <?= $id === 'creditCard' ? 'checked' : '' ?>>
-                        <label class="form-check-label" for="<?= $id ?>"><?= $label ?></label>
-                    </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="<?= $id ?>"
+                                value="<?= $label ?>" <?= $id === 'creditCard' ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="<?= $id ?>"><?= $label ?></label>
+                        </div>
                 <?php endforeach; ?>
             </div>
             <div class="modal-footer">
@@ -133,11 +133,11 @@ $orders = getMemberOrders($memberId);
                         'address' => ['地址', 'Address']
                     ];
                     foreach ($map as $name => [$label, $col]): ?>
-                        <div class="mb-3">
-                            <label class="form-label"><?= $label ?></label>
-                            <input class="form-control" name="<?= $name ?>" value="<?= h($currentMember[$col]) ?>"
-                                <?= $name === 'email' ? 'type=email' : '' ?>>
-                        </div>
+                            <div class="mb-3">
+                                <label class="form-label"><?= $label ?></label>
+                                <input class="form-control" name="<?= $name ?>" value="<?= h($currentMember[$col]) ?>"
+                                    <?= $name === 'email' ? 'type=email' : '' ?>>
+                            </div>
                     <?php endforeach; ?>
                 </div>
                 <div class="modal-footer">
@@ -175,7 +175,7 @@ $orders = getMemberOrders($memberId);
     </div>
 </div>
 
-<?php include __DIR__ . '/fixedFile/footer.php'; ?>
+<?php include __DIR__ . '/footer.php'; ?>
 
 <!-- ---------- 將 PHP 變數輸出到 JS ---------- -->
 <script>const CONFIG = <?= json_encode([

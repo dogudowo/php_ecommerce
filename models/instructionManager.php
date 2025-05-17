@@ -274,8 +274,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
         }
     });
 
-    // 確認刪除 QA 事件已移至 DOMContentLoaded 事件處理程序中
-
     // 顯示 Toast 通知
     function showToast(title, message, type) {
         document.getElementById('toastMessage').querySelector('span').textContent = message;

@@ -9,7 +9,7 @@ if (!isset($_SESSION['logged_in']) || $_SESSION['logged_in'] !== true) {
 
 $memberId = $_SESSION['user_id'];
 
-include __DIR__ . "/fixedFile/header.php";
+include __DIR__ . "/header.php";
 ?>
 
 <div class="container mt-3">
@@ -475,4 +475,4 @@ include __DIR__ . "/fixedFile/header.php";
     }
 </script>
 
-<?php include "fixedFile/footer.php"; ?>
+<?php include "footer.php"; ?>

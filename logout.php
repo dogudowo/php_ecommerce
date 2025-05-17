@@ -22,7 +22,7 @@ if (ini_get("session.use_cookies")) {
 session_destroy();
 
 // 加入header
-include __DIR__ . "/fixedFile/header.php";
+include __DIR__ . "/header.php";
 ?>
 
 <script>
@@ -31,5 +31,5 @@ include __DIR__ . "/fixedFile/header.php";
 
 <?php
 // 加入footer
-include __DIR__ . "/fixedFile/footer.php";
+include __DIR__ . "/footer.php";
 ?>

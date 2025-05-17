@@ -1,8 +1,8 @@
-<?php require_once 'fixedFile/header.php'; ?>
+<?php require_once 'header.php'; ?>
 
 <div class="container mx-auto m-0 p-0">
     <div class="container text-center border-bottom border-black">
-        <img src="imgs/title.png" alt="歐印精品" img-fluid>
+        <img src="imgs/title.png" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
         <h1 class="h1">保固維修</h1>
     </div>
 
@@ -55,4 +55,4 @@
     </div>
 </div>
 
-<?php require_once 'fixedFile/footer.php'; ?>
+<?php require_once 'footer.php'; ?>

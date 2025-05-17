@@ -31,24 +31,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 ?>
 
-<?php include "fixedFile/header.php"; ?>
+<?php include "header.php"; ?>
 
 <div class="container text-center border-bottom border-black">
-    <img src="imgs/title.png" alt="歐印精品" class="img-fluid">
+    <img src="imgs/title.png" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
     <h1 class="h1">會員註冊</h1>
 </div>
 
 <main class="container-sm col-12 col-md-6 col-lg-4 mx-auto my-5">
     <?php if (!empty($error_message)): ?>
-        <div class="alert alert-danger" role="alert">
-            <?php echo htmlspecialchars($error_message); ?>
-        </div>
+            <div class="alert alert-danger" role="alert">
+                <?php echo htmlspecialchars($error_message); ?>
+            </div>
     <?php endif; ?>
 
     <?php if (!empty($success_message)): ?>
-        <div class="alert alert-success" role="alert">
-            <?php echo htmlspecialchars($success_message); ?>
-        </div>
+            <div class="alert alert-success" role="alert">
+                <?php echo htmlspecialchars($success_message); ?>
+            </div>
     <?php endif; ?>
 
     <form method="post" action="register.php">
@@ -124,4 +124,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </form>
 </main>
 
-<?php include "fixedFile/footer.php"; ?>
+<?php include "footer.php"; ?>
