@@ -98,190 +98,165 @@ $carousel_dir = __DIR__ . '/../imgs/carousel/';
 </div>
 
 <script>
-    // 當頁面載入完成後執行
-    document.addEventListener('DOMContentLoaded', function () {
-        // 載入輪播圖列表
-        loadCarouselImages();
+    (() => {
+        "use strict";
+        // ----- 常量 -----
+        const API_URL = "api/carousel.php";
+        const container = document.getElementById("carouselContainer");
+        const form = document.getElementById("carouselUploadForm");
+        const fileInput = document.getElementById("carouselImage");
+        const previewContainer = document.getElementById("imagePreviewContainer");
+        const previewImg = document.getElementById("imagePreview");
+        const deleteModal = document.getElementById("deleteCarouselModal");
+        const deleteImg = document.getElementById("deleteImagePreview");
+        const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
 
-        // 圖片預覽功能
-        document.getElementById('carouselImage').addEventListener('change', function (e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function (e) {
-                    document.getElementById('imagePreview').src = e.target.result;
-                    document.getElementById('imagePreviewContainer').classList.remove('d-none');
-                }
-                reader.readAsDataURL(file);
-            } else {
-                document.getElementById('imagePreviewContainer').classList.add('d-none');
+        // ----- Toast 容器 & 函式 -----
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
+        toastContainer.setAttribute('aria-live', 'polite');
+        toastContainer.setAttribute('aria-atomic', 'true');
+        document.body.appendChild(toastContainer);
+
+        function showToast(msg, type = 'success') {
+            const el = document.createElement('div');
+            el.className = `toast align-items-center text-white bg-${type} border-0`;
+            el.setAttribute('role', 'alert');
+            el.innerHTML = `
+                <div class="d-flex">
+                    <div class="toast-body">
+                    <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
+                    ${msg}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>`;
+            toastContainer.appendChild(el);
+            new bootstrap.Toast(el, { delay: 3000 }).show();
+        }
+
+        // ----- 通用 Fetch Helper -----
+        async function apiPost(formData) {
+            try {
+                const res = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+                return await res.json();
+            } catch (err) {
+                console.error(err);
+                return { success: false, message: '網路錯誤，請稍後再試' };
             }
-        });
+        }
 
-        // 上傳輪播圖
-        document.getElementById('uploadCarouselBtn').addEventListener('click', async function () {
-            const fileInput = document.getElementById('carouselImage');
-            if (!fileInput.files[0]) {
-                showAlert('warning', '請選擇要上傳的圖片');
+        // ----- 載入列表 -----
+        async function loadCarouselImages() {
+            container.innerHTML =
+                `<div class="col-12 text-center py-5">
+                    <div class="spinner-border text-primary" role="status"></div>
+                    <p class="mt-2">載入輪播圖...</p>
+                </div>`;
+            const res = await fetch(`${API_URL}?action=list`).then(r => r.json()).catch(_ => ({ success: false, message: '載入失敗' }));
+            if (!res.success) {
+                container.innerHTML =
+                    `<div class="col-12 text-center py-5">
+                        <i class="bi bi-exclamation-triangle text-danger" style="font-size:3rem;"></i>
+                        <p class="mt-3">${res.message}</p>
+                    </div>`;
                 return;
             }
-
-            // 顯示上傳中狀態
-            this.disabled = true;
-            this.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> 上傳中...';
-
-            const formData = new FormData();
-            formData.append('carouselImage', fileInput.files[0]);
-            formData.append('action', 'upload');
-
-            try {
-                const response = await fetch('api/carousel.php', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-                if (result.success) {
-                    // 重新載入輪播圖列表
-                    loadCarouselImages();
-                    // 重置表單
-                    document.getElementById('carouselUploadForm').reset();
-                    document.getElementById('imagePreviewContainer').classList.add('d-none');
-                    // 顯示成功訊息
-                    showAlert('success', '輪播圖上傳成功！');
-                } else {
-                    showAlert('danger', '上傳失敗：' + result.message);
-                }
-            } catch (error) {
-                console.log('上傳錯誤：', error);
-                showAlert('danger', '上傳過程中發生錯誤，請稍後再試。');
-            } finally {
-                // 恢復按鈕狀態
-                this.disabled = false;
-                this.innerHTML = '<i class="bi bi-upload me-1"></i>上傳圖片';
+            if (!res.data || res.data.length === 0) {
+                container.innerHTML =
+                    `<div class="col-12 text-center py-5">
+                        <i class="bi bi-images text-muted" style="font-size:3rem;"></i>
+                        <p class="mt-3">目前沒有輪播圖，請上傳新圖片。</p>
+                    </div>`;
+                return;
             }
-        });
-
-        // 設置刪除確認按鈕事件
-        document.getElementById('confirmDeleteBtn').addEventListener('click', async function () {
-            const filename = this.dataset.filename;
-            if (!filename) return;
-
-            try {
-                const formData = new FormData();
-                formData.append('filename', filename);
-                formData.append('action', 'delete');
-
-                const response = await fetch('api/carousel.php', {
-                    method: 'POST',
-                    body: formData
-                });
-
-                const result = await response.json();
-                if (result.success) {
-                    // 重新載入輪播圖列表
-                    loadCarouselImages();
-                    // 關閉模態框
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('deleteCarouselModal'));
-                    modal.hide();
-                    // 顯示成功訊息
-                    showAlert('success', '輪播圖已成功刪除！');
-                } else {
-                    showAlert('danger', '刪除失敗：' + result.message);
-                }
-            } catch (error) {
-                console.log('刪除錯誤：', error);
-                showAlert('danger', '刪除過程中發生錯誤，請稍後再試。');
-            }
-        });
-    });
-
-    // 載入輪播圖列表函數
-    async function loadCarouselImages() {
-        const container = document.getElementById('carouselContainer');
-        container.innerHTML = `
-            <div class="col-12 text-center py-5">
-                <div class="spinner-border text-primary" role="status">
-                    <span class="visually-hidden">載入中...</span>
-                </div>
-                <p class="mt-2">載入輪播圖...</p>
-            </div>
-        `;
-
-        try {
-            const response = await fetch('api/carousel.php?action=list');
-            const result = await response.json();
-
-            if (result.success && result.data) {
-                if (Array.isArray(result.data) && result.data.length > 0) {
-                    let html = '';
-                    result.data.forEach(image => {
-                        html += `
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card h-100">
-                                    <img src="imgs/carousel/${image}" class="card-img-top" alt="輪播圖">
-                                    <div class="card-body">
-                                        <h6 class="card-title text-truncate">${image}</h6>
-                                    </div>
-                                    <div class="card-footer bg-white">
-                                        <button type="button" class="btn btn-danger btn-sm delete-carousel" 
-                                                data-bs-toggle="modal" data-bs-target="#deleteCarouselModal"
-                                                data-filename="${image}" data-image="imgs/carousel/${image}">
-                                            <i class="bi bi-trash me-1"></i>刪除
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        `;
-                    });
-                    container.innerHTML = html;
-
-                    // 為所有刪除按鈕添加事件
-                    document.querySelectorAll('.delete-carousel').forEach(button => {
-                        button.addEventListener('click', function () {
-                            const filename = this.dataset.filename;
-                            const imageSrc = this.dataset.image;
-                            document.getElementById('deleteImagePreview').src = imageSrc;
-                            document.getElementById('confirmDeleteBtn').dataset.filename = filename;
-                        });
-                    });
-                } else {
-                    container.innerHTML = `
-                        <div class="col-12 text-center py-5">
-                            <i class="bi bi-images text-muted" style="font-size: 3rem;"></i>
-                            <p class="mt-3">目前沒有輪播圖，請點擊「新增輪播圖」按鈕上傳。</p>
-                        </div>
-                    `;
-                }
-            } else {
-                showAlert('danger', '載入失敗：' + result.message);
-            }
-        } catch (error) {
-            console.log('載入錯誤：', error);
-            container.innerHTML = `
-                <div class="col-12 text-center py-5">
-                    <i class="bi bi-exclamation-triangle text-danger" style="font-size: 3rem;"></i>
-                    <p class="mt-3">載入輪播圖時發生錯誤，請重新整理頁面或稍後再試。</p>
-                </div>
-            `;
+            container.innerHTML = res.data.map(img => `
+                <div class="col-md-6 col-lg-4">
+                    <div class="card h-100">
+                    <img src="imgs/carousel/${img}" class="card-img-top" alt="${img}">
+                    <div class="card-body">
+                        <h6 class="card-title text-truncate">${img}</h6>
+                    </div>
+                    <div class="card-footer bg-white">
+                        <button class="btn btn-danger btn-sm delete-carousel" 
+                                data-filename="${img}" data-image="imgs/carousel/${img}"
+                                data-bs-toggle="modal" data-bs-target="#deleteCarouselModal">
+                        <i class="bi bi-trash me-1"></i>刪除
+                        </button>
+                    </div>
+                    </div>
+                </div>`
+            ).join('');
         }
-    }
 
-    // 顯示提示訊息函數
-    function showAlert(type, message) {
-        const alertDiv = document.createElement('div');
-        alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 start-50 translate-middle-x mt-3`;
-        alertDiv.style.zIndex = '9999';
-        alertDiv.innerHTML = `
-            ${message}
-            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="關閉"></button>
-        `;
-        document.body.appendChild(alertDiv);
+        // ----- 初始化 -----
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCarouselImages();
 
-        // 3秒後自動關閉
-        setTimeout(() => {
-            alertDiv.classList.remove('show');
-            setTimeout(() => alertDiv.remove(), 150);
-        }, 3000);
-    }
+            // 圖片預覽
+            fileInput.addEventListener('change', e => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                        previewImg.src = ev.target.result;
+                        previewContainer.classList.remove('d-none');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    previewContainer.classList.add('d-none');
+                }
+            });
+
+            // 上傳
+            document.getElementById('uploadCarouselBtn').addEventListener('click', async btn => {
+                if (!fileInput.files.length) return showToast('請選擇要上傳的圖片', 'warning');
+                btn.disabled = true;
+                const originalHTML = btn.innerHTML;
+                btn.innerHTML = `<span class="spinner-border spinner-border-sm" role="status"></span> 上傳中...`;
+
+                const fd = new FormData(form);
+                fd.set('action', 'upload');
+                const result = await apiPost(fd);
+
+                if (result.success) {
+                    form.reset();
+                    previewContainer.classList.add('d-none');
+                    showToast('輪播圖上傳成功！', 'success');
+                    loadCarouselImages();
+                } else {
+                    showToast(`上傳失敗：${result.message}`, 'danger');
+                }
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            });
+
+            // 刪除：事件代理
+            container.addEventListener('click', e => {
+                if (!e.target.closest('.delete-carousel')) return;
+                const btn = e.target.closest('.delete-carousel');
+                deleteImg.src = btn.dataset.image;
+                confirmDeleteBtn.dataset.filename = btn.dataset.filename;
+            });
+
+            // 確認刪除
+            confirmDeleteBtn.addEventListener('click', async () => {
+                const filename = confirmDeleteBtn.dataset.filename;
+                const fd = new FormData();
+                fd.set('action', 'delete');
+                fd.set('filename', filename);
+
+                const result = await apiPost(fd);
+                if (result.success) {
+                    showToast('輪播圖已成功刪除！', 'success');
+                    loadCarouselImages();
+                    bootstrap.Modal.getInstance(deleteModal).hide();
+                } else {
+                    showToast(`刪除失敗：${result.message}`, 'danger');
+                }
+            });
+        });
+    })();
 </script>
