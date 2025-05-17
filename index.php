@@ -1,5 +1,5 @@
 <?php
-require_once 'fixedFile/header.php';
+require_once 'header.php';
 require_once __DIR__ . '/api/product.php';
 
 $luggages = getProductsByType('luggage');
@@ -238,5 +238,5 @@ $featureds = getProductsByType('featured');
     applyFilters();
 </script>
 <?php
-require_once 'fixedFile/footer.php';
+require_once 'footer.php';
 ?>

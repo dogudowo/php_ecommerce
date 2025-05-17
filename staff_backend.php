@@ -17,7 +17,7 @@ if (!in_array($current_page, $staff_accessible)) {
     $current_page = 'orderManager';
 }
 ?>
-<?php require_once 'fixedFile/header.php'; ?>
+<?php require_once 'header.php'; ?>
 <div class="container mt-3">
     <!-- 小螢幕提示訊息 -->
     <div class="d-lg-none mb-4">
@@ -90,4 +90,4 @@ if (!in_array($current_page, $staff_accessible)) {
         </div>
     </div>
 </div>
-<?php require_once 'fixedFile/footer.php'; ?>
+<?php require_once 'footer.php'; ?>

@@ -1,12 +1,12 @@
 <?php
-require_once 'fixedFile/header.php';
+require_once 'header.php';
 require_once __DIR__ . '/api/about.php';
 
 $storeLocations = AboutFunctions::getStoreLocations();
 ?>
 
 <div class="container text-center border-bottom border-black">
-    <img src="imgs/title.png" alt="歐印精品" class="img-fluid">
+    <img src="imgs/title.png" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
     <h1 class="h1">關於我們</h1>
 </div>
 <?php
@@ -63,28 +63,28 @@ $social_links = json_decode(file_get_contents(__DIR__ . '/src/social_links.json'
             $emails = explode(',', $company['email']);
             $phones = explode(',', $company['phone']);
             ?>
-            <?php if (!empty($company['phone'])): ?>
-                <?php foreach ($phones as $phone): ?>
-                    <p>客服電話：<?php echo $phone; ?></p>
-                <?php endforeach; ?>
-            <?php endif; ?>
-            <?php if (!empty($company['fax'])): ?>
-                <p>傳真：<?php echo $company['fax']; ?></p>
-            <?php endif; ?>
-            <?php if (!empty($company['email'])): ?>
-                <?php foreach ($emails as $email): ?>
-                    <p><?php echo nl2br($email); ?></p>
-                <?php endforeach; ?>
-            <?php endif; ?>
-            <?php if (!empty($company['tax_id'])): ?>
-                <p class="text-primary">統一編號：<?php echo $company['tax_id']; ?></p>
-            <?php endif; ?>
-            <?php if (!empty($company['name'])): ?>
-                <p class="text-primary">公司名稱：<?php echo $company['name']; ?></p>
-            <?php endif; ?>
-            <?php if (next($companies)): ?>
-                <hr>
-            <?php endif; ?>
+                <?php if (!empty($company['phone'])): ?>
+                        <?php foreach ($phones as $phone): ?>
+                                <p>客服電話：<?php echo $phone; ?></p>
+                        <?php endforeach; ?>
+                <?php endif; ?>
+                <?php if (!empty($company['fax'])): ?>
+                        <p>傳真：<?php echo $company['fax']; ?></p>
+                <?php endif; ?>
+                <?php if (!empty($company['email'])): ?>
+                        <?php foreach ($emails as $email): ?>
+                                <p><?php echo nl2br($email); ?></p>
+                        <?php endforeach; ?>
+                <?php endif; ?>
+                <?php if (!empty($company['tax_id'])): ?>
+                        <p class="text-primary">統一編號：<?php echo $company['tax_id']; ?></p>
+                <?php endif; ?>
+                <?php if (!empty($company['name'])): ?>
+                        <p class="text-primary">公司名稱：<?php echo $company['name']; ?></p>
+                <?php endif; ?>
+                <?php if (next($companies)): ?>
+                        <hr>
+                <?php endif; ?>
         <?php endforeach; ?>
     </div>
 </div>
@@ -109,40 +109,40 @@ $social_links = json_decode(file_get_contents(__DIR__ . '/src/social_links.json'
         <div class="tab-pane fade show active" id="storeLocContent" role="tabpanel" aria-labelledby="storeLoc-tab">
             <div class="container">
                 <?php foreach ($storeLocations as $store): ?>
-                    <h3 class="text-decoration-underline text-center"><?php echo $store['name']; ?></h3>
-                    <?php if (!empty(array_filter($store['service_time']))): ?>
-                        <p class="text-left h6">服務時間</p>
-                        <?php foreach ($store['service_time'] as $time): ?>
-                            <?php if (!empty(trim($time))): ?>
-                                <p><?php echo nl2br($time); ?></p>
-                            <?php endif; ?>
-                        <?php endforeach; ?>
-                    <?php endif; ?>
+                        <h3 class="text-decoration-underline text-center"><?php echo $store['name']; ?></h3>
+                        <?php if (!empty(array_filter($store['service_time']))): ?>
+                                <p class="text-left h6">服務時間</p>
+                                <?php foreach ($store['service_time'] as $time): ?>
+                                        <?php if (!empty(trim($time))): ?>
+                                                <p><?php echo nl2br($time); ?></p>
+                                        <?php endif; ?>
+                                <?php endforeach; ?>
+                        <?php endif; ?>
 
-                    <?php if (!empty($store['phone'])): ?>
-                        <p class="h6">聯絡電話</p>
-                        <p><?php echo $store['phone']; ?></p>
-                    <?php endif; ?>
+                        <?php if (!empty($store['phone'])): ?>
+                                <p class="h6">聯絡電話</p>
+                                <p><?php echo $store['phone']; ?></p>
+                        <?php endif; ?>
 
-                    <?php if (!empty($store['address'])): ?>
-                        <p class="h6">地址</p>
-                        <p><?php echo $store['address']; ?></p>
-                    <?php endif; ?>
+                        <?php if (!empty($store['address'])): ?>
+                                <p class="h6">地址</p>
+                                <p><?php echo $store['address']; ?></p>
+                        <?php endif; ?>
 
-                    <!-- Google Map 顯示 -->
-                    <div class="ratio ratio-16x9">
-                        <iframe src="<?php echo $store['map_url']; ?>" style="border:0;" allowfullscreen="" loading="lazy"
-                            referrerpolicy="no-referrer-when-downgrade">
-                        </iframe>
-                    </div>
+                        <!-- Google Map 顯示 -->
+                        <div class="ratio ratio-16x9">
+                            <iframe src="<?php echo $store['map_url']; ?>" style="border:0;" allowfullscreen="" loading="lazy"
+                                referrerpolicy="no-referrer-when-downgrade">
+                            </iframe>
+                        </div>
 
-                    <?php if (next($storeLocations)): ?>
-                        <hr>
-                    <?php endif; ?>
+                        <?php if (next($storeLocations)): ?>
+                                <hr>
+                        <?php endif; ?>
                 <?php endforeach; ?>
             </div>
         </div>
     </div>
 </div>
 
-<?php require_once 'fixedFile/footer.php'; ?>
+<?php require_once 'footer.php'; ?>

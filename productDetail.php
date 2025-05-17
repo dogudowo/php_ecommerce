@@ -4,10 +4,10 @@
 $product_id = isset($_GET['product_id']) ? (int) $_GET['product_id'] : 0;
 $edit_option_id = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
 ?>
-<?php include "fixedFile/header.php"; ?>
+<?php include "header.php"; ?>
 
 <div class="container text-center border-bottom border-black ">
-    <img src="imgs/title.png" alt="歐印精品" class="img-fluid">
+    <img src="imgs/title.png" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
     <h1 class="h1" id="product-name"></h1>
 </div>
 
@@ -18,7 +18,7 @@ $edit_option_id = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
 <!-- Alert 顯示位置 -->
 <div id="alertPlaceholder" class="position-fixed top-50 start-50 translate-middle-x mt-3" style="z-index: 1100;"></div>
 
-<?php include "fixedFile/footer.php"; ?>
+<?php include "footer.php"; ?>
 
 <!-- 先把 PHP 變數傳給 JS -->
 <script>
@@ -213,14 +213,14 @@ $edit_option_id = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
             try {
                 // 如果有edit參數，先刪除原有商品
                 <?php if ($edit_option_id > 0): ?>
-                    await fetch('api/cart.php?action=removeFromCart', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            memberId: memberId,
-                            optionId: <?= $edit_option_id ?>
-                        })
-                    });
+                        await fetch('api/cart.php?action=removeFromCart', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                memberId: memberId,
+                                optionId: <?= $edit_option_id ?>
+                            })
+                        });
                 <?php endif; ?>
 
                 // 加入新規格商品

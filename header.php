@@ -1,8 +1,8 @@
 <?php
-require_once __DIR__ . '/../api/header.php';
+require_once __DIR__ . '/api/header.php';
 
 // 引入自訂錯誤處理
-require_once __DIR__ . '/../api/error_handler.php';
+require_once __DIR__ . '/api/error_handler.php';
 
 ?>
 <!DOCTYPE html>
@@ -80,7 +80,7 @@ require_once __DIR__ . '/../api/error_handler.php';
             <!-- 電腦版導航 (xl以上) -->
             <div class="d-none d-xl-flex flex-wrap align-items-center justify-content-between py-2 m-0">
                 <a href="index.php" class="d-flex align-items-center mb-0 text-dark text-decoration-none">
-                    <img src="imgs/title.png" alt="" height="49">
+                    <img src="imgs/title.png" style="max-height: 100px;" alt="" height="49">
                 </a>
 
                 <ul class="nav justify-content-center mb-xl-0 gap-2">
@@ -106,7 +106,7 @@ require_once __DIR__ . '/../api/error_handler.php';
                 </button>
 
                 <a href="index.php" class="d-flex align-items-center mb-0 text-dark text-decoration-none">
-                    <img src="imgs/title.png" alt="" height="49">
+                    <img src="imgs/title.png" style="max-height: 100px;" alt="" height="49">
                 </a>
 
                 <div class="text-center gap-2">
