@@ -57,6 +57,10 @@ if (!in_array($fileType, $allowedTypes)) {
 
 // 移動上傳的檔案，覆蓋舊檔案
 if (move_uploaded_file($file['tmp_name'], $targetFilePath)) {
+    if (!chmod($targetFilePath, 0777)) {
+        // chmod 失敗也回報，但仍算檔案移動成功
+        error_log("Failed to chmod 0777 on {$targetFilePath}");
+    }
     echo json_encode(['success' => true, 'message' => '更新成功！']);
 } else {
     http_response_code(500);
