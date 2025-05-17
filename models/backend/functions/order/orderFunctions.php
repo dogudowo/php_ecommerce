@@ -81,7 +81,7 @@ function getOrderStatusList(): array
     return [
         'Completed' => '已完成',
         'Pending' => '處理中',
-        'Shipping' => '運送中',
+        'Shipping' => '已送達',
         'Cancel' => '已取消',
         'abnormal' => '異常',
     ];

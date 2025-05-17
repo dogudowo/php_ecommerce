@@ -278,12 +278,14 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
             <td>${m.City}</td>
             <td>${m.OrderCount ?? 'N/A'}</td>
             <td>${badgeByRole(m.IsAdmin)}</td>
-            <td class="btn-group">
-                <button class="btn btn-sm btn-outline-info view-member"   data-id="${m.MemberID}" title="查看詳情"><i class="bi bi-eye"></i></button>
-                ${currentUserRole === 2 ? `
-                    <button class="btn btn-sm btn-outline-primary edit-member"   data-id="${m.MemberID}" title="編輯"><i class="bi bi-pencil-square"></i></button>
-                    <button class="btn btn-sm btn-outline-danger  delete-member" data-id="${m.MemberID}" title="刪除"><i class="bi bi-trash"></i></button>
-                ` : ''}
+            <td>
+                <div class="btn-group">
+                    <button class="btn btn-sm btn-outline-success view-member"   data-id="${m.MemberID}" title="查看詳情"><i class="bi bi-eye"></i></button>
+                    ${currentUserRole === 2 ? `
+                        <button class="btn btn-sm btn-outline-primary edit-member"   data-id="${m.MemberID}" title="編輯"><i class="bi bi-pencil-square"></i></button>
+                        <button class="btn btn-sm btn-outline-danger  delete-member" data-id="${m.MemberID}" title="刪除"><i class="bi bi-trash"></i></button>
+                    ` : ''}
+                </div>
             </td>`;
         return tr;
     }

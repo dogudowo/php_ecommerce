@@ -28,7 +28,7 @@ $adLink = $adLinkObj->adLink ?? '';
                             <th>電子郵件</th>
                             <th>電話</th>
                             <th>傳真</th>
-                            <th style="width:140px;">操作</th>
+                            <th>操作</th>
                         </tr>
                     </thead>
                     <tbody id="companyTableBody"></tbody>
@@ -55,7 +55,7 @@ $adLink = $adLinkObj->adLink ?? '';
                             <th>電話</th>
                             <th>地址</th>
                             <th>服務時間</th>
-                            <th style="width:140px;">操作</th>
+                            <th>操作</th>
                         </tr>
                     </thead>
                     <tbody id="storeTableBody"></tbody>
@@ -151,8 +151,12 @@ $adLink = $adLinkObj->adLink ?? '';
         };
 
         const renderRow = (entity, row) => {
-            const opTd = `<td><button class="btn btn-sm btn-warning js-edit" data-entity="${entity}" data-id="${row.tax_id}">編輯</button>
-                       <button class="btn btn-sm btn-danger  js-del"  data-entity="${entity}" data-id="${row.tax_id}">刪除</button></td>`;
+            const opTd = `<td>
+                            <div class="btn-group">
+                                <button class="btn btn-sm btn-outline-primary js-edit" data-entity="${entity}" data-id="${row.tax_id}"><i class="bi bi-pencil-square"></i></button>
+                                <button class="btn btn-sm btn-outline-danger  js-del"  data-entity="${entity}" data-id="${row.tax_id}"><i class="bi bi-trash"></i></button>
+                            </div>
+                          </td>`;
             return entity === 'company'
                 ? `<tr><td>${row.tax_id || ''}</td><td>${row.name || ''}</td><td>${row.email || ''}</td><td>${row.phone || ''}</td><td>${row.fax || ''}</td>${opTd}</tr>`
                 : `<tr><td class="d-none">${row.tax_id || ''}</td><td>${row.name || ''}</td><td>${row.phone || ''}</td><td>${row.location || ''}</td><td>${row.opening_time || ''}</td>${opTd}</tr>`;
@@ -240,10 +244,18 @@ $adLink = $adLinkObj->adLink ?? '';
 
         /* ------------------ 事件委派 ------------------ */
         document.addEventListener('click', e => {
-            const t = e.target;
-            if (t.classList.contains('js-open-modal')) openModal(t.dataset.entity, t.dataset.op);
-            else if (t.classList.contains('js-edit')) openModal(t.dataset.entity, 'edit', t.dataset.id);
-            else if (t.classList.contains('js-del')) delEntity(t.dataset.entity, t.dataset.id);
+            // 往上找最近的符合條件的按鈕
+            const openBtn = e.target.closest('.js-open-modal');
+            const editBtn = e.target.closest('.js-edit');
+            const delBtn = e.target.closest('.js-del');
+
+            if (openBtn) {
+                openModal(openBtn.dataset.entity, openBtn.dataset.op);
+            } else if (editBtn) {
+                openModal(editBtn.dataset.entity, 'edit', editBtn.dataset.id);
+            } else if (delBtn) {
+                delEntity(delBtn.dataset.entity, delBtn.dataset.id);
+            }
         });
         document.getElementById('modalSaveBtn').addEventListener('click', saveEntity);
 

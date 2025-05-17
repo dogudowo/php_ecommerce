@@ -524,7 +524,7 @@ function updateProduct(array $data, array $files)
             ':name' => $data['productName'],
             ':type' => $data['productType'],
             ':intro' => $data['productIntro'],
-            ':active' => isset($data['productActive']) ? 1 : 0,
+            ':active' => (int) ($data['productActive'] ?? 0),
             ':id' => $productId,
         ]);
 
@@ -645,60 +645,6 @@ function updateProduct(array $data, array $files)
     }
 }
 
-// 刪除商品
-function deleteProduct($productId)
-{
-    $pdo = getDBConnection();
-    try {
-        $pdo->beginTransaction();
-
-        // 刪除商品選項
-        $stmtOpt = $pdo->prepare("DELETE FROM Options WHERE ProductID = :pid");
-        $stmtOpt->execute([':pid' => $productId]);
-
-        // 刪除商品
-        $stmtProd = $pdo->prepare("DELETE FROM Product WHERE ProductID = :pid");
-        $stmtProd->execute([':pid' => $productId]);
-
-        // 刪除商品圖片目錄 (可選)
-        $productImageDir = __DIR__ . "/../imgs/products/{$productId}";
-        if (is_dir($productImageDir)) {
-            // 簡單遞迴刪除目錄函數
-            function deleteDir($dirPath)
-            {
-                if (!is_dir($dirPath)) {
-                    throw new InvalidArgumentException("$dirPath must be a directory");
-                }
-                if (substr($dirPath, strlen($dirPath) - 1, 1) != '/') {
-                    $dirPath .= '/';
-                }
-                $files = glob($dirPath . '*', GLOB_MARK);
-                foreach ($files as $file) {
-                    if (is_dir($file)) {
-                        deleteDir($file);
-                    } else {
-                        unlink($file);
-                    }
-                }
-                rmdir($dirPath);
-            }
-            try {
-                deleteDir($productImageDir);
-            } catch (Exception $e) {
-                error_log("Error deleting product image directory {$productImageDir}: " . $e->getMessage());
-                // 目錄刪除失敗不應阻止交易提交，但應記錄錯誤
-            }
-        }
-
-        $pdo->commit();
-        return ['success' => true, 'message' => '商品刪除成功'];
-    } catch (Exception $e) {
-        $pdo->rollBack();
-        error_log("Delete product error: " . $e->getMessage());
-        return ['success' => false, 'message' => '刪除商品失敗: ' . $e->getMessage()];
-    }
-}
-
 function updateGallery(array $data, array $files)
 {
     $productId = isset($data['productId']) ? (int) $data['productId'] : 0;
@@ -776,14 +722,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             break;
         case 'updateProduct':
             $result = updateProduct($_POST, $_FILES);
-            echo json_encode($result);
-            break;
-        case 'deleteProduct': // 確保 action 名稱與前端一致
-            if (!isset($_POST['productId'])) {
-                echo json_encode(['success' => false, 'message' => '缺少商品ID']);
-                exit;
-            }
-            $result = deleteProduct((int) $_POST['productId']);
             echo json_encode($result);
             break;
         case 'updateGallery':
