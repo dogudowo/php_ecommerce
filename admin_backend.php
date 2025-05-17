@@ -9,7 +9,7 @@ if (!defined('INCLUDED_FROM_ROUTER') && (!isset($_SESSION['logged_in']) || $_SES
 define('INCLUDED_FROM_ADMIN', true);
 ?>
 <?php require_once 'header.php'; ?>
-<div class="container mt-3">
+<div class="container-fulid mt-4 px-5 mx-5">
     <!-- 小螢幕提示訊息 -->
     <div class="d-lg-none mb-4">
         <div class="alert alert-warning" role="alert">
@@ -204,7 +204,7 @@ define('INCLUDED_FROM_ADMIN', true);
     // 確保前台/後台管理標籤切換時，相應的內容標籤頁也跟著切換
     document.addEventListener('DOMContentLoaded', function () {
         // 初始化時顯示後台管理的商品管理標籤頁
-        document.querySelectorAll('#members, #settings, #carousel, #orders, #repairs').forEach(function (el) {
+        document.querySelectorAll('#members, #settings, #carousel, #orders, #repairs, #logo').forEach(function (el) {
             el.classList.remove('show', 'active');
         });
 
@@ -224,7 +224,7 @@ define('INCLUDED_FROM_ADMIN', true);
         // 前台管理標籤被點擊時
         document.getElementById('frontend-tab').addEventListener('click', function () {
             // 隱藏後台管理相關的標籤頁
-            document.querySelectorAll('#members, #settings, #products, #orders, #repairs').forEach(function (el) {
+            document.querySelectorAll('#members, #settings, #products, #orders, #repairs, #logo').forEach(function (el) {
                 el.classList.remove('show', 'active');
             });
 
@@ -258,6 +258,7 @@ define('INCLUDED_FROM_ADMIN', true);
             document.getElementById('instruction').classList.remove('show', 'active');
             document.getElementById('brand').classList.remove('show', 'active');
             document.getElementById('about').classList.remove('show', 'active');
+            document.getElementById('logo').classList.remove('show', 'active'); // Add this line
 
             // 移除所有前台管理標籤的激活狀態
             document.getElementById('v-pills-carousel-tab').classList.remove('active');
