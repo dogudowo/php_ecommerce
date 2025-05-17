@@ -2,7 +2,7 @@
 <div class="container-fluid p-0">
     <!-- 頁首操作列 -->
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3><i class="bi bi-award me-2"></i>品牌介紹頁面管理</h3>
+        <h3><i class="bi bi-award me-2"></i>品牌介紹</h3>
     </div>
 
     <!-- ──── 品牌介紹列表 ──── -->

@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
 
 <div class="container-fluid p-0">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3>購物說明頁面管理</h3>
+        <h3><i class="bi bi-info-circle me-2"></i>購物說明</h3>
     </div>
 
     <div class="card mb-4">
