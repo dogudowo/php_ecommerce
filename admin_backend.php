@@ -121,10 +121,17 @@ define('INCLUDED_FROM_ADMIN', true);
                                         aria-selected="false">
                                         <i class="bi bi-people me-2"></i> 會員管理
                                     </button>
-                                    <button class="nav-link" id="v-pills-settings-tab" data-bs-toggle="pill"
-                                        data-bs-target="#settings" type="button" role="tab" aria-controls="settings"
-                                        aria-selected="false">
+                                    <button
+                                        class="nav-link <?php echo (isset($_GET['page']) && $_GET['page'] === 'linkManager') ? 'active' : ''; ?>"
+                                        id="v-pills-settings-tab" data-bs-toggle="pill" data-bs-target="#settings"
+                                        type="button" role="tab" aria-controls="settings" aria-selected="false">
                                         <i class="bi bi-sliders me-2"></i>社群連結設置
+                                    </button>
+                                    <button
+                                        class="nav-link <?php echo (isset($_GET['page']) && $_GET['page'] === 'logoManager') ? 'active' : ''; ?>"
+                                        id="v-pills-logo-tab" data-bs-toggle="pill" data-bs-target="#logo" type="button"
+                                        role="tab" aria-controls="logo" aria-selected="false">
+                                        <i class="bi bi-image me-2"></i>品牌logo設置
                                     </button>
                                 </div>
                             </div>
@@ -156,8 +163,14 @@ define('INCLUDED_FROM_ADMIN', true);
                         <?php include "models/memberManager.php"; ?>
                     </div>
                     <!-- 系統設置 -->
-                    <div class="tab-pane fade" id="settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
-                        <?php include "models/systemSettings.php"; ?>
+                    <div class="tab-pane fade <?php echo (isset($_GET['page']) && $_GET['page'] === 'linkManager') ? 'show active' : ''; ?>"
+                        id="settings" role="tabpanel" aria-labelledby="v-pills-settings-tab">
+                        <?php include "models/linkManager.php"; ?>
+                    </div>
+                    <!-- 品牌logo設置 -->
+                    <div class="tab-pane fade <?php echo (isset($_GET['page']) && $_GET['page'] === 'logoManager') ? 'show active' : ''; ?>"
+                        id="logo" role="tabpanel" aria-labelledby="v-pills-logo-tab">
+                        <?php include "models/logoManager.php"; ?>
                     </div>
                     <!-- 輪播圖編輯 -->
                     <div class="tab-pane fade" id="carousel" role="tabpanel" aria-labelledby="v-pills-carousel-tab">
@@ -302,33 +315,40 @@ define('INCLUDED_FROM_ADMIN', true);
                 document.getElementById('v-pills-about-tab').classList.add('active');
             }
 
-            // 激活前台管理標籤，取消激活後台管理標籤
+            // 確保前台管理主標籤被激活
             document.getElementById('frontend-content').classList.add('show', 'active');
-            document.getElementById('backend-content').classList.remove('show', 'active');
             document.getElementById('frontend-tab').classList.add('active');
+            document.getElementById('backend-content').classList.remove('show', 'active');
             document.getElementById('backend-tab').classList.remove('active');
-        }
 
-        // 確保商品管理、訂單管理和維修訂單管理標籤頁在相應URL參數時顯示
-        if (window.location.search.includes('page=productManager') ||
-            window.location.search.includes('page=orderManager') ||
-            window.location.search.includes('page=repairManager')) {
+        } else if (window.location.search.includes('page=logoManager')) {
+            // 隱藏所有後台管理標籤頁
+            document.querySelectorAll('#products, #orders, #repairs, #members, #settings').forEach(function (el) {
+                el.classList.remove('show', 'active');
+            });
+
             // 隱藏所有前台管理標籤頁
             document.querySelectorAll('#carousel, #repair-page, #instruction, #brand, #about').forEach(function (el) {
                 el.classList.remove('show', 'active');
             });
 
-            // 移除所有前台管理標籤的激活狀態
-            document.querySelectorAll('#v-pills-carousel-tab, #v-pills-repair-page-tab, #v-pills-instruction-tab, #v-pills-brand-tab, #v-pills-about-tab').forEach(function (el) {
+            // 移除所有標籤的激活狀態
+            document.querySelectorAll('#v-pills-carousel-tab, #v-pills-repair-page-tab, #v-pills-instruction-tab, #v-pills-brand-tab, #v-pills-about-tab, #v-pills-products-tab, #v-pills-orders-tab, #v-pills-repairs-tab, #v-pills-members-tab, #v-pills-settings-tab').forEach(function (el) {
                 el.classList.remove('active');
             });
 
-            // 激活後台管理標籤，取消激活前台管理標籤
-            document.getElementById('frontend-content').classList.remove('show', 'active');
+            // 顯示品牌logo設置標籤頁
+            document.getElementById('logo').classList.add('show', 'active');
+            document.getElementById('v-pills-logo-tab').classList.add('active');
+
+            // 確保後台管理主標籤被激活
             document.getElementById('backend-content').classList.add('show', 'active');
-            document.getElementById('frontend-tab').classList.remove('active');
             document.getElementById('backend-tab').classList.add('active');
+            document.getElementById('frontend-content').classList.remove('show', 'active');
+            document.getElementById('frontend-tab').classList.remove('active');
+
         }
+
     });
 </script>
 <?php require_once 'fixedFile/footer.php'; ?>
