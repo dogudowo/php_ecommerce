@@ -39,9 +39,6 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                                 placeholder="https://youtube.com/..." required>
                         </div>
                         <div class="d-flex justify-content-end gap-2">
-                            <button type="button" class="btn btn-secondary" id="resetSettingsBtn">
-                                <i class="bi bi-arrow-counterclockwise me-1"></i>重置
-                            </button>
                             <button type="button" class="btn btn-primary" id="saveSettingsBtn">
                                 <i class="bi bi-save me-1"></i>保存設置
                             </button>
@@ -85,10 +82,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
         };
 
         /** ================= DOM ================= */
-        const resetBtn = document.getElementById('resetSettingsBtn');
         const saveBtn = document.getElementById('saveSettingsBtn');
-
-        /** ================= 狀態 ================= */
         let loadedLinks = {};
 
         /** ================= 工具函式 ================= */
@@ -109,11 +103,6 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
         const hasInvalidUrl = links => FIELDS.some(k => !/^https?:\/\//i.test(links[k]));
 
         /** ================= 事件 ================= */
-        resetBtn.addEventListener('click', () => {
-            fillForm(loadedLinks);
-            showToast('已還原為目前設定值。', 'info');
-        });
-
         saveBtn.addEventListener('click', async () => {
             const socialLinks = collectForm();
             if (hasInvalidUrl(socialLinks)) {

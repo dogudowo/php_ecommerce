@@ -194,14 +194,14 @@ $statusList = getOrderStatusList();
                         </td>
                         <td>
                             <div class="btn-group">
-                                <button type="button" class="btn btn-sm btn-outline-primary view-order"
+                                <button type="button" class="btn btn-sm btn-outline-success view-order"
                                     data-id="${order.OrderID}">
                                     <i class="bi bi-eye"></i>
                                 </button>
-                                <button type="button" class="btn btn-sm btn-outline-success update-status"
+                                <button type="button" class="btn btn-sm btn-outline-primary update-status"
                                     data-id="${order.OrderID}"
                                     data-status="${order.Status}">
-                                    <i class="bi bi-arrow-repeat"></i>
+                                    <i class="bi bi-pencil-square"></i>
                                 </button>
                             </div>
                         </td>

@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
                     </div>
                     <div class="mb-3">
                         <label class="form-label">回答</label>
-                        <textarea class="form-control" id="answer" rows="8" required></textarea>
+                        <textarea class="form-control" id="answer" rows="3" required></textarea>
                     </div>
                     <button type="submit" class="btn btn-primary">新增</button>
                 </form>
@@ -180,13 +180,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
                     <td>${item.question}</td>
                     <td>${item.answer}</td>
                     <td>
-                        <button class="btn btn-sm btn-warning edit-btn"
-                            data-id="${item.QA_id}"
-                            data-question="${item.question}"
-                            data-answer="${item.answer}">
-                            編輯
-                        </button>
-                        <button class="btn btn-sm btn-danger delete-btn" data-id="${item.QA_id}">刪除</button>
+                    <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-primary edit-btn"
+                                data-id="${item.QA_id}"
+                                data-question="${item.question}"
+                                data-answer="${item.answer}">
+                                <i class="bi bi-pencil-square"></i>
+                            </button>
+                            <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${item.QA_id}"><i class="bi bi-trash"></i></button>
+                        </div>
                     </td>
                 </tr>`;
             });

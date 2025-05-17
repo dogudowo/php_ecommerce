@@ -443,8 +443,6 @@ $products = [];
             body.addEventListener("click", e => {
                 const btn = e.target.closest("button");
                 if (!btn) return;
-
-                if (btn.classList.contains("delete-product")) return handleDelete(btn);
                 if (btn.classList.contains("edit-product")) return handleEdit(btn);
                 if (btn.id === "addSizeRow") return addSizeRow();
                 if (btn.classList.contains("remove-size-btn")) return removeSizeRow(btn);
@@ -683,25 +681,9 @@ $products = [];
             <td>
                 <div class="btn-group">
                     <button class="btn btn-sm btn-outline-primary edit-product" data-id="${p.ProductID}"><i class="bi bi-pencil"></i></button>
-                    <button class="btn btn-sm btn-outline-danger delete-product" data-id="${p.ProductID}"><i class="bi bi-trash"></i></button>
                 </div>
             </td>
         </tr>`;
-
-        /* ----------  刪除 / 編輯 ---------- */
-        async function handleDelete(btn) {
-            const id = btn.dataset.id;
-            if (!id || !confirm("確定要刪除此商品嗎？此操作無法撤銷。")) return;
-            try {
-                const fd = new FormData();
-                fd.append("action", "deleteProduct");
-                fd.append("productId", id);
-                const res = await jsonFetch(API_BASE, { method: "POST", body: fd });
-                if (!res.success) throw new Error(res.message);
-                showToast("商品已成功刪除！", "success");
-                loadProducts();
-            } catch (err) { showError("刪除失敗", err); }
-        }
 
         async function handleEdit(btn) {
             try {
