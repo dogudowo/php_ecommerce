@@ -177,17 +177,7 @@
         </form>
     </div>
 </div>
-
-<!-- ===== Toast 通知 ===== -->
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999;">
-    <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-header">
-            <strong class="me-auto" id="toastTitle"></strong>
-            <button type="button" class="btn-close" data-bs-dismiss="toast"></button>
-        </div>
-        <div class="toast-body" id="toastMessage"></div>
-    </div>
-</div>
+<div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1080;"></div>
 
 <!-- ================= JavaScript ================= -->
 <script>
@@ -200,16 +190,21 @@
         const brandContainer = document.getElementById('brandContainer');
 
         // === Toast 工具 ===
-        const toastEl = document.getElementById('notificationToast');
-        const toastInst = bootstrap.Toast.getOrCreateInstance(toastEl);
-        const toastTit = document.getElementById('toastTitle');
-        const toastMsg = document.getElementById('toastMessage');
-        function showToast(title, msg, type = 'success') {
-            toastEl.classList.remove('bg-success', 'bg-danger', 'bg-warning');
-            toastEl.classList.add(`bg-${type}`);
-            toastTit.textContent = title;
-            toastMsg.textContent = msg;
-            toastInst.show();
+        const toastContainer = document.getElementById('toastContainer');
+        function showToast(msg, type = 'success') {
+            const el = document.createElement('div');
+            el.className = `toast align-items-center text-white bg-${type} border-0 mb-2`;
+            el.setAttribute('role', 'alert');
+            el.innerHTML = `
+                    <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
+                        ${msg}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                    </div>`;
+            toastContainer.appendChild(el);
+            new bootstrap.Toast(el, { delay: 3000 }).show();
         }
 
         // === API 呼叫 ===
@@ -270,7 +265,7 @@
                     : '<p class="text-muted">暫無介紹段落</p>';
             } catch (e) {
                 introContainer.innerHTML = '<p class="text-danger">載入失敗</p>';
-                showToast('錯誤', '讀取介紹段落失敗：' + e.message, 'danger');
+                showToast('讀取介紹段落失敗：' + e.message, 'danger');
             }
         }
         async function loadBrands() {
@@ -282,7 +277,7 @@
                     : '<p class="text-muted">暫無代理品牌</p>';
             } catch (e) {
                 brandContainer.innerHTML = '<p class="text-danger">載入失敗</p>';
-                showToast('錯誤', '讀取品牌列表失敗：' + e.message, 'danger');
+                showToast('讀取品牌列表失敗：' + e.message, 'danger');
             }
         }
 
@@ -304,9 +299,9 @@
                 await apiRequest('update_intro', { id: currentIntroId, content: editIntroTextarea.value.trim() });
                 editIntroModal.hide();
                 await loadIntros();
-                showToast('成功', '介紹段落已更新');
+                showToast('介紹段落已更新', 'success');
             } catch (e) {
-                showToast('錯誤', '更新失敗：' + e.message, 'danger');
+                showToast('更新失敗：' + e.message, 'danger');
             }
         });
 
@@ -323,7 +318,7 @@
         });
         document.getElementById('createBrandBtn').addEventListener('click', async () => {
             const name = document.getElementById('brandNameInput').value.trim();
-            if (!name) return showToast('警告', '品牌名稱不得為空', 'warning');
+            if (!name) return showToast('品牌名稱不得為空', 'warning');
             const fd = new FormData();
             fd.append('brandName', name);
             fd.append('brandContent', document.getElementById('brandContentInput').value.trim());
@@ -333,9 +328,9 @@
                 await apiRequest('create_brand', fd);
                 addBrandModal.hide();
                 await loadBrands();
-                showToast('成功', '新增品牌成功');
+                showToast('新增品牌成功', 'success');
             } catch (e) {
-                showToast('錯誤', '新增失敗：' + e.message, 'danger');
+                showToast('新增失敗：' + e.message, 'danger');
             }
         });
 
@@ -368,9 +363,9 @@
                 try {
                     await apiRequest('delete_brand', { id });
                     await loadBrands();
-                    showToast('成功', '刪除品牌成功');
+                    showToast('刪除品牌成功', 'success');
                 } catch (err) {
-                    showToast('錯誤', '刪除失敗：' + err.message, 'danger');
+                    showToast('刪除失敗：' + err.message, 'danger');
                 }
             }
         });
@@ -386,9 +381,9 @@
                 await apiRequest('update_brand', fd);
                 editBrandModal.hide();
                 await loadBrands();
-                showToast('成功', '品牌已更新');
+                showToast('品牌已更新', 'success');
             } catch (e) {
-                showToast('錯誤', '更新失敗：' + e.message, 'danger');
+                showToast('更新失敗：' + e.message, 'danger');
             }
         });
 
@@ -405,27 +400,27 @@
                 (res.logos || []).forEach(fn => {
                     const col = document.createElement('div'); col.className = 'col-6 col-md-4 col-lg-3';
                     col.innerHTML = `
-          <div class="card h-100">
-            <img src="imgs/brand/${id}/${fn}" class="card-img-top">
-            <div class="card-footer text-center">
-              <button class="btn btn-sm btn-danger btn-del-brand-img" data-type="logo" data-name="${fn}">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>`;
+                        <div class="card h-100">
+                            <img src="imgs/brand/${id}/${fn}" class="card-img-top">
+                            <div class="card-footer text-center">
+                            <button class="btn btn-sm btn-danger btn-del-brand-img" data-type="logo" data-name="${fn}">
+                                刪除
+                            </button>
+                            </div>
+                        </div>`;
                     logoRow.append(col);
                 });
                 (res.news_images || []).forEach(fn => {
                     const col = document.createElement('div'); col.className = 'col-6 col-md-4 col-lg-3';
                     col.innerHTML = `
-          <div class="card h-100">
-            <img src="imgs/brand/${id}/newAbout/${fn}" class="card-img-top">
-            <div class="card-footer text-center">
-              <button class="btn btn-sm btn-danger btn-del-brand-img" data-type="news" data-name="${fn}">
-                <i class="bi bi-trash"></i>
-              </button>
-            </div>
-          </div>`;
+                        <div class="card h-100">
+                            <img src="imgs/brand/${id}/newAbout/${fn}" class="card-img-top">
+                            <div class="card-footer text-center">
+                            <button class="btn btn-sm btn-danger btn-del-brand-img" data-type="news" data-name="${fn}">
+                                刪除
+                            </button>
+                            </div>
+                        </div>`;
                     newsRow.append(col);
                 });
                 // 刪除按鈕綁定
@@ -441,14 +436,14 @@
                                     image_name: btn.dataset.name
                                 });
                                 loadBrandImages(id);
-                                showToast('成功', '圖片已刪除');
+                                showToast('圖片已刪除', 'success');
                             } catch (e) {
-                                showToast('錯誤', '刪除失敗：' + e.message, 'danger');
+                                showToast('刪除失敗：' + e.message, 'danger');
                             }
                         });
                     });
             } catch (e) {
-                showToast('錯誤', '載入圖片失敗：' + e.message, 'danger');
+                showToast('載入圖片失敗：' + e.message, 'danger');
             }
         }
 

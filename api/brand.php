@@ -237,6 +237,30 @@ class BrandModel
                     }
                     break;
 
+                case 'get_brand_images':
+                    $brandId = (int) $_POST['brand_id'];
+                    $logos = [];
+                    $newsImages = [];
+
+                    $logoDir = __DIR__ . '/../imgs/brand/' . $brandId . '/';
+                    if (is_dir($logoDir)) {
+                        $logoFiles = glob($logoDir . 'logo-*.{png,jpg,jpeg}', GLOB_BRACE);
+                        foreach ($logoFiles as $file) {
+                            $logos[] = basename($file);
+                        }
+                    }
+
+                    $newsDir = __DIR__ . '/../imgs/brand/' . $brandId . '/newAbout/';
+                    if (is_dir($newsDir)) {
+                        $newsFiles = glob($newsDir . 'newabout-*.jpg', GLOB_BRACE);
+                        foreach ($newsFiles as $file) {
+                            $newsImages[] = basename($file);
+                        }
+                    }
+
+                    echo json_encode(['success' => true, 'logos' => $logos, 'news_images' => $newsImages]);
+                    break;
+
                 default:
                     echo json_encode(['success' => false, 'message' => '無效的操作']);
             }
