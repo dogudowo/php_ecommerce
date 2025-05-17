@@ -31,19 +31,19 @@ class BrandModel
                 'images' => []
             ];
 
-            // 獲取品牌logo (路徑格式為brand/$brand_id/logo-*.png或.jpg)
+            // 獲取品牌logo
             $logoDir = "imgs/brand/{$brandId}/";
-            if (is_dir(__DIR__ . "/../$logoDir")) {
-                $logos = glob(__DIR__ . "/../$logoDir" . "logo-*.{png,jpg,jpeg}", GLOB_BRACE);
+            if (is_dir(__DIR__ . "/../{$logoDir}")) {
+                $logos = glob(__DIR__ . "/../{$logoDir}" . "logo-*.{png,jpg,jpeg}", GLOB_BRACE);
                 foreach ($logos as $logo) {
                     $brands[$brandId]['logos'][] = basename($logo);
                 }
             }
 
-            // 獲取品牌圖片 (路徑格式為brand/$brand_id/newAbout/newabout-*.jpg)
+            // 獲取品牌圖片
             $newAboutDir = "imgs/brand/{$brandId}/newAbout/";
-            if (is_dir(__DIR__ . "/../$newAboutDir")) {
-                $images = glob(__DIR__ . "/../$newAboutDir" . "newabout-*.jpg", GLOB_BRACE);
+            if (is_dir(__DIR__ . "/../{$newAboutDir}")) {
+                $images = glob(__DIR__ . "/../{$newAboutDir}" . "newabout-*.jpg", GLOB_BRACE);
                 foreach ($images as $image) {
                     $brands[$brandId]['images'][] = "brand/{$brandId}/newAbout/" . basename($image);
                 }
@@ -63,6 +63,7 @@ class BrandModel
 
         try {
             $action = $_POST['action'] ?? '';
+            umask(0); // 確保 chmod 不受 umask 限制
 
             switch ($action) {
                 case 'get_intros':
@@ -106,10 +107,12 @@ class BrandModel
                             $brandContent
                         ]);
 
+                        // 處理 Logo 圖片上傳
                         if (isset($_FILES['logo_images']) && !empty($_FILES['logo_images']['name'][0])) {
                             $logoDir = __DIR__ . '/../imgs/brand/' . $newBrandId . '/';
                             if (!file_exists($logoDir)) {
                                 mkdir($logoDir, 0777, true);
+                                chmod($logoDir, 0777);
                             }
 
                             $logoFiles = $_FILES['logo_images'];
@@ -120,15 +123,19 @@ class BrandModel
                                         throw new Exception('不支援的Logo圖片格式');
                                     }
                                     $logoFilename = 'logo-' . $i . '.' . $extension;
-                                    move_uploaded_file($logoFiles['tmp_name'][$i], $logoDir . $logoFilename);
+                                    $destPath = $logoDir . $logoFilename;
+                                    move_uploaded_file($logoFiles['tmp_name'][$i], $destPath);
+                                    chmod($destPath, 0777);
                                 }
                             }
                         }
 
+                        // 處理 最新消息 圖片上傳
                         if (isset($_FILES['news_images']) && !empty($_FILES['news_images']['name'][0])) {
                             $newsDir = __DIR__ . '/../imgs/brand/' . $newBrandId . '/newAbout/';
                             if (!file_exists($newsDir)) {
                                 mkdir($newsDir, 0777, true);
+                                chmod($newsDir, 0777);
                             }
 
                             $newsFiles = $_FILES['news_images'];
@@ -139,7 +146,9 @@ class BrandModel
                                         throw new Exception('不支援的最新消息圖片格式');
                                     }
                                     $newsFilename = 'newabout-' . $i . '.' . $extension;
-                                    move_uploaded_file($newsFiles['tmp_name'][$i], $newsDir . $newsFilename);
+                                    $destPath = $newsDir . $newsFilename;
+                                    move_uploaded_file($newsFiles['tmp_name'][$i], $destPath);
+                                    chmod($destPath, 0777);
                                 }
                             }
                         }
@@ -172,10 +181,12 @@ class BrandModel
                         $stmt = $conn->prepare("UPDATE agent_brand SET brand_name = ?, brand_content = ? WHERE brand_id = ?");
                         $stmt->execute([$brandName, $brandContent, $id]);
 
+                        // Logo 圖片覆寫
                         if (isset($_FILES['logo_images']) && !empty($_FILES['logo_images']['name'][0])) {
                             $logoDir = __DIR__ . '/../imgs/brand/' . $id . '/';
                             if (!file_exists($logoDir)) {
                                 mkdir($logoDir, 0777, true);
+                                chmod($logoDir, 0777);
                             }
 
                             $logoFiles = $_FILES['logo_images'];
@@ -186,15 +197,19 @@ class BrandModel
                                         throw new Exception('不支援的Logo圖片格式');
                                     }
                                     $logoFilename = 'logo-' . $i . '.' . $extension;
-                                    move_uploaded_file($logoFiles['tmp_name'][$i], $logoDir . $logoFilename);
+                                    $destPath = $logoDir . $logoFilename;
+                                    move_uploaded_file($logoFiles['tmp_name'][$i], $destPath);
+                                    chmod($destPath, 0777);
                                 }
                             }
                         }
 
+                        // 最新消息 圖片覆寫
                         if (isset($_FILES['news_images']) && !empty($_FILES['news_images']['name'][0])) {
                             $newsDir = __DIR__ . '/../imgs/brand/' . $id . '/newAbout/';
                             if (!file_exists($newsDir)) {
                                 mkdir($newsDir, 0777, true);
+                                chmod($newsDir, 0777);
                             }
 
                             $newsFiles = $_FILES['news_images'];
@@ -205,7 +220,9 @@ class BrandModel
                                         throw new Exception('不支援的最新消息圖片格式');
                                     }
                                     $newsFilename = 'newabout-' . $i . '.' . $extension;
-                                    move_uploaded_file($newsFiles['tmp_name'][$i], $newsDir . $newsFilename);
+                                    $destPath = $newsDir . $newsFilename;
+                                    move_uploaded_file($newsFiles['tmp_name'][$i], $destPath);
+                                    chmod($destPath, 0777);
                                 }
                             }
                         }
@@ -222,12 +239,16 @@ class BrandModel
                         $stmt = $conn->prepare("DELETE FROM agent_brand WHERE brand_id = ?");
                         $stmt->execute([$id]);
 
-                        // 刪除品牌圖片資料夾
+                        // 刪除品牌資料夾
                         $brandDir = __DIR__ . '/../imgs/brand/' . $id;
-                        if (file_exists($brandDir)) {
-                            array_map('unlink', glob($brandDir . '/newAbout/*.*'));
-                            array_map('unlink', glob($brandDir . '/*.*'));
-                            rmdir($brandDir . '/newAbout');
+                        if (is_dir($brandDir)) {
+                            $files = new RecursiveIteratorIterator(
+                                new RecursiveDirectoryIterator($brandDir, RecursiveDirectoryIterator::SKIP_DOTS),
+                                RecursiveIteratorIterator::CHILD_FIRST
+                            );
+                            foreach ($files as $file) {
+                                $file->isDir() ? rmdir($file->getRealPath()) : unlink($file->getRealPath());
+                            }
                             rmdir($brandDir);
                         }
 

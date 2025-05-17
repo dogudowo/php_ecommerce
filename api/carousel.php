@@ -3,7 +3,7 @@ require_once __DIR__ . '/header.php';
 require_once __DIR__ . '/error_handler.php';
 
 const CAROUSEL_DIR = __DIR__ . '/../imgs/carousel/'; // storage folder
-const MAX_UPLOAD_SIZE = 2 * 1024 * 1024;             // 2 MB
+const MAX_UPLOAD_SIZE = 5 * 1024 * 1024;             // 2 MB
 const ALLOWED_MIME_TYPES = [
     'image/jpeg' => 'jpg',
     'image/png' => 'png',
@@ -11,9 +11,12 @@ const ALLOWED_MIME_TYPES = [
     'image/webp' => 'webp',
 ];
 
-if (!is_dir(CAROUSEL_DIR) && !mkdir(CAROUSEL_DIR, 0755, true) && !is_dir(CAROUSEL_DIR)) {
+// Ensure carousel directory exists with permissive permissions
+if (!is_dir(CAROUSEL_DIR) && !mkdir(CAROUSEL_DIR, 0777, true) && !is_dir(CAROUSEL_DIR)) {
     respondJson(false, '無法建立輪播圖目錄');
 }
+// Set directory permissions to 0777 to allow deletion by any user
+chmod(CAROUSEL_DIR, 0777);
 
 $action = $_REQUEST['action'] ?? '';
 
@@ -101,6 +104,8 @@ function handleUpload(): void
     if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
         respondJson(false, '檔案保存失敗');
     }
+    // Ensure uploaded file is world-writable to allow deletion
+    chmod($targetPath, 0777);
 
     respondJson(true, ['filename' => $newFileName]);
 }
@@ -122,6 +127,9 @@ function handleDelete(): void
     if ($filePath === false || strpos($filePath, realpath(CAROUSEL_DIR)) !== 0) {
         respondJson(false, '非法路徑');
     }
+
+    // Ensure file permissions allow deletion
+    chmod($filePath, 0777);
 
     if (!file_exists($filePath) || !unlink($filePath)) {
         respondJson(false, '刪除失敗或檔案不存在');
@@ -156,6 +164,9 @@ function respondJson(bool $success, $data = null, int $status = 200): void
     exit;
 }
 
+/**
+ * Validate filename extension
+ */
 function isImageFilename(string $filename): bool
 {
     $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));

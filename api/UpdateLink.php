@@ -132,7 +132,7 @@ if ($method === 'POST') {
         if (!write_social_links($links)) {
             respond(false, '寫入設定失敗，請檢查檔案權限。');
         }
-
+        chmod($dir, 0777);
         respond(true, '社群連結已更新成功！');
     }
 

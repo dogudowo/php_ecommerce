@@ -5,7 +5,8 @@ $logPath = __DIR__ . '/../.logs/error_log';
 
 // 檢查並建立logs目錄和檔案
 if (!file_exists(dirname($logPath))) {
-    mkdir(dirname($logPath), 0666, true);
+    mkdir(dirname($logPath), 0777, true);
+    chmod(dirname($logPath), 0777);
 }
 if (!file_exists($logPath)) {
     touch($logPath);
