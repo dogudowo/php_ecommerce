@@ -5,9 +5,9 @@ $adLinkObj = json_decode(file_get_contents(__DIR__ . '/../src/adLink.json'));
 $adLink = $adLinkObj->adLink ?? '';
 ?>
 
-<div class="container-fluid p-0 mt-4">
+<div class="container-fluid p-0">
     <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3>關於我們頁面管理</h3>
+        <h3><i class="bi bi-building me-2"></i>關於我們</h3>
     </div>
 
     <!-- 公司資料 -->

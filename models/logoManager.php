@@ -8,39 +8,37 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
 }
 ?>
 
-<div class="container mt-4">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h3><i class="bi bi-image me-2"></i>品牌 Logo 管理</h3>
-    </div>
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-image me-2"></i>品牌 Logo </h3>
+</div>
 
-    <div class="row">
-        <!-- Title Logo -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">網站標題 Logo (title.png)</div>
-                <div class="card-body text-center">
-                    <img src="imgs/title.png" id="titleLogoImg" class="img-fluid mb-3" style="max-height:100px;">
-                    <form id="titleLogoForm" enctype="multipart/form-data">
-                        <input type="file" name="logoFile" class="form-control mb-3" accept=".png" required>
-                        <input type="hidden" name="logoType" value="title">
-                        <button class="btn btn-primary">更新標題 Logo</button>
-                    </form>
-                </div>
+<div class="row">
+    <!-- Title Logo -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">網站標題 Logo (title.png)</div>
+            <div class="card-body text-center">
+                <img src="imgs/title.png" id="titleLogoImg" class="img-fluid mb-3" style="max-height:100px;">
+                <form id="titleLogoForm" enctype="multipart/form-data">
+                    <input type="file" name="logoFile" class="form-control mb-3" accept=".png" required>
+                    <input type="hidden" name="logoType" value="title">
+                    <button class="btn btn-primary">更新標題 Logo</button>
+                </form>
             </div>
         </div>
+    </div>
 
-        <!-- Web Icon -->
-        <div class="col-md-6 mb-4">
-            <div class="card">
-                <div class="card-header">網站圖示 (webimg.ico)</div>
-                <div class="card-body text-center">
-                    <img src="imgs/webimg.ico" id="webIconImg" class="img-fluid mb-3" style="height:100px;">
-                    <form id="webIconForm" enctype="multipart/form-data">
-                        <input type="file" name="logoFile" class="form-control mb-3" accept=".ico" required>
-                        <input type="hidden" name="logoType" value="favicon">
-                        <button class="btn btn-primary">更新網站圖示</button>
-                    </form>
-                </div>
+    <!-- Web Icon -->
+    <div class="col-md-6 mb-4">
+        <div class="card">
+            <div class="card-header">網站圖示 (webimg.ico)</div>
+            <div class="card-body text-center">
+                <img src="imgs/webimg.ico" id="webIconImg" class="img-fluid mb-3" style="height:100px;">
+                <form id="webIconForm" enctype="multipart/form-data">
+                    <input type="file" name="logoFile" class="form-control mb-3" accept=".ico" required>
+                    <input type="hidden" name="logoType" value="favicon">
+                    <button class="btn btn-primary">更新網站圖示</button>
+                </form>
             </div>
         </div>
     </div>

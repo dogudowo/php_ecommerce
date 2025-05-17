@@ -8,6 +8,11 @@ define('PRICE_IMG_PATH', 'imgs/repair/price/AllenRepairPrice0609.jpg');
 define('KEY_REPORT_DOC_PATH', 'src/KeyReport.doc');
 
 ?>
+
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3><i class="bi bi-tools me-2"></i>維修頁面</h3>
+</div>
+
 <?php if (isset($_GET['status']) && $_GET['status'] === 'success'): ?>
     <div class="alert alert-success" role="alert">
         內容已成功更新！

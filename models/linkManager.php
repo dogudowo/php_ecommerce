@@ -10,7 +10,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
 ?>
 
 <div class="d-flex justify-content-between align-items-center mb-4">
-    <h3><i class="bi bi-sliders me-2"></i>社群連結設置</h3>
+    <h3><i class="bi bi-sliders me-2"></i>社群連結</h3>
 </div>
 <div class="container-fluid p-0">
     <div class="row mb-4">
