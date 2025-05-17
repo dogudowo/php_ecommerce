@@ -666,14 +666,9 @@ $products = [];
                 };
                 reader.readAsDataURL(file);
             });
-
-            // 4. 清空暫存的刪除和新增圖片陣列
-            // deletedGallerySrcs = []; // 移除此行
-            // newGalleryFiles = []; // 移除此行
-
-            // 5. 更新詳細圖片按鈕狀態
+            // 4. 更新詳細圖片按鈕狀態
             updateGalleryButtons();
-            // 6. 關閉模態框
+            // 5. 關閉模態框
             bootstrap.Modal.getInstance(document.getElementById('manageGalleryModal')).hide();
         }
 
@@ -1070,7 +1065,7 @@ $products = [];
 
             // 3. 新增上傳的檔案
             newGalleryFiles.forEach((file, i) => {
-                fd.append("newGalleryFiles[]", file, file.name);
+                fd.append("newGalleryImages[]", file, file.name);
             });
 
             // 清空暫存（可視需求保留或移除）
