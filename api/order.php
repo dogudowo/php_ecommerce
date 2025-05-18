@@ -615,7 +615,7 @@ function updateOrderStatus(int $memberId, int $orderId, string $newStatus, strin
             foreach ($items as $item) {
                 for ($i = 0; $i < $item['Quantity']; $i++) {
                     $warrantyId = $pdo->query(
-                        "SELECT IFNULL(MAX(WarrantyID), 0) + 1 AS newId FROM warranty"
+                        "SELECT IFNULL(MAX(WarrantyID), 0) + 1 AS newId FROM Warranty"
                     )->fetchColumn();
 
                     $createWarranty->execute(['warrantyId' => $warrantyId]);
