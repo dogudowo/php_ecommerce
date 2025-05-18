@@ -184,7 +184,7 @@ function checkStock($memberId)
 
     try {
         // 獲取購物車商品及其庫存
-        $stmt = $conn->prepare("SELECT c.OptionID, c.Quantity, p.ProductName, p.ProductID, o.Color, o.Size, o.SizeDescription, o.Price, o.Stock 
+        $stmt = $conn->prepare("SELECT c.OptionID, c.Quantity, p.ProductName, p.ProductID, p.isActive, o.Color, o.Size, o.SizeDescription, o.Price, o.Stock
                                FROM CartItem c 
                                JOIN Options o ON c.OptionID = o.OptionID 
                                JOIN Product p ON o.ProductID = p.ProductID 
@@ -192,10 +192,12 @@ function checkStock($memberId)
         $stmt->execute([$memberId]);
         $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-        // 檢查哪些商品庫存不足
+        // 檢查哪些商品庫存不足或已下架
         $outOfStockItems = [];
         foreach ($items as $item) {
-            if ($item['Quantity'] > $item['Stock']) {
+            if ($item['isActive'] == 0) {
+                $outOfStockItems[] = array_merge($item, ['status' => 'inactive']);
+            } elseif ($item['Quantity'] > $item['Stock']) {
                 $outOfStockItems[] = $item;
             }
         }

@@ -403,16 +403,19 @@ include __DIR__ . "/header.php";
                                 <span class="text-muted">${item.Color || '無顏色'}</span>
                                 ${item.Size != -1 ? `<span class="text-muted"> - ${item.SizeDescription || '無尺寸'}</span>` : ''}
                             </p>
-                            <p class="mb-0">
-                                目前庫存: ${item.Stock}，您選擇的數量: ${item.Quantity}
-                            </p>
+                            ${item.status === 'inactive' ?
+                            `<p class="mb-0 text-danger">商品已下架</p>` :
+                            `<p class="mb-0">目前庫存: ${item.Stock}，您選擇的數量: ${item.Quantity}</p>`
+                        }
                         </div>
                         <div>
-                            <button class="btn btn-outline-primary btn-sm change-spec-btn" 
-                                data-option-id="${item.OptionID}" 
-                                data-product-id="${item.ProductID}">
-                                更改規格
-                            </button>
+                            ${item.status === 'inactive' ? '' :
+                            `<button class="btn btn-outline-primary btn-sm change-spec-btn" 
+                                    data-option-id="${item.OptionID}" 
+                                    data-product-id="${item.ProductID}">
+                                    更改規格
+                                </button>`
+                        }
                             <button class="btn btn-danger btn-sm remove-item-btn" 
                                 data-option-id="${item.OptionID}">
                                 移除
