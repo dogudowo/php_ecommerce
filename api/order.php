@@ -494,7 +494,7 @@ function updateOrderStatus(int $memberId, int $orderId, string $newStatus, strin
             $items = $items->fetchAll(PDO::FETCH_ASSOC);
 
             $createWarranty = $pdo->prepare(
-                "INSERT INTO warranty (WarrantyID, WarrantyDate, WarrantyStatus)
+                "INSERT INTO Warranty (WarrantyID, WarrantyDate, WarrantyStatus)
                  VALUES (:warrantyId, DATE_ADD(NOW(), INTERVAL 1 YEAR), true)"
             );
             $createReceiptItem = $pdo->prepare(
