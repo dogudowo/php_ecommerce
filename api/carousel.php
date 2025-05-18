@@ -15,8 +15,6 @@ const ALLOWED_MIME_TYPES = [
 if (!is_dir(CAROUSEL_DIR) && !mkdir(CAROUSEL_DIR, 0777, true) && !is_dir(CAROUSEL_DIR)) {
     respondJson(false, '無法建立輪播圖目錄');
 }
-// Set directory permissions to 0777 to allow deletion by any user
-chmod(CAROUSEL_DIR, 0777);
 
 $action = $_REQUEST['action'] ?? '';
 
