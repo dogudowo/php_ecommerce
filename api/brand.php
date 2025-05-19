@@ -1,298 +1,350 @@
 <?php
-require_once __DIR__ . '/error_handler.php';
 require_once __DIR__ . '/db.php';
+require_once __DIR__ . '/error_handler.php';
+header('Content-Type: application/json');
 
-class BrandModel
+$action = $_REQUEST['action'] ?? null;
+
+function getBrandData()
 {
-    public static function getBrandInfo()
-    {
+    try {
         $conn = getDBConnection();
 
-        // 獲取公司介紹
+        // 取得公司介紹
         $companyIntro = [];
         $stmt = $conn->query("SELECT introdution FROM brand_introduction");
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $companyIntro[] = $row['introdution'];
         }
 
-        // 獲取品牌資料
+        // 取得品牌資料
         $brands = [];
-        $stmt = $conn->query("SELECT ab.brand_id, ab.brand_content, bi.introdution, ab.brand_name 
-                              FROM agent_brand ab 
-                              JOIN brand_introduction bi ON ab.brand_introduction_id = bi.brand_introduction_id");
-
+        $stmt = $conn->query("SELECT ab.brand_id, ab.brand_content, ab.brand_name 
+                              FROM agent_brand ab");
         while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
             $brandId = $row['brand_id'];
             $brands[$brandId] = [
                 'name' => $row['brand_name'],
                 'content' => $row['brand_content'],
-                'description' => explode('\n', $row['introdution']),
-                'logos' => [],
-                'images' => []
+                'logos' => glob("../imgs/brand/$brandId/*.{jpg,jpeg,png,gif,webp}", GLOB_BRACE), // 匹配任何副檔名的 logo 圖片
+                'images' => glob("../imgs/brand/$brandId/newAbout/*.{jpg,jpeg,png,gif,webp}", GLOB_BRACE) // 匹配任何副檔名的最新消息圖片
             ];
-
-            // 獲取品牌logo
-            $logoDir = "imgs/brand/{$brandId}/";
-            if (is_dir(__DIR__ . "/../{$logoDir}")) {
-                $logos = glob(__DIR__ . "/../{$logoDir}" . "logo-*.{png,jpg,jpeg}", GLOB_BRACE);
-                foreach ($logos as $logo) {
-                    $brands[$brandId]['logos'][] = basename($logo);
-                }
-            }
-
-            // 獲取品牌圖片
-            $newAboutDir = "imgs/brand/{$brandId}/newAbout/";
-            if (is_dir(__DIR__ . "/../{$newAboutDir}")) {
-                $images = glob(__DIR__ . "/../{$newAboutDir}" . "newabout-*.jpg", GLOB_BRACE);
-                foreach ($images as $image) {
-                    $brands[$brandId]['images'][] = "brand/{$brandId}/newAbout/" . basename($image);
-                }
-            }
         }
 
         return [
             'company_intro' => $companyIntro,
             'brands' => $brands
         ];
+    } catch (Exception $e) {
+        // 可以在這裡記錄錯誤，或者重新拋出異常
+        throw $e;
     }
+}
 
-    public static function handleRequest()
-    {
-        header('Content-Type: application/json');
-        $conn = getDBConnection();
+
+
+// 處理不同的 action
+switch ($action) {
+    case 'getBrandInfo':
+        try {
+            $data = getBrandData();
+            echo json_encode($data);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+        break;
+
+    case 'getBrandDetails':
+        // 取得單一品牌詳細資料 (用於編輯)
+        $brandId = $_GET['brand_id'] ?? null;
+        if (!$brandId) {
+            http_response_code(400);
+            echo json_encode(['error' => '缺少 brand_id 參數']);
+            exit;
+        }
+        try {
+            $conn = getDBConnection();
+            $stmt = $conn->prepare("SELECT brand_id, brand_name, brand_content FROM agent_brand WHERE brand_id = ?");
+            $stmt->execute([$brandId]);
+            $brand = $stmt->fetch(PDO::FETCH_ASSOC);
+
+            if (!$brand) {
+                http_response_code(404);
+                echo json_encode(['error' => '找不到指定的品牌']);
+                exit;
+            }
+
+            // 取得品牌 Logo 圖片
+            $brand['logos'] = glob("../imgs/brand/{$brandId}/*.{jpg,jpeg,png,gif,webp}", GLOB_BRACE);
+            // 取得品牌最新消息圖片
+            $brand['news_images'] = glob("../imgs/brand/{$brandId}/newAbout/*.{jpg,jpeg,png,gif,webp}", GLOB_BRACE);
+
+            echo json_encode($brand);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+        break;
+
+    case 'updateCompanyIntro':
+        // 更新公司介紹
+        $intro = json_decode(file_get_contents('php://input'), true)['introduction'] ?? null;
+        if ($intro === null) {
+            http_response_code(400);
+            echo json_encode(['error' => '缺少 introduction 參數']);
+            exit;
+        }
+        try {
+            $conn = getDBConnection();
+            // 假設只有一筆公司介紹資料，ID 為 1
+            $stmt = $conn->prepare("UPDATE brand_introduction SET introdution = ? WHERE brand_introduction_id = 1");
+            $stmt->execute([$intro]);
+            echo json_encode(['success' => true, 'message' => '公司介紹更新成功']);
+        } catch (Exception $e) {
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+        break;
+
+    case 'addBrand':
+        // 新增品牌
+        $brandName = $_POST['brand_name'] ?? null;
+        $brandContent = $_POST['brand_content'] ?? null;
+        $brandLogos = $_FILES['brand_logos'] ?? [];
+        $brandNewsImages = $_FILES['brand_news_images'] ?? []; // 新增：接收最新消息圖片
+
+        if (!$brandName || $brandContent === null) {
+            http_response_code(400);
+            echo json_encode(['error' => '缺少品牌名稱或介紹參數']);
+            exit;
+        }
 
         try {
-            $action = $_POST['action'] ?? '';
-            umask(0); // 確保 chmod 不受 umask 限制
+            $conn = getDBConnection();
+            $conn->beginTransaction();
 
-            switch ($action) {
-                case 'get_intros':
-                    $stmt = $conn->query("SELECT * FROM brand_introduction ORDER BY brand_introduction_id");
-                    echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
-                    break;
+            // 取得目前最大的 brand_id
+            $stmt = $conn->query("SELECT MAX(brand_id) AS max_id FROM agent_brand");
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            $nextBrandId = ($row['max_id'] === null) ? 1 : $row['max_id'] + 1;
 
-                case 'update_intro':
-                    $id = (int) $_POST['id'];
-                    $content = htmlspecialchars($_POST['content']);
-                    $stmt = $conn->prepare("UPDATE brand_introduction SET introdution = ? WHERE brand_introduction_id = ?");
-                    $stmt->execute([$content, $id]);
-                    echo json_encode(['success' => true]);
-                    break;
+            // 插入新的品牌資料，並指定 brand_id
+            $stmt = $conn->prepare("INSERT INTO agent_brand (brand_id, brand_name, brand_content) VALUES (?, ?, ?)");
+            $stmt->execute([$nextBrandId, $brandName, $brandContent]);
+            $newBrandId = $nextBrandId;
 
-                case 'create_brand':
-                    try {
-                        $transactionStarted = false;
-                        if (empty($_POST['brandName'] ?? '') || empty($_POST['brandContent'] ?? '')) {
-                            throw new Exception('缺少必要參數');
+            // 處理 Logo 圖片上傳
+            if (!empty($brandLogos['name'][0])) { // 檢查是否有檔案上傳
+                $uploadDir = __DIR__ . "/../imgs/brand/{$newBrandId}/";
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+
+                foreach ($brandLogos['name'] as $key => $name) {
+                    $tmp_name = $brandLogos['tmp_name'][$key];
+                    $error = $brandLogos['error'][$key];
+
+                    if ($error === UPLOAD_ERR_OK) {
+                        $fileExtension = pathinfo($name, PATHINFO_EXTENSION);
+                        $newFileName = uniqid('logo_') . '.' . $fileExtension; // 使用唯一名稱避免衝突
+                        $uploadPath = $uploadDir . $newFileName;
+                        if (!move_uploaded_file($tmp_name, $uploadPath)) {
+                            throw new Exception("檔案上傳失敗: {$name}");
                         }
-
-                        $brandName = htmlspecialchars(trim($_POST['brandName'] ?? ''));
-                        $brandContent = htmlspecialchars(trim($_POST['brandContent'] ?? ''));
-
-                        if (empty($brandName) || empty($brandContent)) {
-                            throw new Exception('品牌名稱與內容不得為空');
-                        }
-
-                        $conn->beginTransaction();
-                        $transactionStarted = true;
-
-                        $maxId = $conn->query("SELECT MAX(brand_id) FROM agent_brand")->fetchColumn();
-                        $newBrandId = ($maxId ? $maxId : 0) + 1;
-
-                        $stmt = $conn->prepare("INSERT INTO agent_brand (brand_id, brand_name, brand_introduction_id, brand_content) VALUES (?, ?, ?, ?)");
-                        $stmt->execute([
-                            $newBrandId,
-                            $brandName,
-                            1,
-                            $brandContent
-                        ]);
-
-                        // 處理 Logo 圖片上傳
-                        if (isset($_FILES['logo_images']) && !empty($_FILES['logo_images']['name'][0])) {
-                            $logoDir = __DIR__ . '/../imgs/brand/' . $newBrandId . '/';
-                            if (!file_exists($logoDir)) {
-                                mkdir($logoDir, 0777, true);
-                                chmod($logoDir, 0777);
-                            }
-
-                            $logoFiles = $_FILES['logo_images'];
-                            for ($i = 0; $i < count($logoFiles['name']); $i++) {
-                                if ($logoFiles['error'][$i] === UPLOAD_ERR_OK) {
-                                    $extension = strtolower(pathinfo($logoFiles['name'][$i], PATHINFO_EXTENSION));
-                                    if (!in_array($extension, ['png', 'jpg', 'jpeg'])) {
-                                        throw new Exception('不支援的Logo圖片格式');
-                                    }
-                                    $logoFilename = 'logo-' . $i . '.' . $extension;
-                                    $destPath = $logoDir . $logoFilename;
-                                    move_uploaded_file($logoFiles['tmp_name'][$i], $destPath);
-                                    chmod($destPath, 0777);
-                                }
-                            }
-                        }
-
-                        // 處理 最新消息 圖片上傳
-                        if (isset($_FILES['news_images']) && !empty($_FILES['news_images']['name'][0])) {
-                            $newsDir = __DIR__ . '/../imgs/brand/' . $newBrandId . '/newAbout/';
-                            if (!file_exists($newsDir)) {
-                                mkdir($newsDir, 0777, true);
-                                chmod($newsDir, 0777);
-                            }
-
-                            $newsFiles = $_FILES['news_images'];
-                            for ($i = 0; $i < count($newsFiles['name']); $i++) {
-                                if ($newsFiles['error'][$i] === UPLOAD_ERR_OK) {
-                                    $extension = strtolower(pathinfo($newsFiles['name'][$i], PATHINFO_EXTENSION));
-                                    if (!in_array($extension, ['jpg', 'jpeg'])) {
-                                        throw new Exception('不支援的最新消息圖片格式');
-                                    }
-                                    $newsFilename = 'newabout-' . $i . '.' . $extension;
-                                    $destPath = $newsDir . $newsFilename;
-                                    move_uploaded_file($newsFiles['tmp_name'][$i], $destPath);
-                                    chmod($destPath, 0777);
-                                }
-                            }
-                        }
-
-                        $conn->commit();
-                        echo json_encode(['success' => true, 'brand_id' => $newBrandId]);
-                    } catch (Exception $e) {
-                        if ($transactionStarted && $conn->inTransaction()) {
-                            $conn->rollBack();
-                        }
-                        echo json_encode(['success' => false, 'message' => '品牌建立失敗: ' . $e->getMessage()]);
+                        chmod($uploadPath, 0777);
+                    } else if ($error !== UPLOAD_ERR_NO_FILE) {
+                        throw new Exception("檔案上傳錯誤: {$name}, 錯誤碼: {$error}");
                     }
-                    break;
-
-                case 'get_brands':
-                    $stmt = $conn->query("SELECT * FROM agent_brand ORDER BY brand_id");
-                    echo json_encode(['success' => true, 'data' => $stmt->fetchAll(PDO::FETCH_ASSOC)]);
-                    break;
-
-                case 'update_brand':
-                    try {
-                        $id = (int) $_POST['id'];
-                        $brandName = htmlspecialchars(trim($_POST['brandName'] ?? ''));
-                        $brandContent = htmlspecialchars(trim($_POST['brandContent'] ?? ''));
-
-                        if (empty($brandName) || empty($brandContent)) {
-                            throw new Exception('品牌名稱與內容不得為空');
-                        }
-
-                        $stmt = $conn->prepare("UPDATE agent_brand SET brand_name = ?, brand_content = ? WHERE brand_id = ?");
-                        $stmt->execute([$brandName, $brandContent, $id]);
-
-                        // Logo 圖片覆寫
-                        if (isset($_FILES['logo_images']) && !empty($_FILES['logo_images']['name'][0])) {
-                            $logoDir = __DIR__ . '/../imgs/brand/' . $id . '/';
-                            if (!file_exists($logoDir)) {
-                                mkdir($logoDir, 0777, true);
-                                chmod($logoDir, 0777);
-                            }
-
-                            $logoFiles = $_FILES['logo_images'];
-                            for ($i = 0; $i < count($logoFiles['name']); $i++) {
-                                if ($logoFiles['error'][$i] === UPLOAD_ERR_OK) {
-                                    $extension = strtolower(pathinfo($logoFiles['name'][$i], PATHINFO_EXTENSION));
-                                    if (!in_array($extension, ['png', 'jpg', 'jpeg'])) {
-                                        throw new Exception('不支援的Logo圖片格式');
-                                    }
-                                    $logoFilename = 'logo-' . $i . '.' . $extension;
-                                    $destPath = $logoDir . $logoFilename;
-                                    move_uploaded_file($logoFiles['tmp_name'][$i], $destPath);
-                                    chmod($destPath, 0777);
-                                }
-                            }
-                        }
-
-                        // 最新消息 圖片覆寫
-                        if (isset($_FILES['news_images']) && !empty($_FILES['news_images']['name'][0])) {
-                            $newsDir = __DIR__ . '/../imgs/brand/' . $id . '/newAbout/';
-                            if (!file_exists($newsDir)) {
-                                mkdir($newsDir, 0777, true);
-                                chmod($newsDir, 0777);
-                            }
-
-                            $newsFiles = $_FILES['news_images'];
-                            for ($i = 0; $i < count($newsFiles['name']); $i++) {
-                                if ($newsFiles['error'][$i] === UPLOAD_ERR_OK) {
-                                    $extension = strtolower(pathinfo($newsFiles['name'][$i], PATHINFO_EXTENSION));
-                                    if (!in_array($extension, ['jpg', 'jpeg'])) {
-                                        throw new Exception('不支援的最新消息圖片格式');
-                                    }
-                                    $newsFilename = 'newabout-' . $i . '.' . $extension;
-                                    $destPath = $newsDir . $newsFilename;
-                                    move_uploaded_file($newsFiles['tmp_name'][$i], $destPath);
-                                    chmod($destPath, 0777);
-                                }
-                            }
-                        }
-
-                        echo json_encode(['success' => true]);
-                    } catch (Exception $e) {
-                        echo json_encode(['success' => false, 'message' => '品牌更新失敗: ' . $e->getMessage()]);
-                    }
-                    break;
-
-                case 'delete_brand':
-                    try {
-                        $id = (int) $_POST['id'];
-                        $stmt = $conn->prepare("DELETE FROM agent_brand WHERE brand_id = ?");
-                        $stmt->execute([$id]);
-
-                        // 刪除品牌資料夾
-                        $brandDir = __DIR__ . '/../imgs/brand/' . $id;
-                        if (is_dir($brandDir)) {
-                            $files = new RecursiveIteratorIterator(
-                                new RecursiveDirectoryIterator($brandDir, RecursiveDirectoryIterator::SKIP_DOTS),
-                                RecursiveIteratorIterator::CHILD_FIRST
-                            );
-                            foreach ($files as $file) {
-                                $file->isDir() ? rmdir($file->getRealPath()) : unlink($file->getRealPath());
-                            }
-                            rmdir($brandDir);
-                        }
-
-                        echo json_encode(['success' => true]);
-                    } catch (Exception $e) {
-                        echo json_encode(['success' => false, 'message' => '品牌刪除失敗: ' . $e->getMessage()]);
-                    }
-                    break;
-
-                case 'get_brand_images':
-                    $brandId = (int) $_POST['brand_id'];
-                    $logos = [];
-                    $newsImages = [];
-
-                    $logoDir = __DIR__ . '/../imgs/brand/' . $brandId . '/';
-                    if (is_dir($logoDir)) {
-                        $logoFiles = glob($logoDir . 'logo-*.{png,jpg,jpeg}', GLOB_BRACE);
-                        foreach ($logoFiles as $file) {
-                            $logos[] = basename($file);
-                        }
-                    }
-
-                    $newsDir = __DIR__ . '/../imgs/brand/' . $brandId . '/newAbout/';
-                    if (is_dir($newsDir)) {
-                        $newsFiles = glob($newsDir . 'newabout-*.jpg', GLOB_BRACE);
-                        foreach ($newsFiles as $file) {
-                            $newsImages[] = basename($file);
-                        }
-                    }
-
-                    echo json_encode(['success' => true, 'logos' => $logos, 'news_images' => $newsImages]);
-                    break;
-
-                default:
-                    echo json_encode(['success' => false, 'message' => '無效的操作']);
+                }
             }
-        } catch (Exception $e) {
-            echo json_encode(['success' => false, 'message' => '操作失敗: ' . $e->getMessage()]);
-        }
-    }
-}
 
-// 處理請求
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    BrandModel::handleRequest();
+            // 新增：處理最新消息圖片上傳
+            if (!empty($brandNewsImages['name'][0])) { // 檢查是否有檔案上傳
+                $uploadDir = __DIR__ . "/../imgs/brand/{$newBrandId}/newAbout/"; // 儲存到 newAbout 子資料夾
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+
+                foreach ($brandNewsImages['name'] as $key => $name) {
+                    $tmp_name = $brandNewsImages['tmp_name'][$key];
+                    $error = $brandNewsImages['error'][$key];
+
+                    if ($error === UPLOAD_ERR_OK) {
+                        $fileExtension = pathinfo($name, PATHINFO_EXTENSION);
+                        $newFileName = uniqid('news_') . '.' . $fileExtension; // 使用唯一名稱避免衝突
+                        $uploadPath = $uploadDir . $newFileName;
+                        if (!move_uploaded_file($tmp_name, $uploadPath)) {
+                            throw new Exception("最新消息圖片上傳失敗: {$name}");
+                        }
+                        chmod($uploadPath, 0777);
+                    } else if ($error !== UPLOAD_ERR_NO_FILE) {
+                        throw new Exception("最新消息圖片上傳錯誤: {$name}, 錯誤碼: {$error}");
+                    }
+                }
+            }
+
+            $conn->commit();
+            echo json_encode(['success' => true, 'message' => '品牌新增成功', 'brand_id' => $newBrandId]);
+
+        } catch (Exception $e) {
+            $conn->rollBack();
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+        break;
+
+    case 'updateBrand':
+        // 更新品牌
+        $brandId = $_POST['brand_id'] ?? null;
+        $brandName = $_POST['brand_name'] ?? null;
+        $brandContent = $_POST['brand_content'] ?? null;
+        $addLogos = $_FILES['add_logos'] ?? [];
+        $deleteLogos = json_decode($_POST['delete_logos'] ?? '[]', true);
+        $addNewsImages = $_FILES['add_news_images'] ?? [];
+        $deleteNewsImages = json_decode($_POST['delete_news_images'] ?? '[]', true);
+
+        if (!$brandId || !$brandName || $brandContent === null) {
+            http_response_code(400);
+            echo json_encode(['error' => '缺少必要的更新參數']);
+            exit;
+        }
+
+        try {
+            $conn = getDBConnection();
+            $conn->beginTransaction();
+
+            // 更新品牌文字資料
+            $stmt = $conn->prepare("UPDATE agent_brand SET brand_name = ?, brand_content = ? WHERE brand_id = ?");
+            $stmt->execute([$brandName, $brandContent, $brandId]);
+
+            // 處理圖片刪除
+            foreach ($deleteLogos as $logoPath) {
+                // 確保路徑是預期的格式，避免刪除非品牌圖片
+                if (strpos($logoPath, "../imgs/brand/{$brandId}/") === 0 && file_exists(__DIR__ . '/' . $logoPath)) {
+                    unlink(__DIR__ . '/' . $logoPath);
+                }
+            }
+
+            // 處理最新消息圖片刪除
+            foreach ($deleteNewsImages as $imagePath) {
+                // 確保路徑是預期的格式，避免刪除非品牌圖片
+                if (strpos($imagePath, "../imgs/brand/{$brandId}/newAbout/") === 0 && file_exists(__DIR__ . '/' . $imagePath)) {
+                    unlink(__DIR__ . '/' . $imagePath);
+                }
+            }
+
+            // 處理 Logo 圖片上傳
+            if (!empty($addLogos['name'][0])) { // 檢查是否有檔案上傳
+                $uploadDir = __DIR__ . "/../imgs/brand/{$brandId}/";
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+
+                foreach ($addLogos['name'] as $key => $name) {
+                    $tmp_name = $addLogos['tmp_name'][$key];
+                    $error = $addLogos['error'][$key];
+
+                    if ($error === UPLOAD_ERR_OK) {
+                        $fileExtension = pathinfo($name, PATHINFO_EXTENSION);
+                        $newFileName = uniqid('logo_') . '.' . $fileExtension; // 使用唯一名稱避免衝突
+                        $uploadPath = $uploadDir . $newFileName;
+                        if (!move_uploaded_file($tmp_name, $uploadPath)) {
+                            throw new Exception("檔案上傳失敗: {$name}");
+                        }
+                        chmod($uploadPath, 0777);
+                    } else if ($error !== UPLOAD_ERR_NO_FILE) {
+                        throw new Exception("檔案上傳錯誤: {$name}, 錯誤碼: {$error}");
+                    }
+                }
+            }
+
+            // 處理最新消息圖片上傳
+            if (!empty($addNewsImages['name'][0])) { // 檢查是否有檔案上傳
+                $uploadDir = __DIR__ . "/../imgs/brand/{$brandId}/newAbout/";
+                if (!is_dir($uploadDir)) {
+                    mkdir($uploadDir, 0777, true);
+                }
+
+                foreach ($addNewsImages['name'] as $key => $name) {
+                    $tmp_name = $addNewsImages['tmp_name'][$key];
+                    $error = $addNewsImages['error'][$key];
+
+                    if ($error === UPLOAD_ERR_OK) {
+                        $fileExtension = pathinfo($name, PATHINFO_EXTENSION);
+                        $newFileName = uniqid('news_') . '.' . $fileExtension; // 使用唯一名稱避免衝突
+                        $uploadPath = $uploadDir . $newFileName;
+                        if (!move_uploaded_file($tmp_name, $uploadPath)) {
+                            throw new Exception("檔案上傳失敗: {$name}");
+                        }
+                        chmod($uploadPath, 0777);
+                    } else if ($error !== UPLOAD_ERR_NO_FILE) {
+                        throw new Exception("檔案上傳錯誤: {$name}, 錯誤碼: {$error}");
+                    }
+                }
+            }
+
+            $conn->commit();
+            echo json_encode(['success' => true, 'message' => '品牌更新成功']);
+
+        } catch (Exception $e) {
+            $conn->rollBack();
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+        break;
+
+    case 'deleteBrand':
+        // 刪除品牌
+        // 嘗試從 $_REQUEST (GET/POST) 或請求主體中取得 brand_id
+        $brandId = $_REQUEST['brand_id'] ?? (json_decode(file_get_contents('php://input'), true)['brand_id'] ?? null);
+        if (!$brandId) {
+            http_response_code(400);
+            echo json_encode(['error' => '缺少 brand_id 參數']);
+            exit;
+        }
+
+        try {
+            $conn = getDBConnection();
+            $conn->beginTransaction();
+
+            // 刪除品牌相關圖片資料夾
+            $brandImgDir = __DIR__ . "/../imgs/brand/{$brandId}/";
+            if (is_dir($brandImgDir)) {
+                // 遞迴刪除資料夾內容
+                function deleteDirectory($dir)
+                {
+                    if (!file_exists($dir))
+                        return true;
+                    if (!is_dir($dir))
+                        return unlink($dir);
+                    foreach (scandir($dir) as $item) {
+                        if ($item == '.' || $item == '..')
+                            continue;
+                        if (!deleteDirectory($dir . DIRECTORY_SEPARATOR . $item))
+                            return false;
+                    }
+                    return rmdir($dir);
+                }
+                deleteDirectory($brandImgDir);
+            }
+
+            // 刪除資料庫中的品牌資料
+            $stmt = $conn->prepare("DELETE FROM agent_brand WHERE brand_id = ?");
+            $stmt->execute([$brandId]);
+
+            $conn->commit();
+            echo json_encode(['success' => true, 'message' => '品牌刪除成功']);
+
+        } catch (Exception $e) {
+            $conn->rollBack();
+            http_response_code(500);
+            echo json_encode(['error' => $e->getMessage()]);
+        }
+        break;
+
+    default:
+        http_response_code(400);
+        echo json_encode(['error' => '無效的 action 參數']);
+        break;
 }
-?>
