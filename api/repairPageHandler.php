@@ -68,7 +68,28 @@ function handleUpload(string $fileKey, string $relativePath, array $allowedMimeT
 
     // 組合目標絕對路徑
     $targetAbsPath = "{$projectRoot}/{$relativePath}";
-    $targetDir = dirname($targetAbsPath);
+
+    // 特殊處理 key_report_doc，固定檔名但保留副檔名
+    if ($fileKey === 'key_report_doc') {
+        $baseName = 'KeyReport';
+        $targetDir = "{$projectRoot}/src";
+        $targetAbsPath = "{$targetDir}/{$baseName}.{$fileExt}";
+
+        // 檢查並刪除同檔名但副檔名不同的舊檔案
+        $existingFiles = glob("{$targetDir}/{$baseName}.*");
+        if ($existingFiles) {
+            foreach ($existingFiles as $existingFile) {
+                if (pathinfo($existingFile, PATHINFO_EXTENSION) !== $fileExt) {
+                    if (is_file($existingFile)) {
+                        unlink($existingFile);
+                    }
+                }
+            }
+        }
+    } else {
+        $targetAbsPath = "{$projectRoot}/{$relativePath}";
+        $targetDir = dirname($targetAbsPath);
+    }
 
     // 建立資料夾
     if (!is_dir($targetDir) && !mkdir($targetDir, 0777, true)) {
@@ -79,6 +100,9 @@ function handleUpload(string $fileKey, string $relativePath, array $allowedMimeT
     // 搬移檔案
     if (!move_uploaded_file($fileTmpPath, $targetAbsPath)) {
         $uploadErrors[] = "無法將檔案「{$fileName}」搬到 {$relativePath}，請檢查權限。";
+    } else {
+        // 設定檔案權限為 777
+        chmod($targetAbsPath, 0777);
     }
 }
 
@@ -105,11 +129,21 @@ handleUpload('key_report_doc', KEY_REPORT_DOC_PATH, $docMimeTypes, $docExtension
 /* ---------- 回傳結果 ---------- */
 header('Content-Type: application/json');
 
-echo json_encode(
-    empty($uploadErrors)
+$uploadedDocExt = null;
+if (isset($_FILES['key_report_doc']) && $_FILES['key_report_doc']['error'] === UPLOAD_ERR_OK) {
+    $uploadedDocExt = strtolower(pathinfo($_FILES['key_report_doc']['name'], PATHINFO_EXTENSION));
+}
+
+$response = empty($uploadErrors)
     ? ['success' => true, 'message' => '內容已成功更新！']
-    : ['success' => false, 'message' => implode("\n", array_map('htmlspecialchars', $uploadErrors))]
-);
+    : ['success' => false, 'message' => implode("\n", array_map('htmlspecialchars', $uploadErrors))];
+
+// Add the uploaded document extension if available and successful
+if ($uploadedDocExt !== null && empty($uploadErrors)) {
+    $response['key_report_doc_ext'] = $uploadedDocExt;
+}
+
+echo json_encode($response);
 
 exit();
 ?>

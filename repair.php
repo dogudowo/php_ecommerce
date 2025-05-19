@@ -5,11 +5,23 @@
         <img src="imgs/title.png" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
         <h1 class="h1">保固維修</h1>
     </div>
-
     <div class="container text-center mt-3">
-        <a class="btn btn-outline-success" style="border-radius: 20px;"
-            href="imgs/repair/price/AllenRepairPrice0609.jpg">維修價格表</a>
-        <a class="btn btn-outline-success" style="border-radius: 20px;" href="src/KeyReport.doc">鑰匙價格表</a>
+        <a class="btn btn-outline-success" style="border-radius: 20px;" target="_blank""
+            href=" imgs/repair/price/AllenRepairPrice0609.jpg">維修價格表</a>
+        <?php
+        $keyReportPath = '';
+        $srcDir = __DIR__ . '/src/';
+        if (is_dir($srcDir)) {
+            $files = scandir($srcDir);
+            foreach ($files as $file) {
+                if (strpos($file, 'KeyReport') === 0) {
+                    $keyReportPath = 'src/' . $file;
+                    break;
+                }
+            }
+        }
+        ?>
+        <a class="btn btn-outline-success" style="border-radius: 20px;" href="<?php echo $keyReportPath; ?>">鑰匙價格表</a>
     </div>
 
     <div class="container m-0 p-0">
