@@ -11,22 +11,21 @@ $repairId = (int)$_POST['repair_id'];
 $newStatus = $_POST['new_status'];
 
 try {
-    $pdo = getDBConnection(); // 如果你的 function 叫 db_connect()，請改成 db_connect()
+    $pdo = getDBConnection();
     $stmt = $pdo->prepare("UPDATE Repairs SET RepairStatus = :status WHERE RepairID = :id");
     $stmt->execute(['status' => $newStatus, 'id' => $repairId]);
 
-    // 狀態中文與樣式
-    $statusMap = [
-        'Completed' => ['text' => '已完成', 'class' => 'bg-success'],
-        'Pending' => ['text' => '處理中', 'class' => 'bg-info text-dark'],
-        'Repairing' => ['text' => '維修中', 'class' => 'bg-primary'],
-        'Cancel' => ['text' => '已取消', 'class' => 'bg-warning'],
-        'abnormal' => ['text' => '異常', 'class' => 'bg-danger'],
-    ];
-    $statusText = $statusMap[$newStatus]['text'] ?? $newStatus;
-    $statusClass = $statusMap[$newStatus]['class'] ?? 'bg-secondary';
+    // 狀態樣式
+    $statusClass = match ($newStatus) {
+        '已完成' => 'bg-success',
+        '處理中' => 'bg-info text-dark',
+        '維修中' => 'bg-primary',
+        '已取消' => 'bg-warning',
+        '異常' => 'bg-danger',
+        default => 'bg-secondary'
+    };
 
-    echo json_encode(['success' => true, 'statusText' => $statusText, 'statusClass' => $statusClass]);
+    echo json_encode(['success' => true, 'statusText' => $newStatus, 'statusClass' => $statusClass]);
 } catch (Exception $e) {
     echo json_encode(['success' => false, 'message' => '資料庫更新失敗']);
 }

@@ -894,19 +894,16 @@ function getRepairStatusClass(string $status): string
     return [
         '待處理' => 'bg-secondary',
         '處理中' => 'bg-info',
+        '維修中' => 'bg-primary',
         '已完成' => 'bg-success',
-        '已取消' => 'bg-danger'
+        '已取消' => 'bg-danger',
+        '異常' => 'bg-warning'
     ][$status] ?? 'bg-secondary';
 }
 
 function getRepairStatusText(string $status): string
 {
-    return [
-        '待處理' => '待處理',
-        '處理中' => '處理中',
-        '已完成' => '已完成',
-        '已取消' => '已取消'
-    ][$status] ?? $status;
+    return $status; // 直接返回中文狀態
 }
 ?>
 <script>

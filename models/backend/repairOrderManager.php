@@ -38,11 +38,11 @@ function getAllRepairOrders()
 function getRepairStatusList()
 {
     return [
-        'Completed' => '已完成',
-        'Pending' => '處理中',
-        'Repairing' => '維修中',
-        'Cancel' => '已取消',
-        'abnormal' => '異常'
+        '已完成' => '已完成',
+        '處理中' => '處理中',
+        '維修中' => '維修中',
+        '已取消' => '已取消',
+        '異常' => '異常'
     ];
 }
 
@@ -50,11 +50,11 @@ function getRepairStatusList()
 function getRepairStatusClass($status)
 {
     return match ($status) {
-        'Completed' => 'bg-success',
-        'Pending' => 'bg-info text-dark',
-        'Repairing' => 'bg-primary',
-        'Cancel' => 'bg-warning',
-        'abnormal' => 'bg-danger',
+        '已完成' => 'bg-success',
+        '處理中' => 'bg-info text-dark',
+        '維修中' => 'bg-primary',
+        '已取消' => 'bg-warning',
+        '異常' => 'bg-danger',
         default => 'bg-secondary'
     };
 }
@@ -306,8 +306,11 @@ $tab = $_GET['tab'] ?? 'product';
             if (result.success) {
                 // 更新表格上的狀態
                 const row = document.querySelector(`button.update-repair-status[data-id="${repairId}"]`).closest('tr');
-                row.querySelector('span.badge').textContent = result.statusText;
-                row.querySelector('span.badge').className = 'badge ' + result.statusClass;
+                const statusBadge = row.querySelector('span.badge');
+                statusBadge.textContent = newStatus;
+                statusBadge.className = 'badge ' + result.statusClass;
+                // 更新按鈕的 data-status 屬性
+                row.querySelector(`button.update-repair-status[data-id="${repairId}"]`).setAttribute('data-status', newStatus);
                 // 關閉 modal
                 bootstrap.Modal.getInstance(document.getElementById('updateRepairStatusModal')).hide();
             } else {
