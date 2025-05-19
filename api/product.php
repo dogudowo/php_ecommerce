@@ -658,7 +658,6 @@ function updateGallery(array $data, array $files)
             return ['success' => false, 'message' => '無法建立圖片目錄'];
         }
     }
-    chmod($uploadDir, 0777);
     // 處理 existing files: 保留 remainingSrcs 內檔案，其他刪除
     $existingFiles = glob($uploadDir . "gallery-*.{jpg,jpeg,png,gif}", GLOB_BRACE);
 
@@ -699,7 +698,10 @@ function updateGallery(array $data, array $files)
             $newFileName = "gallery-{$maxOrder}.{$ext}";
             $destination = $uploadDir . $newFileName;
 
-            if (!move_uploaded_file($tmpName, $destination)) {
+            if (move_uploaded_file($tmpName, $destination)) {
+                // 設定檔案權限為 777
+                chmod($destination, 0777);
+            } else {
                 return ['success' => false, 'message' => "圖片 {$files['newGalleryImages']['name'][$i]} 上傳失敗"];
             }
         }
