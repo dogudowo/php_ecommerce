@@ -1,16 +1,6 @@
 <?php
 require_once __DIR__ . '/../api/error_handler.php';
 require_once __DIR__ . '/../api/instruction.php';
-
-// 處理圖片上傳
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])) {
-    $type = $_POST['image_type'];
-    if (InstructionModel::updateInstructionImage($type, $_FILES['instruction_image'])) {
-        echo '<div class="alert alert-success">圖片更新成功</div>';
-    } else {
-        echo '<div class="alert alert-danger">圖片更新失敗</div>';
-    }
-}
 ?>
 
 <div class="container-fluid p-0">
@@ -26,9 +16,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
             <div class="row">
                 <div class="col-md-6 mb-3">
                     <h5>購物說明圖片</h5>
-                    <img src="<?= InstructionModel::getInstructionImages()['buyContext'] ?>" class="img-fluid mb-3"
+                    <img src="<?= getInstructionImages()['buyContext'] ?>" class="img-fluid mb-3"
                         style="max-height: 300px;">
-                    <form method="post" enctype="multipart/form-data">
+                    <form class="image-upload-form" method="post" enctype="multipart/form-data">
                         <input type="hidden" name="image_type" value="buyContext">
                         <div class="mb-3">
                             <input class="form-control" type="file" name="instruction_image"
@@ -39,9 +29,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
                 </div>
                 <div class="col-md-6 mb-3">
                     <h5>購物流程圖片</h5>
-                    <img src="<?= InstructionModel::getInstructionImages()['order'] ?>" class="img-fluid mb-3"
-                        style="max-height: 300px;">
-                    <form method="post" enctype="multipart/form-data">
+                    <img src="<?= getInstructionImages()['order'] ?>" class="img-fluid mb-3" style="max-height: 300px;">
+                    <form class="image-upload-form" method="post" enctype="multipart/form-data">
                         <input type="hidden" name="image_type" value="order">
                         <div class="mb-3">
                             <input class="form-control" type="file" name="instruction_image"
@@ -153,14 +142,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
     </div>
 </div>
 
-<!-- 通知Toast -->
-<div class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
-    <div id="notificationToast" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-        <div class="toast-body d-flex justify-content-between align-items-center" id="toastMessage">
-            <span></span>
-            <button type="button" class="btn-close ms-2" data-bs-dismiss="toast" aria-label="Close"></button>
-        </div>
-    </div>
+<!-- Toast Container -->
+<div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
+    <!-- Toasts will be appended here by JavaScript -->
 </div>
 
 <script>
@@ -223,7 +207,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
 
         } catch (error) {
             console.error('Error loading QA items:', error);
-            showToast('錯誤', '載入 QA 列表時發生錯誤', 'danger');
+            showError('載入 QA 列表時發生錯誤', error);
         }
     }
 
@@ -242,15 +226,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
             });
             const result = await response.json();
             if (result.success) {
-                showToast('成功', '新增成功', 'success');
+                showToast('新增成功', 'success');
                 e.target.reset();
                 loadQAList();
             } else {
-                showToast('失敗', '新增失敗', 'danger');
+                showToast('新增失敗', 'danger');
             }
         } catch (error) {
             console.error('Error adding QA item:', error);
-            showToast('錯誤', '新增時發生錯誤', 'danger');
+            showError('新增時發生錯誤', error);
         }
     });
 
@@ -270,25 +254,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
             });
             const result = await response.json();
             if (result.success) {
-                showToast('成功', '更新成功', 'success');
+                showToast('更新成功', 'success');
                 bootstrap.Modal.getInstance(document.getElementById('editModal')).hide();
                 loadQAList();
             } else {
-                showToast('失敗', '更新失敗', 'danger');
+                showToast('更新失敗', 'danger');
             }
         } catch (error) {
             console.error('Error updating QA item:', error);
-            showToast('錯誤', '更新時發生錯誤', 'danger');
+            showError('更新時發生錯誤', error);
         }
     });
 
     // 顯示 Toast 通知
-    function showToast(title, message, type) {
-        document.getElementById('toastMessage').querySelector('span').textContent = message;
-        const toastEl = document.getElementById('notificationToast');
-        toastEl.className = `toast bg-${type} text-white`;
-        new bootstrap.Toast(toastEl).show();
+    function showToast(msg, type = "success") {
+        const toastContainer = document.getElementById("toastContainer");
+        const el = document.createElement("div");
+        el.className = `toast align-items-center text-white bg-${type} border-0`;
+        el.role = "alert";
+        el.innerHTML = `
+            <div class="d-flex">
+                <div class="toast-body">
+                    <i class="bi ${type === "success" ? "bi-check-circle" : "bi-exclamation-triangle"} me-2"></i>${msg}
+                </div>
+                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+            </div>`;
+        toastContainer.appendChild(el);
+        new bootstrap.Toast(el, { delay: 3000 }).show();
     }
+    const showError = (title, err) => { console.error(title, err); showToast(`${title}：${err.message || err}`, "danger"); };
 
     // 初始載入
     document.addEventListener('DOMContentLoaded', () => {
@@ -316,15 +310,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
                     ).hide();
 
                     if (result.success) {
-                        showToast('成功', '刪除成功', 'success');
+                        showToast('刪除成功', 'success');
                         loadQAList();               // 重新載入列表
                     } else {
-                        showToast('失敗', '刪除失敗', 'danger');
+                        showToast('刪除失敗', 'danger');
                     }
                 } catch (err) {
                     console.error('Error deleting QA item:', err);
-                    showToast('錯誤', '刪除時發生錯誤', 'danger');
+                    showError('刪除時發生錯誤', err);
                 }
             });
+
+        // 圖片上傳表單處理
+        document.querySelectorAll('.image-upload-form').forEach(form => {
+            form.addEventListener('submit', async e => {
+                e.preventDefault();
+                const formData = new FormData(form);
+                const imageType = formData.get('image_type');
+
+                try {
+                    const response = await fetch(`${handlerUrl}?action=updateInstructionImage`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    const result = await response.json();
+
+                    if (result.success) {
+                        showToast('圖片更新成功', 'success');
+                        window.location.href = window.location.pathname + '?page=instructionManager&image_update=success'; // 重新導向並帶上成功參數
+                    } else {
+                        showToast(`圖片更新失敗: ${result.error || '未知錯誤'}`, 'danger');
+                    }
+                } catch (error) {
+                    console.error('Error updating image:', error);
+                    showError('圖片更新時發生錯誤', error);
+                }
+            });
+        });
+
+        // 檢查 URL 參數並顯示 Toast
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('image_update') && urlParams.get('image_update') === 'success') {
+            showToast('圖片更新成功', 'success');
+            // 移除 URL 參數以避免重複顯示
+            urlParams.delete('image_update');
+            const newUrl = window.location.pathname + '?' + urlParams.toString();
+            window.history.replaceState({}, document.title, newUrl);
+        }
     });
 </script>
