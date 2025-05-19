@@ -56,7 +56,7 @@ $featureds = getProductsByType('featured');
                 imgElement.src = img;
                 imgElement.className = 'd-block w-100';
                 imgElement.alt = 'slide';
-
+                imgElement.style.height = '630px';
                 item.appendChild(imgElement);
                 innerContainer.appendChild(item);
             });
