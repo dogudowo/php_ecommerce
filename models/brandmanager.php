@@ -437,11 +437,13 @@ defined('INCLUDED_FROM_ADMIN') || exit(header('Location: ../login.php'));
 
         // 品牌列表操作按鈕點擊 (編輯/刪除)
         brandTableBody.addEventListener('click', async (event) => {
-            const target = event.target;
+            // 找到最近的 edit-brand-btn 或 delete-brand-btn 按鈕
+            const btn = event.target.closest('.edit-brand-btn, .delete-brand-btn');
+            if (!btn) return;
 
             // 編輯按鈕
-            if (target.classList.contains('edit-brand-btn')) {
-                currentEditingBrandId = target.dataset.id;
+            if (btn.classList.contains('edit-brand-btn')) {
+                currentEditingBrandId = btn.dataset.id;
                 try {
                     const brandData = await apiRequest('getBrandDetails', { brand_id: currentEditingBrandId });
                     editBrandIdInput.value = brandData.brand_id;
@@ -473,9 +475,9 @@ defined('INCLUDED_FROM_ADMIN') || exit(header('Location: ../login.php'));
             }
 
             // 刪除按鈕
-            if (target.classList.contains('delete-brand-btn')) {
-                currentEditingBrandId = target.dataset.id;
-                const brandName = target.dataset.name;
+            if (btn.classList.contains('delete-brand-btn')) {
+                currentEditingBrandId = btn.dataset.id;
+                const brandName = btn.dataset.name;
                 deleteBrandName.textContent = brandName;
                 deleteBrandConfirmModal.show();
             }
