@@ -140,13 +140,19 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                 <div class="modal-body">
                     <form id="editMemberForm">
                         <input type="hidden" id="editMemberId">
-                        <div class="mb-3">
-                            <label for="editMemberType" class="form-label">會員類型</label>
-                            <select class="form-select" id="editMemberType" required>
-                                <option value="0">一般會員</option>
-                                <option value="1">員工</option>
-                                <option value="2">管理員</option>
-                            </select>
+                        <div class="mb-3 text-center d-flex flex-column">
+                            <label class="form-label">會員類型</label>
+                            <div class="btn-group" role="group" aria-label="會員類型">
+                                <input type="radio" class="btn-check" name="editMemberType" id="editMemberType0"
+                                    value="0" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="editMemberType0">一般會員</label>
+                                <input type="radio" class="btn-check" name="editMemberType" id="editMemberType1"
+                                    value="1" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="editMemberType1">員工</label>
+                                <input type="radio" class="btn-check" name="editMemberType" id="editMemberType2"
+                                    value="2" autocomplete="off">
+                                <label class="btn btn-outline-primary" for="editMemberType2">管理員</label>
+                            </div>
                         </div>
                     </form>
                 </div>
@@ -329,7 +335,12 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
             const { member } = await res.json();
 
             document.getElementById('editMemberId').value = id;
-            document.getElementById('editMemberType').value = member.IsAdmin;
+            // 設定按鈕群組的選取狀態
+            document.querySelectorAll('input[name="editMemberType"]').forEach(radio => {
+                if (radio.value == member.IsAdmin) {
+                    radio.checked = true;
+                }
+            });
             new bootstrap.Modal('#editMemberModal').show();
         } catch (err) {
             console.error(err);
@@ -346,7 +357,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
     /* 存檔 */
     document.getElementById('saveMember').onclick = async () => {
         const memberId = document.getElementById('editMemberId').value;
-        const isAdmin = document.getElementById('editMemberType').value;
+        const isAdmin = document.querySelector('input[name="editMemberType"]:checked').value;
 
         try {
             const res = await fetch(`${MEMBER_API}?action=update`, {

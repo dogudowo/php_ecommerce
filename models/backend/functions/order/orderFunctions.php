@@ -79,9 +79,9 @@ function updateOrderStatus(int $orderId, string $status): bool
 function getOrderStatusList(): array
 {
     return [
-        'Completed' => '已完成',
         'Pending' => '處理中',
         'Shipping' => '已送達',
+        'Completed' => '已完成',
         'Cancel' => '已取消',
         'abnormal' => '異常',
     ];
@@ -90,9 +90,9 @@ function getOrderStatusList(): array
 function getOrderStatusClass(string $status): string
 {
     return [
-        'Completed' => 'bg-success',
         'Pending' => 'bg-info text-dark',
         'Shipping' => 'bg-primary',
+        'Completed' => 'bg-success',
         'Cancel' => 'bg-warning',
         'abnormal' => 'bg-danger',
     ][$status] ?? 'bg-secondary';

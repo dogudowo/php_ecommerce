@@ -121,15 +121,20 @@ $statusList = getOrderStatusList();
                 <div class="modal-body">
                     <form id="updateStatusForm">
                         <input type="hidden" id="updateOrderId">
-                        <div class="mb-3">
-                            <label for="orderStatus" class="form-label">訂單狀態</label>
-                            <select class="form-select" id="orderStatus" required>
+                        <div class="mb-3 d-flex flex-column">
+                            <label class="form-label">訂單狀態</label>
+                            <div class="btn-group" role="group" aria-label="訂單狀態">
                                 <?php foreach ($statusList as $key => $value): ?>
-                                    <option value="<?php echo htmlspecialchars($key); ?>">
+                                    <input type="radio" class="btn-check" name="orderStatusRadio"
+                                        id="status_<?php echo htmlspecialchars($key); ?>"
+                                        value="<?php echo htmlspecialchars($key); ?>" autocomplete="off">
+                                    <label class="btn btn-outline-primary"
+                                        for="status_<?php echo htmlspecialchars($key); ?>">
                                         <?php echo htmlspecialchars($value); ?>
-                                    </option>
+                                    </label>
                                 <?php endforeach; ?>
-                            </select>
+                            </div>
+                            <input type="hidden" id="orderStatus"> <!-- Hidden input to store selected status -->
                         </div>
                         <!-- 移除備註輸入框 -->
                     </form>
@@ -396,15 +401,23 @@ $statusList = getOrderStatusList();
         return statusClasses[status] || 'bg-secondary';
     }
 
+    // 處理訂單狀態 radio 點擊事件 (btn-check)
+    $(document).on('change', '#updateStatusModal input[name="orderStatusRadio"]', function () {
+        // 將選定的狀態值存入隱藏的 input 欄位 (如果仍需要)
+        // $('#orderStatus').val($(this).val()); // 根據需要保留或移除
+    });
+
     // 更新訂單狀態 (使用事件委派)
     $(document).on('click', '.update-status', function () {
         const orderId = this.getAttribute('data-id');
         const currentStatus = this.getAttribute('data-status');
         console.log('更新訂單狀態：', orderId, currentStatus);
 
-        // 設置當前狀態
+        // 設置當前訂單ID
         document.getElementById('updateOrderId').value = orderId;
-        document.getElementById('orderStatus').value = currentStatus;
+
+        // 根據當前狀態設定對應的 radio button 為選中狀態
+        $(`#updateStatusModal input[name="orderStatusRadio"][value="${currentStatus}"]`).prop('checked', true);
 
         // 顯示模態框
         const modal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
@@ -414,7 +427,8 @@ $statusList = getOrderStatusList();
     // 保存訂單狀態更新
     document.getElementById('saveStatus').addEventListener('click', async function () {
         const orderId = document.getElementById('updateOrderId').value;
-        const status = document.getElementById('orderStatus').value;
+        // 從選中的 radio button 獲取選定的狀態值
+        const status = document.querySelector('#updateStatusModal input[name="orderStatusRadio"]:checked').value;
 
         console.log('保存訂單狀態更新：', orderId, status);
 
@@ -463,23 +477,24 @@ $statusList = getOrderStatusList();
 
                 // 更新頁面上的訂單狀態顯示
                 // 找到對應的訂單行並更新狀態
-                const orderRow = document.querySelector(`button.update-status[data-id="${orderId}"]`).closest('tr');
+                const orderRow = document.querySelector(`button.update-status[data-id="${orderId}"]`);
                 if (orderRow) {
-                    const statusCell = orderRow.querySelector('td:nth-child(6)');
-                    const statusClass = getOrderStatusClass(status);
-                    const statusText = getOrderStatusName(status);
-                    statusCell.innerHTML = `<span class="badge ${statusClass}">${statusText}</span>`;
-
-                    // 更新按鈕的 data-status 屬性
-                    orderRow.querySelector('button.update-status').setAttribute('data-status', status);
+                    orderRow.setAttribute('data-status', status);
+                    // 找到狀態顯示的 span 元素並更新內容和樣式
+                    const statusSpan = orderRow.closest('tr').querySelector('td:nth-child(6) span.badge');
+                    if (statusSpan) {
+                        statusSpan.className = `badge ${getOrderStatusClass(status)}`;
+                        statusSpan.textContent = getOrderStatusName(status);
+                    }
                 }
+
             } else {
                 // 更新失敗
                 toastContainer.innerHTML = `
                     <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
                         <div class="d-flex">
                             <div class="toast-body">
-                                <i class="bi bi-exclamation-triangle me-2"></i>${result.message || '更新訂單狀態失敗！'}
+                                <i class="bi bi-exclamation-circle me-2"></i>${result.message || '訂單狀態更新失敗！'}
                             </div>
                             <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                         </div>
@@ -488,42 +503,31 @@ $statusList = getOrderStatusList();
             }
 
             document.body.appendChild(toastContainer);
-            const toastElement = toastContainer.querySelector('.toast');
-            const toast = new bootstrap.Toast(toastElement, { delay: 3000 });
+            const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'), { delay: 3000 });
             toast.show();
-
-            // 3秒後移除 Toast 元素
-            setTimeout(() => {
-                document.body.removeChild(toastContainer);
-            }, 3500);
+            toastContainer.querySelector('.toast').addEventListener('hidden.bs.toast', () => toastContainer.remove());
 
         } catch (error) {
-            console.error('更新訂單狀態錯誤：', error);
-
+            console.error('保存訂單狀態更新錯誤:', error);
             // 顯示錯誤提示
-            const errorToast = document.createElement('div');
-            errorToast.className = 'position-fixed bottom-0 end-0 p-3';
-            errorToast.style.zIndex = '11';
-            errorToast.innerHTML = `
+            const toastContainer = document.createElement('div');
+            toastContainer.className = 'position-fixed bottom-0 end-0 p-3';
+            toastContainer.style.zIndex = '11';
+            toastContainer.innerHTML = `
                 <div class="toast align-items-center text-white bg-danger border-0" role="alert" aria-live="assertive" aria-atomic="true">
                     <div class="d-flex">
                         <div class="toast-body">
-                            <i class="bi bi-exclamation-triangle me-2"></i>系統錯誤，請稍後再試
+                            <i class="bi bi-exclamation-circle me-2"></i>系統錯誤，請稍後再試
                         </div>
                         <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                     </div>
                 </div>
             `;
+            document.body.appendChild(toastContainer);
+            const toast = new bootstrap.Toast(toastContainer.querySelector('.toast'), { delay: 3000 });
+            toast.show();
+            toastContainer.querySelector('.toast').addEventListener('hidden.bs.toast', () => toastContainer.remove());
 
-            document.body.appendChild(errorToast);
-            const errorToastElement = errorToast.querySelector('.toast');
-            const errorToastInstance = new bootstrap.Toast(errorToastElement, { delay: 3000 });
-            errorToastInstance.show();
-
-            // 3秒後移除 Toast 元素
-            setTimeout(() => {
-                document.body.removeChild(errorToast);
-            }, 3500);
         } finally {
             // 恢復按鈕狀態
             saveButton.innerHTML = originalText;
