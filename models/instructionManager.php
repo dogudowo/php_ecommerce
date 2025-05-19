@@ -174,13 +174,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['instruction_image'])
             const qaItems = await response.json();
             if (!Array.isArray(qaItems)) throw new Error('Invalid QA items data');
 
-            let html = '<table class="table table-striped"><thead><tr><th>問題</th><th>回答</th><th>操作</th></tr></thead><tbody>';
+            let html = `<table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th style="width: 20%">問題</th>
+                                    <th style="width: 40%">回答</th>
+                                    <th style="width: 10%">操作</th>
+                                </tr>
+                            </thead>
+                        <tbody>`;
             qaItems.forEach(item => {
                 html += `<tr>
                     <td>${item.question}</td>
                     <td>${item.answer}</td>
                     <td>
-                    <div class="btn-group">
+                        <div class="btn-group">
                             <button class="btn btn-sm btn-outline-primary edit-btn"
                                 data-id="${item.QA_id}"
                                 data-question="${item.question}"

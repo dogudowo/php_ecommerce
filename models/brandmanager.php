@@ -7,15 +7,15 @@ defined('INCLUDED_FROM_ADMIN') || exit(header('Location: ../login.php'));
 
     <!-- 公司介紹區塊 -->
     <div class="card mb-4">
-        <div class="card-header">
+        <div class="card-header d-flex justify-content-between align-items-center">
             公司介紹
+            <button class="btn btn-primary" data-bs-toggle="modal"
+                data-bs-target="#editCompanyIntroModal">編輯公司介紹</button>
         </div>
         <div class="card-body">
             <div id="companyIntroContent">
                 <!-- 公司介紹內容將由 JS 載入 -->
             </div>
-            <button class="btn btn-primary btn-sm mt-3" data-bs-toggle="modal"
-                data-bs-target="#editCompanyIntroModal">編輯公司介紹</button>
         </div>
     </div>
 
@@ -30,9 +30,9 @@ defined('INCLUDED_FROM_ADMIN') || exit(header('Location: ../login.php'));
                 <table class="table table-hover align-middle">
                     <thead>
                         <tr>
-                            <th style="width: 15%;">品牌名稱</th>
-                            <th style="width: 30%;">品牌介紹</th>
-                            <th style="width: 15%;">操作</th>
+                            <th style="width: 20%;">品牌名稱</th>
+                            <th style="width: 70%;">品牌介紹</th>
+                            <th style="width: 10%;">操作</th>
                         </tr>
                     </thead>
                     <tbody id="brandTableBody">
@@ -305,8 +305,10 @@ defined('INCLUDED_FROM_ADMIN') || exit(header('Location: ../login.php'));
                             <td>${brand.name}</td>
                             <td>${brand.content.substring(0, 100)}...</td>
                             <td>
-                                <button class="btn btn-sm btn-primary me-2 edit-brand-btn" data-id="${brandId}">編輯</button>
-                                <button class="btn btn-sm btn-danger delete-brand-btn" data-id="${brandId}" data-name="${brand.name}">刪除</button>
+                                <div class="btn-group">
+                                    <button class="btn btn-sm btn-outline-primary edit-brand-btn" data-id="${brandId}"><i class="bi bi-pencil-square"></i></button>
+                                    <button class="btn btn-sm btn-outline-danger delete-brand-btn" data-id="${brandId}" data-name="${brand.name}"><i class="bi bi-trash"></i></button>
+                                </div>
                             </td>
                         </tr>
                     `;
