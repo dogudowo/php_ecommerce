@@ -60,12 +60,14 @@
                             <div class="container text-start my-3 col-lg-9">
                                 <p>${brandData.content.replace(/\n/g, '<br>')}</p>
                             </div>
+                            ${brandData.images && brandData.images.length > 0 ? `
                             <div class="container">
                                 <h5 class="text-center">最新資訊</h5>
                                 <div class="row">
                                     ${imagesHtml}
                                 </div>
                             </div>
+                            ` : ''}
                         </div>
                     `);
                 });
