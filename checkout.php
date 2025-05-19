@@ -22,9 +22,6 @@ try {
     if (!$memberInfo) {
         throw new Exception("找不到會員資訊");
     }
-
-    // 測試輸出會員資訊
-    error_log("獲取到的會員資訊: " . print_r($memberInfo, true));
 } catch (Exception $e) {
     error_log("獲取會員資訊失敗: " . $e->getMessage());
     $memberInfo = ['Name' => '', 'Phone' => '', 'City' => '', 'Address' => ''];
