@@ -261,8 +261,40 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
 
     // 進行中(Pending & Shipping) vs 其他
     $filtered = ($status === 'Pending')
-        ? array_filter($orders, fn($o) => in_array($o['Status'], ['Pending', 'Shipping'], true))
-        : array_filter($orders, fn($o) => !in_array($o['Status'], ['Pending', 'Shipping'], true));
+        ? array_filter($orders, function($o) use ($pdo) {
+            // 檢查訂單狀態
+            $orderStatus = in_array($o['Status'], ['Pending', 'Shipping'], true);
+            
+            // 檢查維修狀態
+            $warranties = getOrderWarranties((int) $o['OrderID'], $pdo);
+            $hasActiveRepair = false;
+            foreach ($warranties as $warranty) {
+                if (isset($warranty['RepairStatus']) && 
+                    in_array($warranty['RepairStatus'], ['待處理', '處理中'], true)) {
+                    $hasActiveRepair = true;
+                    break;
+                }
+            }
+            
+            return $orderStatus || $hasActiveRepair;
+        })
+        : array_filter($orders, function($o) use ($pdo) {
+            // 檢查訂單狀態
+            $orderStatus = !in_array($o['Status'], ['Pending', 'Shipping'], true);
+            
+            // 檢查維修狀態
+            $warranties = getOrderWarranties((int) $o['OrderID'], $pdo);
+            $hasActiveRepair = false;
+            foreach ($warranties as $warranty) {
+                if (isset($warranty['RepairStatus']) && 
+                    in_array($warranty['RepairStatus'], ['待處理', '處理中'], true)) {
+                    $hasActiveRepair = true;
+                    break;
+                }
+            }
+            
+            return $orderStatus && !$hasActiveRepair;
+        });
 
     echo '<div class="tab-pane fade ' . ($status === 'Pending' ? 'show active' : '') .
         '" id="' . strtolower($status) . '" role="tabpanel" aria-labelledby="' .
@@ -272,32 +304,65 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
         echo '<div class="list-group">';
         foreach ($filtered as $order) {
             $detail = getOrderDetails((int) $order['OrderID'], $pdo);
-            ?>
-            <div class="list-group-item mb-4 border rounded">
-                <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">訂單號碼: ORD-<?= $order['OrderID'] ?></h5>
-                    <small><?= $order['OrderDate'] ?></small>
-                </div>
-                <?php
-                foreach ($detail['items'] as $item): ?>
-                    <div class="d-flex align-items-center mb-2 border-top mt-2 pt-2">
-                        <div>
-                            <p class="mb-1 h5"><?= $item['ProductName'] ?></p>
-                            <p class="mb-0">顏色: <?= "{$item['Color']}" ?></p>
-                            <p class="mb-0">數量: <?= $item['Quantity'] ?> 件</p>
-                            <p class="mb-0">單價: $<?= $item['Price'] ?></p>
+            $warranties = getOrderWarranties((int) $order['OrderID'], $pdo);
+            $activeRepairs = array_filter($warranties, function($w) {
+                return isset($w['RepairStatus']) && 
+                       in_array($w['RepairStatus'], ['待處理', '處理中'], true);
+            });
+            
+            // 如果是進行中頁面且有維修項目，先顯示維修項目
+            if ($status === 'Pending' && !empty($activeRepairs)) {
+                foreach ($activeRepairs as $repair) {
+                    ?>
+                    <div class="list-group-item mb-4 border rounded">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">維修單號: REP-<?= $repair['RepairID'] ?></h5>
+                            <small><?= $repair['RepairDate'] ?></small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2 border-top mt-2 pt-2">
+                            <div>
+                                <p class="mb-1 h5"><?= $repair['ProductName'] ?></p>
+                                <p class="mb-0">維修狀態: 
+                                    <span class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?>">
+                                        <?= getRepairStatusText($repair['RepairStatus']) ?>
+                                    </span>
+                                </p>
+                                <?php if ($repair['RepairCommit']): ?>
+                                    <p class="mb-0">維修說明: <?= htmlspecialchars($repair['RepairCommit']) ?></p>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                     <?php
-                endforeach; ?>
-                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                    <div class="badge <?= getStatusClass($order['Status']) ?>">
-                        <?php echo htmlspecialchars(getStatusText($order['Status'])); ?>
+                }
+            }
+            
+            // 如果是進行中頁面且訂單狀態為 Pending 或 Shipping，顯示訂單
+            if ($status === 'Pending' && in_array($order['Status'], ['Pending', 'Shipping'], true)) {
+                ?>
+                <div class="list-group-item mb-4 border rounded">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">訂單號碼: ORD-<?= $order['OrderID'] ?></h5>
+                        <small><?= $order['OrderDate'] ?></small>
                     </div>
-                    <div class="text-center fw-bold fs-5 text-danger">總計 $<?= number_format($detail['total_amount']) ?></div>
-                    <div class="d-flex align-items-center">
+                    <?php
+                    foreach ($detail['items'] as $item): ?>
+                        <div class="d-flex align-items-center mb-2 border-top mt-2 pt-2">
+                            <div>
+                                <p class="mb-1 h5"><?= $item['ProductName'] ?></p>
+                                <p class="mb-0">顏色: <?= "{$item['Color']}" ?></p>
+                                <p class="mb-0">數量: <?= $item['Quantity'] ?> 件</p>
+                                <p class="mb-0">單價: $<?= $item['Price'] ?></p>
+                            </div>
+                        </div>
                         <?php
-                        if ($status === 'Pending'): ?>
+                    endforeach; ?>
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                        <div class="badge <?= getStatusClass($order['Status']) ?>">
+                            <?php echo htmlspecialchars(getStatusText($order['Status'])); ?>
+                        </div>
+                        <div class="text-center fw-bold fs-5 text-danger">總計 $<?= number_format($detail['total_amount']) ?></div>
+                        <div class="d-flex align-items-center">
                             <?php
                             if ($order['Status'] === 'Shipping'): ?>
                                 <button class="btn btn-success btn-sm" data-action="pay"
@@ -308,12 +373,42 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                                     disabled>付款</button>
                                 <?php
                             endif; ?>
+                        </div>
+                    </div>
+                </div>
+                <?php
+            }
+            
+            // 如果是已完成頁面，顯示訂單
+            if ($status !== 'Pending') {
+                ?>
+                <div class="list-group-item mb-4 border rounded">
+                    <div class="d-flex w-100 justify-content-between">
+                        <h5 class="mb-1">訂單號碼: ORD-<?= $order['OrderID'] ?></h5>
+                        <small><?= $order['OrderDate'] ?></small>
+                    </div>
+                    <?php
+                    foreach ($detail['items'] as $item): ?>
+                        <div class="d-flex align-items-center mb-2 border-top mt-2 pt-2">
+                            <div>
+                                <p class="mb-1 h5"><?= $item['ProductName'] ?></p>
+                                <p class="mb-0">顏色: <?= "{$item['Color']}" ?></p>
+                                <p class="mb-0">數量: <?= $item['Quantity'] ?> 件</p>
+                                <p class="mb-0">單價: $<?= $item['Price'] ?></p>
+                            </div>
+                        </div>
                         <?php
-                        else:
+                    endforeach; ?>
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                        <div class="badge <?= getStatusClass($order['Status']) ?>">
+                            <?php echo htmlspecialchars(getStatusText($order['Status'])); ?>
+                        </div>
+                        <div class="text-center fw-bold fs-5 text-danger">總計 $<?= number_format($detail['total_amount']) ?></div>
+                        <div class="d-flex align-items-center">
+                            <?php
                             // 檢查所有商品的 Type 是否都為 aluminum 或 zipper
                             $showRepair = false;
                             foreach ($detail['items'] as $item) {
-                                // 這裡假設 ProductID 就是 Type，若不是請改成 $item['Type']
                                 if (isset($item['ProductID']) && in_array(strtolower($item['ProductID']), ['aluminum', 'zipper'])) {
                                     $showRepair = true;
                                     break;
@@ -324,12 +419,12 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                                     data-order-id="<?= $order['OrderID'] ?>"
                                     data-bs-toggle="modal" 
                                     data-bs-target="#warrantyModal<?= $order['OrderID'] ?>">維修</button>
-                            <?php endif;
-                        endif; ?>
+                            <?php endif; ?>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <?php
+                <?php
+            }
         }
         echo '</div>';
     } else {
