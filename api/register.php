@@ -56,7 +56,7 @@ function registerUser($name, $phone, $email, $password, $confirm_password, $city
         $newMemberID = $result['max_id'] ? $result['max_id'] + 1 : 1;
 
         // 創建新用戶
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT); //bcrypt
         $stmt = $pdo->prepare("INSERT INTO Member (MemberID, Name, Phone, Email, Password, City, Address) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$newMemberID, $name, $phone, $email, $hashed_password, $city, $address]);
 
