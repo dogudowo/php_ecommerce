@@ -5,7 +5,18 @@ define('CH_RUNDOWN_IMG_PATH', 'imgs/repair/context-ch/repairRundown.jpg');
 define('EN_CONTEXT_IMG_PATH', 'imgs/repair/context-en/repairContextUS.jpg');
 define('EN_RUNDOWN_IMG_PATH', 'imgs/repair/context-en/repairRundownEN.jpg');
 define('PRICE_IMG_PATH', 'imgs/repair/price/AllenRepairPrice0609.jpg');
-define('KEY_REPORT_DOC_PATH', 'src/KeyReport.doc');
+// Find the KeyReport file dynamically
+$keyReportDocPath = '';
+$srcDir = __DIR__ . '/../src/';
+$files = scandir($srcDir);
+if ($files) {
+    foreach ($files as $file) {
+        if (strpos($file, 'KeyReport') === 0) {
+            $keyReportDocPath = 'src/' . $file;
+            break;
+        }
+    }
+}
 
 ?>
 
@@ -93,8 +104,8 @@ define('KEY_REPORT_DOC_PATH', 'src/KeyReport.doc');
                 <label for="key_report_doc" class="form-label">鑰匙價格表文件 (KeyReport.doc):</label>
                 <input class="form-control" type="file" id="key_report_doc" name="key_report_doc"
                     accept=".doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document">
-                <p class="current-img-label mt-2">目前文件: <a href="<?php echo 'src/KeyReport.doc'; ?>"
-                        target="_blank">KeyReport.doc</a></p>
+                <p class="current-img-label mt-2">目前文件: <a href="<?php echo $keyReportDocPath; ?>"
+                        target="_blank"><?php echo basename($keyReportDocPath); ?></a></p>
             </div>
         </div>
     </div>
@@ -121,6 +132,16 @@ define('KEY_REPORT_DOC_PATH', 'src/KeyReport.doc');
                 document.querySelectorAll('.img-preview').forEach(img => {
                     img.src = img.src.split('?')[0] + '?t=' + new Date().getTime();
                 });
+
+                // 如果有上傳文件，更新文件連結
+                if (result.key_report_doc_ext) {
+                    const docLink = document.querySelector('#price-doc a[href*="KeyReport.doc"]');
+                    if (docLink) {
+                        const newHref = `src/KeyReport.${result.key_report_doc_ext}`;
+                        docLink.href = newHref;
+                        docLink.textContent = `KeyReport.${result.key_report_doc_ext}`;
+                    }
+                }
 
                 // 顯示成功toast通知
                 const toastContainer = document.createElement('div');
