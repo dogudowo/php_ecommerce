@@ -19,7 +19,7 @@ $carousel_dir = __DIR__ . '/../imgs/carousel/';
     <!-- 新增輪播圖區域 -->
     <div class="card mb-4">
         <div class="card-header">
-            <h5 class="mb-0"><i class="bi bi-plus-circle me-2"></i>新增輪播圖</h5>
+            <h4>新增輪播圖</h4>
         </div>
         <div class="card-body">
             <form id="carouselUploadForm" enctype="multipart/form-data">
@@ -52,7 +52,7 @@ $carousel_dir = __DIR__ . '/../imgs/carousel/';
     <!-- 輪播圖列表 -->
     <div class="card">
         <div class="card-header">
-            <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>輪播圖列表</h5>
+            <h4>輪播圖列表</h4>
         </div>
         <div class="card-body">
             <div id="carouselContainer" class="row g-3">
