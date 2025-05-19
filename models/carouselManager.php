@@ -29,7 +29,6 @@ $carousel_dir = __DIR__ . '/../imgs/carousel/';
                             <label for="carouselImage" class="form-label">選擇圖片</label>
                             <input type="file" class="form-control" id="carouselImage" name="carouselImage"
                                 accept="image/*" required>
-                            <div class="form-text">建議使用寬高比為16:9的圖片，最大檔案大小為2MB。</div>
                         </div>
                         <div class="mb-3">
                             <button type="button" class="btn btn-primary" id="uploadCarouselBtn">

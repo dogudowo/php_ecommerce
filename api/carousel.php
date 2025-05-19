@@ -3,7 +3,7 @@ require_once __DIR__ . '/header.php';
 require_once __DIR__ . '/error_handler.php';
 
 const CAROUSEL_DIR = __DIR__ . '/../imgs/carousel/'; // storage folder
-const MAX_UPLOAD_SIZE = 5 * 1024 * 1024;             // 2 MB
+const MAX_UPLOAD_SIZE = 10 * 1024 * 1024;             // 10 MB
 const ALLOWED_MIME_TYPES = [
     'image/jpeg' => 'jpg',
     'image/png' => 'png',
@@ -92,7 +92,7 @@ function handleUpload(): void
     }
 
     if ($file['size'] > MAX_UPLOAD_SIZE) {
-        respondJson(false, '圖片大小不能超過 2 MB');
+        respondJson(false, '圖片大小不能超過 10 MB');
     }
 
     $extension = ALLOWED_MIME_TYPES[$mime];
