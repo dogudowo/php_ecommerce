@@ -60,9 +60,9 @@ function handleUpload(string $fileKey, string $relativePath, array $allowedMimeT
         return;
     }
 
-    // 大小限制（5 MB）
-    if ($fileSize > 5 * 1024 * 1024) {
-        $uploadErrors[] = "檔案「{$fileName}」過大（> 5 MB）。";
+    // 大小限制（10 MB）
+    if ($fileSize > 10 * 1024 * 1024) {
+        $uploadErrors[] = "檔案「{$fileName}」過大（> 10 MB）。";
         return;
     }
 
