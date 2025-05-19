@@ -29,7 +29,7 @@ $edit_option_id = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
         try {
             const resp = await fetch(`api/product.php?action=getProductById&product_id=${productId}`);
             const json = await resp.json();
-            if (!json.success || !json.data) {
+            if (!json.success || !json.data || json.data.isActive == 0) {
                 window.location.href = '404.php';
                 return;
             }
@@ -213,14 +213,14 @@ $edit_option_id = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
             try {
                 // 如果有edit參數，先刪除原有商品
                 <?php if ($edit_option_id > 0): ?>
-                        await fetch('api/cart.php?action=removeFromCart', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                memberId: memberId,
-                                optionId: <?= $edit_option_id ?>
-                            })
-                        });
+                    await fetch('api/cart.php?action=removeFromCart', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            memberId: memberId,
+                            optionId: <?= $edit_option_id ?>
+                        })
+                    });
                 <?php endif; ?>
 
                 // 加入新規格商品
