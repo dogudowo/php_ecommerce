@@ -32,36 +32,46 @@ require_once __DIR__ . '/header.php';
         <div class="tab-pane fade show active text-center" id="shoppingContent" role="tabpanel"
             aria-labelledby="shopping-tab">
             <!-- 購物說明內容 -->
-            <img src="imgs/instruction/buyContext.jpg" class="img-fluid" />
+            <?php
+            $buyContextImages = glob('imgs/instruction/buyContext.*');
+            if (!empty($buyContextImages)) {
+                echo '<img src="' . $buyContextImages[0] . '" class="img-fluid" />';
+            }
+            ?>
         </div>
         <div class="tab-pane fade" id="qaContent" role="tabpanel" aria-labelledby="qa-tab">
             <!-- 購物Q&A內容 -->
             <?php
             require_once __DIR__ . '/api/instruction.php';
-            $qaItems = InstructionModel::getQAItems();
+            $qaItems = getQAItems();
             ?>
             <div class="accordion" id="accordionExample">
                 <?php foreach ($qaItems as $index => $item): ?>
-                        <div class="accordion-item">
-                            <h2 class="accordion-header" id="heading<?= $index ?>">
-                                <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                                    data-bs-target="#collapse<?= $index ?>" aria-expanded="false"
-                                    aria-controls="collapse<?= $index ?>">
-                                    <?= nl2br($item['question']) ?>
-                                </button>
-                            </h2>
-                            <div id="collapse<?= $index ?>" class="accordion-collapse collapse collapsed"
-                                aria-labelledby="heading<?= $index ?>" data-bs-parent="#accordionExample">
-                                <div class="accordion-body">
-                                    <?= nl2br($item['answer']) ?>
-                                </div>
+                    <div class="accordion-item">
+                        <h2 class="accordion-header" id="heading<?= $index ?>">
+                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                                data-bs-target="#collapse<?= $index ?>" aria-expanded="false"
+                                aria-controls="collapse<?= $index ?>">
+                                <?= nl2br($item['question']) ?>
+                            </button>
+                        </h2>
+                        <div id="collapse<?= $index ?>" class="accordion-collapse collapse collapsed"
+                            aria-labelledby="heading<?= $index ?>" data-bs-parent="#accordionExample">
+                            <div class="accordion-body">
+                                <?= nl2br($item['answer']) ?>
                             </div>
                         </div>
+                    </div>
                 <?php endforeach; ?>
             </div>
         </div>
         <div class="tab-pane fade text-center" id="processContent" role="tabpanel" aria-labelledby="process-tab">
-            <img src="imgs/instruction/order.jpg" alt="" class="img-fulid w-100" />
+            <?php
+            $orderImages = glob('imgs/instruction/order.*');
+            if (!empty($orderImages)) {
+                echo '<img src="' . $orderImages[0] . '" alt="" class="img-fulid w-100" />';
+            }
+            ?>
         </div>
     </div>
 </div>
