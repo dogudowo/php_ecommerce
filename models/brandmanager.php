@@ -1,14 +1,14 @@
-<?php
-defined('INCLUDED_FROM_ADMIN') || exit(header('Location: ../login.php'));
-?>
+<?php defined('INCLUDED_FROM_ADMIN') || exit(header('Location: ../login.php')); ?>
 
-<div class="container-fluid p-4">
-    <h3 class="mb-4"><i class="bi bi-building me-2"></i>品牌管理</h3>
+<div class="container-fluid p-0">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h3><i class="bi bi-building me-2"></i>品牌管理</h3>
+    </div>
 
     <!-- 公司介紹區塊 -->
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-            公司介紹
+            <h4>公司介紹</h4>
             <button class="btn btn-primary" data-bs-toggle="modal"
                 data-bs-target="#editCompanyIntroModal">編輯公司介紹</button>
         </div>
@@ -22,7 +22,7 @@ defined('INCLUDED_FROM_ADMIN') || exit(header('Location: ../login.php'));
     <!-- 品牌列表區塊 -->
     <div class="card mb-4">
         <div class="card-header d-flex justify-content-between align-items-center">
-            品牌列表
+            <h4>品牌列表</h4>
             <button class="btn btn-success " data-bs-toggle="modal" data-bs-target="#addBrandModal">新增品牌</button>
         </div>
         <div class="card-body">
