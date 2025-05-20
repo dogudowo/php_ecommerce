@@ -340,7 +340,7 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
             $hasActiveRepair = false;
             foreach ($warranties as $warranty) {
                 if (isset($warranty['RepairStatus']) && 
-                    in_array($warranty['RepairStatus'], ['待處理', '維修中'], true)) {
+                    in_array($warranty['RepairStatus'], ['待處理', '維修中', '已送達'], true)) {
                     $hasActiveRepair = true;
                     break;
                 }
@@ -364,7 +364,7 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
             $warranties = getOrderWarranties((int) $order['OrderID'], $pdo);
             $activeRepairs = array_filter($warranties, function($w) {
                 return isset($w['RepairStatus']) && 
-                       in_array($w['RepairStatus'], ['待處理', '維修中'], true);
+                       in_array($w['RepairStatus'], ['待處理', '維修中', '已送達'], true);
             });
             
             // 如果是進行中頁面且有維修項目，先顯示維修項目
@@ -386,6 +386,19 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                                 </p>
                                 <?php if ($repair['RepairCommit']): ?>
                                     <p class="mb-0">維修說明: <?= htmlspecialchars($repair['RepairCommit']) ?></p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                            <div class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?>">
+                                <?= getRepairStatusText($repair['RepairStatus']) ?>
+                            </div>
+                            <?php if ($repair['Price'] !== null): ?>
+                                <div class="text-center fw-bold fs-5 text-danger">維修金額 $<?= number_format($repair['Price']) ?></div>
+                            <?php endif; ?>
+                            <div class="d-flex align-items-center">
+                                <?php if ($repair['RepairStatus'] === '已送達'): ?>
+                                    <button class="btn btn-success btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>">付款</button>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -781,12 +794,6 @@ function getOrderWarranties(int $orderId, ?PDO $pdo = null): array
 {
     $pdo = $pdo ?? db_connect();
     
-    // 首先檢查repairs資料
-    $checkRepairs = $pdo->prepare("SELECT * FROM Repairs");
-    $checkRepairs->execute();
-    $allRepairs = $checkRepairs->fetchAll(PDO::FETCH_ASSOC);
-    error_log('All Repairs: ' . json_encode($allRepairs, JSON_UNESCAPED_UNICODE));
-    
     // 簡化查詢，先確保基本資料能正確獲取
     $sql = <<<SQL
         SELECT  w.WarrantyID,
@@ -796,7 +803,8 @@ function getOrderWarranties(int $orderId, ?PDO $pdo = null): array
                 r.RepairID,
                 r.RepairDate,
                 r.RepairStatus,
-                r.RepairCommit
+                r.RepairCommit,
+                r.Price
         FROM    Orders o
         JOIN    OrderRecord orec ON o.OrderID = orec.OrderID
         JOIN    ReceiptItem ri ON orec.RecordID = ri.OrderRecordID
@@ -808,23 +816,6 @@ function getOrderWarranties(int $orderId, ?PDO $pdo = null): array
     $stmt = $pdo->prepare($sql);
     $stmt->execute(['orderId' => $orderId]);
     $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // 調試輸出
-    error_log('Order ID: ' . $orderId);
-    error_log('SQL Query: ' . $sql);
-    error_log('Results: ' . json_encode($results, JSON_UNESCAPED_UNICODE));
-    
-    // 檢查warranty和repairs的關聯
-    if (!empty($results)) {
-        $warrantyIds = array_column($results, 'WarrantyID');
-        $checkWarrantyRepairs = $pdo->prepare("
-            SELECT * FROM Repairs 
-            WHERE WarrantyID IN (" . implode(',', $warrantyIds) . ")
-        ");
-        $checkWarrantyRepairs->execute();
-        $warrantyRepairs = $checkWarrantyRepairs->fetchAll(PDO::FETCH_ASSOC);
-        error_log('Warranty Repairs: ' . json_encode($warrantyRepairs, JSON_UNESCAPED_UNICODE));
-    }
     
     return $results;
 }
@@ -842,7 +833,7 @@ function createRepairRequest(array $warrantyIds, ?PDO $pdo = null, string $repai
 
         $createRepair = $pdo->prepare("
             INSERT INTO Repairs (RepairID, WarrantyID, RepairDate, RepairStatus, RepairCommit, Price) 
-            VALUES (:repairId, :warrantyId, NOW(), '待處理', :repairCommit, :price)
+            VALUES (:repairId, :warrantyId, NOW(), :status, :repairCommit, :price)
         ");
 
         foreach ($warrantyIds as $warrantyId) {
@@ -861,6 +852,7 @@ function createRepairRequest(array $warrantyIds, ?PDO $pdo = null, string $repai
             $createRepair->execute([
                 'repairId' => $repairId,
                 'warrantyId' => $warrantyId,
+                'status' => REPAIR_STATUS['PENDING'],
                 'repairCommit' => $repairCommit,
                 'price' => $isWarrantyValid ? 0 : null // 保固內免費，保固外待定
             ]);
@@ -898,6 +890,7 @@ function getRepairStatusClass(string $status): string
         '處理中' => 'bg-info',
         '維修中' => 'bg-primary',
         '已完成' => 'bg-success',
+        '已送達' => 'bg-primary',
         '已取消' => 'bg-warning',
         '異常' => 'bg-danger'
     ][$status] ?? 'bg-secondary';
