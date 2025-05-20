@@ -305,6 +305,9 @@ function renderRepairTab(array $orders, string $title, ?PDO $pdo = null): void
                                 <p class="mb-2">維修說明: <?= htmlspecialchars($repair['RepairCommit']) ?></p>
                             <?php endif; ?>
                             <p class="mb-0">保固到期日: <?= date('Y-m-d', strtotime($repair['WarrantyDate'])) ?></p>
+                            <?php if ($repair['Price'] !== null): ?>
+                                <p class="mb-0">維修金額: $<?= number_format($repair['Price']) ?></p>
+                            <?php endif; ?>
                         </div>
                         <div class="col-md-4 text-end">
                             <span class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?> fs-6">
@@ -463,25 +466,34 @@ function renderOrderItem($order, $detail) {
                             $warranties = getOrderWarranties((int) $order['OrderID']);
                             foreach ($warranties as $warranty):
                                 if (!isset($warranty['RepairID'])): // 只顯示尚未維修的商品
-                                    $warrantyStatus = $warranty['WarrantyStatus'] ? '有效' : '已過期';
-                                    $warrantyClass = $warranty['WarrantyStatus'] ? 'text-success' : 'text-danger';
+                                    // 檢查保固是否真的有效（檢查到期日）
+                                    $warrantyDate = strtotime($warranty['WarrantyDate']);
+                                    $isWarrantyValid = $warranty['WarrantyStatus'] && $warrantyDate > time();
+                                    $warrantyStatus = $isWarrantyValid ? '有效' : '已過期';
+                                    $warrantyClass = $isWarrantyValid ? 'text-success' : 'text-danger';
                             ?>
                                 <div class="form-check mb-2">
                                     <input class="form-check-input" type="checkbox" name="warranty_ids[]" 
-                                           value="<?= $warranty['WarrantyID'] ?>" id="warranty<?= $warranty['WarrantyID'] ?>"
-                                           <?= !$warranty['WarrantyStatus'] ? 'disabled' : '' ?>>
+                                           value="<?= $warranty['WarrantyID'] ?>" id="warranty<?= $warranty['WarrantyID'] ?>">
                                     <label class="form-check-label" for="warranty<?= $warranty['WarrantyID'] ?>">
                                         <?= htmlspecialchars($warranty['ProductName']) ?>
                                         <br>
                                         <small class="ms-4">
                                             <span class="<?= $warrantyClass ?>">
-                                                <i class="bi <?= $warranty['WarrantyStatus'] ? 'bi-shield-check' : 'bi-shield-x' ?>"></i>
+                                                <i class="bi <?= $isWarrantyValid ? 'bi-shield-check' : 'bi-shield-x' ?>"></i>
                                                 保固狀態：<?= $warrantyStatus ?>
                                             </span>
                                             <br>
                                             <span class="text-muted ms-4">
                                                 到期日：<?= date('Y-m-d', strtotime($warranty['WarrantyDate'])) ?>
                                             </span>
+                                            <?php if (!$isWarrantyValid): ?>
+                                                <br>
+                                                <span class="text-warning ms-4">
+                                                    <i class="bi bi-exclamation-triangle"></i>
+                                                    注意：此商品已過保，維修將收取額外費用
+                                                </span>
+                                            <?php endif; ?>
                                         </small>
                                     </label>
                                 </div>
@@ -829,15 +841,28 @@ function createRepairRequest(array $warrantyIds, ?PDO $pdo = null, string $repai
         $repairId = $result['maxId'] ? $result['maxId'] + 1 : 1;
 
         $createRepair = $pdo->prepare("
-            INSERT INTO Repairs (RepairID, WarrantyID, RepairDate, RepairStatus, RepairCommit) 
-            VALUES (:repairId, :warrantyId, NOW(), '待處理', :repairCommit)
+            INSERT INTO Repairs (RepairID, WarrantyID, RepairDate, RepairStatus, RepairCommit, Price) 
+            VALUES (:repairId, :warrantyId, NOW(), '待處理', :repairCommit, :price)
         ");
 
         foreach ($warrantyIds as $warrantyId) {
+            // 檢查保固狀態
+            $checkWarranty = $pdo->prepare("
+                SELECT WarrantyStatus, WarrantyDate 
+                FROM Warranty 
+                WHERE WarrantyID = :warrantyId
+            ");
+            $checkWarranty->execute(['warrantyId' => $warrantyId]);
+            $warranty = $checkWarranty->fetch(PDO::FETCH_ASSOC);
+            
+            // 判斷是否在保固期內
+            $isWarrantyValid = $warranty['WarrantyStatus'] && strtotime($warranty['WarrantyDate']) > time();
+            
             $createRepair->execute([
                 'repairId' => $repairId,
                 'warrantyId' => $warrantyId,
-                'repairCommit' => $repairCommit
+                'repairCommit' => $repairCommit,
+                'price' => $isWarrantyValid ? 0 : null // 保固內免費，保固外待定
             ]);
             $repairId++;
         }
