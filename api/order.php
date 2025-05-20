@@ -345,23 +345,9 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
             
             return $orderStatus || $hasActiveRepair;
         })
-        : array_filter($orders, function($o) use ($pdo) {
-            // 檢查訂單狀態是否為已完成
-            $orderStatus = $o['Status'] === 'Completed';
-            
-            // 檢查是否有進行中的維修
-            $warranties = getOrderWarranties((int) $o['OrderID'], $pdo);
-            $hasActiveRepair = false;
-            foreach ($warranties as $warranty) {
-                if (isset($warranty['RepairStatus']) && 
-                    in_array($warranty['RepairStatus'], ['待處理', '維修中'], true)) {
-                    $hasActiveRepair = true;
-                    break;
-                }
-            }
-            
-            // 如果是已完成訂單且沒有進行中的維修，則顯示
-            return $orderStatus && !$hasActiveRepair;
+        : array_filter($orders, function($o) {
+            // 已完成頁面只檢查訂單狀態是否為 Completed
+            return $o['Status'] === 'Completed';
         });
 
     echo '<div class="tab-pane fade ' . ($status === 'Pending' ? 'show active' : '') .
@@ -446,19 +432,79 @@ function renderOrderItem($order, $detail) {
             </div>
             <div class="text-center fw-bold fs-5 text-danger">總計 $<?= number_format($detail['total_amount']) ?></div>
             <div class="d-flex align-items-center">
-                <?php
-                if ($order['Status'] === 'Shipping'): ?>
-                    <button class="btn btn-success btn-sm" data-action="pay"
-                        data-order-id="<?= $order['OrderID'] ?>">付款</button>
-                    <?php
-                elseif ($order['Status'] === 'Pending'): ?>
-                    <button class="btn btn-secondary btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>"
-                        disabled>付款</button>
-                    <?php
-                endif; ?>
+                <?php if ($order['Status'] === 'Completed'): ?>
+                    <button class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#repairModal<?= $order['OrderID'] ?>">
+                        <i class="bi bi-tools"></i> 申請維修
+                    </button>
+                <?php endif; ?>
+                <?php if ($order['Status'] === 'Shipping'): ?>
+                    <button class="btn btn-success btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>">付款</button>
+                <?php elseif ($order['Status'] === 'Pending'): ?>
+                    <button class="btn btn-secondary btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>" disabled>付款</button>
+                <?php endif; ?>
             </div>
         </div>
     </div>
+
+    <?php if ($order['Status'] === 'Completed'): ?>
+    <!-- 維修申請 Modal -->
+    <div class="modal fade" id="repairModal<?= $order['OrderID'] ?>" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">申請維修 - 訂單 #<?= $order['OrderID'] ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="repairForm<?= $order['OrderID'] ?>">
+                        <div class="mb-3">
+                            <label class="form-label">選擇要維修的商品：</label>
+                            <?php
+                            $warranties = getOrderWarranties((int) $order['OrderID']);
+                            foreach ($warranties as $warranty):
+                                if (!isset($warranty['RepairID'])): // 只顯示尚未維修的商品
+                                    $warrantyStatus = $warranty['WarrantyStatus'] ? '有效' : '已過期';
+                                    $warrantyClass = $warranty['WarrantyStatus'] ? 'text-success' : 'text-danger';
+                            ?>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="warranty_ids[]" 
+                                           value="<?= $warranty['WarrantyID'] ?>" id="warranty<?= $warranty['WarrantyID'] ?>"
+                                           <?= !$warranty['WarrantyStatus'] ? 'disabled' : '' ?>>
+                                    <label class="form-check-label" for="warranty<?= $warranty['WarrantyID'] ?>">
+                                        <?= htmlspecialchars($warranty['ProductName']) ?>
+                                        <br>
+                                        <small class="ms-4">
+                                            <span class="<?= $warrantyClass ?>">
+                                                <i class="bi <?= $warranty['WarrantyStatus'] ? 'bi-shield-check' : 'bi-shield-x' ?>"></i>
+                                                保固狀態：<?= $warrantyStatus ?>
+                                            </span>
+                                            <br>
+                                            <span class="text-muted ms-4">
+                                                到期日：<?= date('Y-m-d', strtotime($warranty['WarrantyDate'])) ?>
+                                            </span>
+                                        </small>
+                                    </label>
+                                </div>
+                            <?php 
+                                endif;
+                            endforeach; 
+                            ?>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">維修說明：</label>
+                            <textarea class="form-control" id="repairCommit<?= $order['OrderID'] ?>" rows="3" 
+                                      placeholder="請描述商品需要維修的問題..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary submit-repair" data-order-id="<?= $order['OrderID'] ?>">送出維修申請</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
     <?php
 }
 
