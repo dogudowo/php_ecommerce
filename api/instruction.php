@@ -7,10 +7,23 @@ require_once __DIR__ . '/db.php';
 /* ----------  取得圖片 ---------- */
 function getInstructionImages(): array
 {
-    return [
+    $imagePaths = [
         'buyContext' => 'imgs/instruction/buyContext.jpg',
         'order' => 'imgs/instruction/order.jpg',
     ];
+
+    $imagesWithTimestamp = [];
+    foreach ($imagePaths as $type => $path) {
+        $fullPath = __DIR__ . '/../' . $path;
+        if (file_exists($fullPath)) {
+            $timestamp = filemtime($fullPath);
+            $imagesWithTimestamp[$type] = $path . '?' . $timestamp;
+        } else {
+            $imagesWithTimestamp[$type] = $path; // 如果檔案不存在，回傳原始路徑或預設圖片路徑
+        }
+    }
+
+    return $imagesWithTimestamp;
 }
 
 /* ----------  更新圖片 ---------- */
