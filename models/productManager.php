@@ -316,14 +316,15 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
         </div>
     </div>
 </div>
-
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+<script src="api/toast.js"></script>
 <script>
     (() => {
         "use strict";
 
-        /* ----------  常數 ---------- */
+        /* ---------- Constants ---------- */
         const API_BASE = "api/product.php";
-        const GET_URL = "api/getProducts.php"; // 假設此 API 用於獲取產品列表及單一產品詳情
+        const GET_URL = "api/getProducts.php";
         const TYPE_OPTIONS = {
             aluminum: "鋁框款",
             zipper: "拉鍊款",
@@ -331,22 +332,22 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
             travel: "旅遊周邊",
             featured: "精選商品",
         };
-        let CURRENT_PRODUCT_ID = null; // 追蹤目前編輯的商品 ID
+        let CURRENT_PRODUCT_ID = null;
 
-        /* ----------  DOM 快取 ---------- */
+        /* ---------- DOM Cache ---------- */
         const body = document.body;
         const productTableBody = document.getElementById("productTableBody");
         const addProductModalEl = document.getElementById("addProductModal");
-        const addProductModal = new bootstrap.Modal(addProductModalEl); // Modal 實例
-        const editMainImageModalEl = document.getElementById('editMainImageModal');
-        const manageGalleryModalEl = document.getElementById('manageGalleryModal');
-        const sizePriceContainer = document.getElementById('sizePriceContainer');
+        const addProductModal = new bootstrap.Modal(addProductModalEl);
+        const editMainImageModalEl = document.getElementById("editMainImageModal");
+        const manageGalleryModalEl = document.getElementById("manageGalleryModal");
+        const sizePriceContainer = document.getElementById("sizePriceContainer");
 
-        /* 暫存詳細圖片處理狀態 (全局變數，由不同函數修改和使用) */
-        let deletedGallerySrcs = []; // 儲存已刪除的舊圖片路徑 (非 blob URL)
-        let newGalleryFiles = [];    // 儲存新增上傳的圖片檔案 (File 物件)
+        /* ---------- State for Gallery Images ---------- */
+        let deletedGallerySrcs = [];
+        let newGalleryFiles = [];
 
-        /* Toast 容器 */
+        /* ---------- Toast Container ---------- */
         const toastContainer = (() => {
             const div = document.createElement("div");
             div.className = "position-fixed bottom-0 end-0 p-3";
@@ -354,7 +355,7 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
             return div;
         })();
 
-        /* ----------  輔助函式 ---------- */
+        /* ---------- Helper Functions ---------- */
         const jsonFetch = async (url, opt) => {
             const res = await fetch(url, opt);
             if (!res.ok) {
@@ -364,27 +365,12 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
             return res.json();
         };
 
-        const showToast = (msg, type = "success") => {
-            const el = document.createElement("div");
-            el.className = `toast align-items-center text-white bg-${type} border-0`;
-            el.role = "alert";
-            el.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="bi ${type === "success" ? "bi-check-circle" : "bi-exclamation-triangle"} me-2"></i>${msg}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>`;
-            toastContainer.appendChild(el);
-            new bootstrap.Toast(el, { delay: 3000 }).show();
-        };
-
         const showError = (title, err) => {
             console.error(title, err);
             showToast(`${title}：${err.message || err}`, "danger");
         };
 
-        /* ----------  初始化 ---------- */
+        /* ---------- Initialize ---------- */
         document.addEventListener("DOMContentLoaded", () => {
             populateTypeSelects();
             loadProducts();
@@ -392,47 +378,46 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
             bindModalEvents();
         });
 
-        /* ----------  下拉選單 ---------- */
+        /* ---------- Populate Type Selects ---------- */
         function populateTypeSelects() {
             const selects = [
                 document.getElementById("productType"),
                 document.getElementById("filterType"),
-            ].filter(Boolean); // 過濾掉可能不存在的元素
+            ].filter(Boolean);
 
             selects.forEach(sel => {
-                const withAllOption = sel.id === "filterType";
                 sel.innerHTML = "";
-                if (withAllOption) sel.appendChild(new Option("全部類型", ""));
+                if (sel.id === "filterType") sel.appendChild(new Option("全部類型", ""));
                 Object.entries(TYPE_OPTIONS).forEach(([value, text]) => {
                     const option = new Option(text, value);
-                    // 如果是篩選類型，且PHP傳遞的type參數符合，則選中
-                    if (sel.id === 'filterType' && value === '<?= $type ?>') {
+                    if (sel.id === "filterType" && value === "<?= $type ?>") {
                         option.selected = true;
                     }
                     sel.appendChild(option);
                 });
             });
 
-            // 針對 filterStatus，確保 PHP 傳遞的值被選中
             const filterStatusSelect = document.getElementById("filterStatus");
             if (filterStatusSelect) {
                 Array.from(filterStatusSelect.options).forEach(option => {
-                    if (option.value === '<?= $status ?>') {
+                    if (option.value === "<?= $status ?>") {
                         option.selected = true;
                     }
                 });
             }
         }
 
-        /* ----------  讀取產品 ---------- */
+        /* ---------- Load Products ---------- */
         async function loadProducts() {
             try {
                 const { products = [] } = await jsonFetch(`${GET_URL}?action=getProducts`);
                 renderTable(products);
-            } catch (err) { showError("載入商品失敗", err); }
+            } catch (err) {
+                showError("載入商品失敗", err);
+            }
         }
 
-        /* ----------  表格呈現 ---------- */
+        /* ---------- Render Table ---------- */
         const getTypeName = t => TYPE_OPTIONS[t?.trim().toLowerCase()] || t || "";
 
         const createTableRow = p => `
@@ -455,92 +440,112 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                 : '<tr><td colspan="6" class="text-center">暫無商品資料</td></tr>';
         }
 
-        /* ----------  模態框事件 ---------- */
+        /* ---------- Modal Events ---------- */
         function bindModalEvents() {
-            // 當編輯主要圖片模態框關閉時，重新顯示新增商品模態框
-            editMainImageModalEl.addEventListener('hidden.bs.modal', () => {
-                addProductModal.show();
-            });
+            editMainImageModalEl.addEventListener("hidden.bs.modal", () => addProductModal.show());
+            manageGalleryModalEl.addEventListener("hidden.bs.modal", () => addProductModal.show());
 
-            // 當管理詳細圖片模態框關閉時，重新顯示新增商品模態框
-            manageGalleryModalEl.addEventListener('hidden.bs.modal', () => {
-                addProductModal.show();
-            });
-
-            // 處理庫存數量按鈕事件 (使用事件委派在 addProductModalEl 上)
-            addProductModalEl.addEventListener('click', (event) => {
+            addProductModalEl.addEventListener("click", (event) => {
                 const target = event.target;
-                if (target.classList.contains('btn-minus')) {
-                    const input = target.closest('.input-group')?.querySelector('.stock-input');
+                if (target.classList.contains("btn-minus")) {
+                    const input = target.closest(".input-group")?.querySelector(".stock-input");
                     if (input) {
                         let value = parseInt(input.value, 10);
                         if (value > 0) input.value = value - 1;
                     }
-                } else if (target.classList.contains('btn-plus')) {
-                    const input = target.closest('.input-group')?.querySelector('.stock-input');
+                } else if (target.classList.contains("btn-plus")) {
+                    const input = target.closest(".input-group")?.querySelector(".stock-input");
                     if (input) {
-                        let value = parseInt(input.value, 10);
-                        input.value = value + 1;
+                        input.value = parseInt(input.value, 10) + 1;
                     }
                 }
             });
         }
 
-        /* ----------  事件繫結 ---------- */
+        /* ---------- Drag and Drop for Gallery Sorting ---------- */
+        function enableDragAndDrop(container) {
+            let draggedItem = null;
+
+            container.addEventListener("dragstart", (e) => {
+                draggedItem = e.target.closest(".col-md-4");
+                if (draggedItem) {
+                    e.dataTransfer.setData("text/plain", "");
+                    draggedItem.classList.add("dragging");
+                }
+            });
+
+            container.addEventListener("dragend", (e) => {
+                if (draggedItem) {
+                    draggedItem.classList.remove("dragging");
+                    draggedItem = null;
+                    updateGalleryOrder();
+                }
+            });
+
+            container.addEventListener("dragover", (e) => {
+                e.preventDefault();
+            });
+
+            container.addEventListener("drop", (e) => {
+                e.preventDefault();
+                if (!draggedItem) return;
+
+                const allItems = Array.from(container.querySelectorAll(".col-md-4"));
+                const dropTarget = e.target.closest(".col-md-4");
+                if (!dropTarget || dropTarget === draggedItem) return;
+
+                const dropIndex = allItems.indexOf(dropTarget);
+                const draggedIndex = allItems.indexOf(draggedItem);
+
+                if (draggedIndex < dropIndex) {
+                    container.insertBefore(draggedItem, dropTarget.nextSibling);
+                } else {
+                    container.insertBefore(draggedItem, dropTarget);
+                }
+            });
+
+            // Make gallery images draggable
+            container.querySelectorAll(".col-md-4").forEach(item => {
+                item.draggable = true;
+            });
+        }
+
+        /* ---------- UI Event Bindings ---------- */
         function bindUIEvents() {
-            // 使用 Map 集中管理不同按鈕的處理函數，提高可讀性和擴展性
             const buttonHandlers = new Map([
-                ['addSizeRow', () => addSizeRow()],
-                ['confirmAddProduct', (btn) => handleAddOrUpdate(btn)],
-                ['editMainImage', () => initEditMainImageModal()],
-                ['manageGallery', () => initManageGalleryModal()],
-                ['saveMainImageBtn', () => saveMainImage()],
-                ['saveGalleryBtn', () => saveGallery()],
-                ['addGalleryImage', () => addProductModalEl.querySelector("#galleryImageInput").click()],
+                ["addSizeRow", () => addSizeRow()],
+                ["confirmAddProduct", (btn) => handleAddOrUpdate(btn)],
+                ["editMainImage", () => initEditMainImageModal()],
+                ["manageGallery", () => initManageGalleryModal()],
+                ["saveMainImageBtn", () => saveMainImage()],
+                ["saveGalleryBtn", () => saveGallery()],
+                ["addGalleryImage", () => addProductModalEl.querySelector("#galleryImageInput").click()],
             ]);
 
-            body.addEventListener("click", e => {
+            body.addEventListener("click", (e) => {
                 const btn = e.target.closest("button");
                 if (!btn) return;
 
-                // 委派處理通用類別按鈕
                 if (btn.classList.contains("edit-product")) return handleEdit(btn);
                 if (btn.classList.contains("remove-size-btn")) return removeSizeRow(btn);
                 if (btn.classList.contains("add-color-btn")) return addColorRow(btn);
                 if (btn.classList.contains("remove-color-btn")) return removeColorRow(btn);
                 if (btn.classList.contains("delete-gallery-image")) return handleDeleteGalleryImage(btn);
-
-                // 處理新增檔案後新創建的圖片刪除按鈕 (此按鈕的 `data-src` 可能為 `blob:` 開頭)
-                // 注意：這裡使用 `e.target.closest(".remove-new-gallery-image")` 而非 `btn.classList.contains`，因為 btn 可能不是直接的按鈕
                 if (e.target.closest(".remove-new-gallery-image")) {
                     const card = e.target.closest(".col-md-4");
-                    // 根據圖片來源，從 newGalleryFiles 中移除對應的檔案
-                    const imgElement = card.querySelector('img');
-                    if (imgElement && imgElement.src.startsWith('blob:')) {
+                    const imgElement = card.querySelector("img");
+                    if (imgElement && imgElement.src.startsWith("blob:")) {
                         newGalleryFiles = newGalleryFiles.filter(file => URL.createObjectURL(file) !== imgElement.src);
                     }
-                    card.remove(); // 從 DOM 中移除卡片
+                    card.remove();
                     return;
                 }
 
-                // 處理特定 ID 按鈕
                 const handler = buttonHandlers.get(btn.id);
                 if (handler) handler(btn);
             });
 
-            // 初始化 jQuery UI Sortable
-            $(document).ready(function () {
-                $("#gallerySortable").sortable({
-                    placeholder: "ui-state-highlight",
-                    update: function (event, ui) {
-                        updateGalleryOrder(); // 重新排序後，如果需要保存順序，在此處處理
-                    }
-                });
-                $("#gallerySortable").disableSelection();
-            });
-
-            /* 其他表單事件 */
-            body.addEventListener("change", e => {
+            body.addEventListener("change", (e) => {
                 const t = e.target;
                 if (t.id === "productActive") updateStatusText(t);
                 else if (t.id === "mainImageInput") previewMainImage(t);
@@ -551,122 +556,98 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
             document.getElementById("searchProduct")?.addEventListener("input", filterProducts);
 
-            // 開啟 modal 時若非編輯模式則重置表單
             document.querySelectorAll('[data-bs-target="#addProductModal"]').forEach(btn =>
                 btn.addEventListener("click", () => {
-                    if (!btn.dataset.editMode) {
-                        resetForm();
-                    }
+                    if (!btn.dataset.editMode) resetForm();
                 })
             );
 
-            // 初始時呼叫一次，以確保一開始就正確 disable 尺寸/顏色按鈕
-            addProductModalEl.addEventListener('shown.bs.modal', () => {
+            addProductModalEl.addEventListener("shown.bs.modal", () => {
                 updateSizeButtons();
-                addProductModalEl.querySelectorAll('.size-price-block').forEach(block => {
+                addProductModalEl.querySelectorAll(".size-price-block").forEach(block => {
                     updateColorButtons(block);
                 });
             });
         }
 
-
-        /* ----------  圖片管理函數 ---------- */
+        /* ---------- Image Management Functions ---------- */
         function initEditMainImageModal() {
-            const mainImagePreview = addProductModalEl.querySelector('#mainImagePreview');
-            const editMainImagePreview = editMainImageModalEl.querySelector('#editMainImagePreview');
-            const newMainImageInput = editMainImageModalEl.querySelector('#newMainImageInput');
+            const mainImagePreview = addProductModalEl.querySelector("#mainImagePreview");
+            const editMainImagePreview = editMainImageModalEl.querySelector("#editMainImagePreview");
+            const newMainImageInput = editMainImageModalEl.querySelector("#newMainImageInput");
 
-            // 確保有圖片來源才設定，否則清除
-            if (mainImagePreview.src && mainImagePreview.style.display !== 'none') {
-                editMainImagePreview.src = mainImagePreview.src;
-                editMainImagePreview.style.display = 'block'; // 確保預覽顯示
-            } else {
-                editMainImagePreview.src = '';
-                editMainImagePreview.style.display = 'none';
-            }
-            // 清空編輯模態框的 file input，避免重複選擇同一個文件不觸發change事件
-            if (newMainImageInput) {
-                newMainImageInput.value = '';
-            }
+            editMainImagePreview.src = mainImagePreview.src && mainImagePreview.style.display !== "none" ? mainImagePreview.src : "";
+            editMainImagePreview.style.display = editMainImagePreview.src ? "block" : "none";
+            if (newMainImageInput) newMainImageInput.value = "";
         }
 
         function saveMainImage() {
             try {
-                const fileInput = editMainImageModalEl.querySelector('#newMainImageInput');
-                // 如果沒有選擇新圖片，直接關閉模態框
-                if (!fileInput || fileInput.files.length === 0) {
+                const fileInput = editMainImageModalEl.querySelector("#newMainImageInput");
+                if (!fileInput?.files.length) {
                     bootstrap.Modal.getInstance(editMainImageModalEl).hide();
                     return;
                 }
 
                 const file = fileInput.files[0];
-                const mainImageInput = addProductModalEl.querySelector('#mainImageInput');
-                const mainImagePreview = addProductModalEl.querySelector('#mainImagePreview');
+                const mainImageInput = addProductModalEl.querySelector("#mainImageInput");
+                const mainImagePreview = addProductModalEl.querySelector("#mainImagePreview");
 
-                // 將檔案從編輯模態框複製到主表單的 hidden input
                 const dataTransfer = new DataTransfer();
                 dataTransfer.items.add(file);
                 mainImageInput.files = dataTransfer.files;
 
-                // 更新主表單的預覽
                 const reader = new FileReader();
-                reader.onload = function (e) {
+                reader.onload = (e) => {
                     mainImagePreview.src = e.target.result;
-                    mainImagePreview.style.display = 'block';
+                    mainImagePreview.style.display = "block";
                 };
                 reader.readAsDataURL(file);
 
                 bootstrap.Modal.getInstance(editMainImageModalEl).hide();
             } catch (error) {
-                console.error('儲存主要圖片時發生錯誤:', error);
-                showError('儲存主要圖片失敗', error);
+                showError("儲存主要圖片失敗", error);
                 bootstrap.Modal.getInstance(editMainImageModalEl).hide();
             }
         }
 
         function initManageGalleryModal() {
-            const gallerySortable = manageGalleryModalEl.querySelector('#gallerySortable');
-            gallerySortable.innerHTML = ''; // 清空現有圖片顯示
+            const gallerySortable = manageGalleryModalEl.querySelector("#gallerySortable");
+            gallerySortable.innerHTML = "";
 
-            // 將主表單預覽區的所有圖片（包括舊圖和新圖）轉移到管理模態框
-            const galleryImagesPreview = addProductModalEl.querySelector('#galleryImagesPreview');
-            Array.from(galleryImagesPreview.querySelectorAll('img')).forEach(img => {
-                const imgDiv = document.createElement('div');
-                imgDiv.className = 'col-md-4 mb-2';
-                const isNewBlob = img.src.startsWith('blob:');
+            const galleryImagesPreview = addProductModalEl.querySelector("#galleryImagesPreview");
+            Array.from(galleryImagesPreview.querySelectorAll("img")).forEach(img => {
+                const imgDiv = document.createElement("div");
+                imgDiv.className = "col-md-4 mb-2";
+                const isNewBlob = img.src.startsWith("blob:");
                 imgDiv.innerHTML = `
-                    <div class="card ${isNewBlob ? 'new-gallery-card' : ''}">
-                        <img src="${img.src}" class="rounded mx-auto d-block"  style="width: 200px; height: 200px;">
-                        <div class="card-body p-2">
-                            <button type="button" class="btn btn-sm btn-danger w-100 ${isNewBlob ? 'remove-new-gallery-image' : 'delete-gallery-image'}"
-                                data-src="${img.src}">
-                                <i class="bi bi-trash"></i> 刪除
-                            </button>
-                        </div>
+                <div class="card ${isNewBlob ? "new-gallery-card" : ""}">
+                    <img src="${img.src}" class="card-img-top">
+                    <div class="card-body p-2">
+                        <button type="button" class="btn btn-sm btn-danger w-100 ${isNewBlob ? "remove-new-gallery-image" : "delete-gallery-image"}" data-src="${img.src}">
+                            <i class="bi bi-trash"></i> 刪除
+                        </button>
                     </div>
-                `;
+                </div>`;
                 gallerySortable.appendChild(imgDiv);
             });
 
-            // 清空管理模態框的 file input，避免重複選擇同一個文件不觸發change事件
-            const newGalleryImageInput = manageGalleryModalEl.querySelector('#newGalleryImageInput');
-            if (newGalleryImageInput) {
-                newGalleryImageInput.value = '';
-            }
+            enableDragAndDrop(gallerySortable);
+
+            const newGalleryImageInput = manageGalleryModalEl.querySelector("#newGalleryImageInput");
+            if (newGalleryImageInput) newGalleryImageInput.value = "";
         }
 
         function handleNewGalleryUpload(input) {
+            const gallerySortable = manageGalleryModalEl.querySelector("#gallerySortable");
             Array.from(input.files).forEach(file => {
-                // 將新檔案加入全局 newGalleryFiles 列表
                 newGalleryFiles.push(file);
-
-                // 為每個新檔案創建一個預覽卡片並插入到管理模態框的 sortable 容器中
                 const reader = new FileReader();
-                reader.onload = e => {
+                reader.onload = (e) => {
                     const html = `
                     <div class="col-md-4 mb-2">
                         <div class="card new-gallery-card">
-                            <img src="${e.target.result}" class="card-img-top"  style="width: 100px; height: 100px;">
+                            <img src="${e.target.result}" class="card-img-top">
                             <div class="card-body p-2">
                                 <button type="button" class="btn btn-sm btn-danger w-100 remove-new-gallery-image">
                                     <i class="bi bi-trash"></i> 刪除
@@ -674,44 +655,37 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                             </div>
                         </div>
                     </div>`;
-                    manageGalleryModalEl.querySelector("#gallerySortable")
-                        .insertAdjacentHTML("beforeend", html);
+                    gallerySortable.insertAdjacentHTML("beforeend", html);
+                    // Re-enable drag-and-drop for new items
+                    const newItem = gallerySortable.lastElementChild;
+                    newItem.draggable = true;
                 };
                 reader.readAsDataURL(file);
             });
-            // 清空 input，以便重覆選同檔也會觸發 change 事件
             input.value = "";
         }
 
         function handleDeleteGalleryImage(btn) {
-            const srcToDelete = btn.dataset.src; // 圖片的 src (可能是舊圖的伺服器路徑或新圖的 blob URL)
-            const cardToRemove = btn.closest('.col-md-4');
-
-            // 如果圖片來源不是 blob URL (表示是舊圖)，則加入刪除清單
-            if (!srcToDelete.startsWith('blob:')) {
+            const srcToDelete = btn.dataset.src;
+            const cardToRemove = btn.closest(".col-md-4");
+            if (!srcToDelete.startsWith("blob:")) {
                 deletedGallerySrcs.push(srcToDelete);
             } else {
-                // 如果是 blob URL (新上傳但還未保存的圖片)，則從 newGalleryFiles 中移除對應的檔案
                 newGalleryFiles = newGalleryFiles.filter(file => URL.createObjectURL(file) !== srcToDelete);
             }
-            cardToRemove.remove(); // 從 DOM 中移除卡片
+            cardToRemove.remove();
         }
 
         function updateGalleryOrder() {
-            // 這個函數用於 jQuery UI Sortable 的 update 事件。
-            // 如果需要保存排序，應該在此處讀取 #gallerySortable 中圖片的新順序，
-            // 並更新一個內部狀態（例如一個圖片 URL 陣列），該狀態最終將在 saveGallery 或 handleAddOrUpdate 時發送到後端。
-            // 目前程式碼中未實現排序保存邏輯，僅為佔位符。
+            // Placeholder for saving the order of images if needed
+            // Currently, the order is handled by the DOM structure and sent to the server in saveGallery
         }
 
         async function saveGallery() {
-            const galleryImagesPreview = addProductModalEl.querySelector('#galleryImagesPreview');
-            galleryImagesPreview.innerHTML = ''; // 清空主預覽區
+            const galleryImagesPreview = addProductModalEl.querySelector("#galleryImagesPreview");
+            galleryImagesPreview.innerHTML = "";
 
-            // 1. 取得管理模態框中所有圖片（包括舊圖和新圖）的當前順序
-            const currentImagesInModal = Array.from(manageGalleryModalEl.querySelectorAll('#gallerySortable .card img'));
-
-            // 2. 更新主預覽區的圖片顯示
+            const currentImagesInModal = Array.from(manageGalleryModalEl.querySelectorAll("#gallerySortable .card img"));
             currentImagesInModal.forEach(img => {
                 const im = document.createElement("img");
                 im.src = img.src;
@@ -720,9 +694,7 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                 galleryImagesPreview.appendChild(im);
             });
 
-            // 3. 關閉管理模態框
             bootstrap.Modal.getInstance(manageGalleryModalEl).hide();
-            // 4. 更新詳細圖片按鈕狀態
             updateGalleryButtons();
         }
 
@@ -731,19 +703,19 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                 const productId = btn.dataset.id;
                 const { product } = await jsonFetch(`${GET_URL}?action=getProduct&id=${productId}`);
                 CURRENT_PRODUCT_ID = product.ProductID;
-                fillForm(product); // 填入表單資料並重置臨時狀態
+                fillForm(product);
                 addProductModal.show();
-            } catch (err) { showError("獲取商品詳情失敗", err); }
+            } catch (err) {
+                showError("獲取商品詳情失敗", err);
+            }
         }
 
-        /* ----------  新增 / 更新 ---------- */
+        /* ---------- Add/Update Product ---------- */
         async function handleAddOrUpdate(confirmBtn) {
             const isEdit = !!confirmBtn.dataset.editMode;
-            // 收集所有表單數據，包括 product、gallery 和 options
             const allData = collectAllFormData(isEdit);
 
             try {
-                // 準備商品主資料的 FormData
                 const productFd = new FormData();
                 Object.entries(allData.product).forEach(([key, value]) => {
                     if (key === "mainImageFile") {
@@ -753,151 +725,136 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                     }
                 });
 
-                // 1) 第一次 API 請求：新增/更新商品主資料 (Product, ProductOption)
                 const productRes = await jsonFetch(API_BASE, { method: "POST", body: productFd });
                 if (!productRes.success) throw new Error(productRes.message);
 
-                // 獲取商品ID (如果是新增，則從響應中獲取；如果是編輯，則從現有資料中獲取)
                 const productId = productRes.productId || allData.product.productId;
                 if (!productId) throw new Error("無法取得商品ID，請檢查API響應");
 
-                // 準備詳細圖片的 FormData
                 const galleryFd = new FormData();
                 galleryFd.append("action", "updateGallery");
                 galleryFd.append("productId", productId);
-
-                // 將保留的舊圖路徑傳入
                 if (allData.gallery.remainingSrcs.length) {
                     galleryFd.append("remainingSrcs", JSON.stringify(allData.gallery.remainingSrcs));
                 }
-                // 將已刪除的舊圖路徑傳入
                 if (allData.gallery.deletedSrcs.length) {
                     galleryFd.append("deletedSrcs", JSON.stringify(allData.gallery.deletedSrcs));
                 }
-                // 將新上傳的檔案傳入
                 allData.gallery.newFiles.forEach((file) => {
                     galleryFd.append("newGalleryImages[]", file, file.name);
                 });
 
-                // 2) 第二次 API 請求：更新詳細圖片 (ProductGallery)
                 const galleryRes = await jsonFetch(API_BASE, { method: "POST", body: galleryFd });
                 if (!galleryRes.success) throw new Error("圖庫更新失敗：" + galleryRes.message);
 
                 showToast(isEdit ? "商品更新完成！" : "商品新增完成！", "success");
-                addProductModal.hide(); // 關閉模態框
-                loadProducts();      // 重新載入商品列表
-                resetForm();         // 操作成功後重置表單和臨時狀態
+                addProductModal.hide();
+                loadProducts();
+                resetForm();
             } catch (err) {
                 showError("操作失敗", err);
             }
         }
 
-        /* ----------  篩選 ---------- */
+        /* ---------- Filter Products ---------- */
         async function filterProducts() {
             const params = new URLSearchParams();
             const type = document.getElementById("filterType").value;
             const status = document.getElementById("filterStatus").value;
             const search = document.getElementById("searchProduct").value;
             if (type) params.append("type", type);
-            if (status !== '') params.append("status", status); // '0'也應被考慮為有效值
+            if (status !== "") params.append("status", status);
             if (search) params.append("search", search);
             try {
                 const { products = [] } = await jsonFetch(`${API_BASE}?action=filter&${params}`);
                 renderTable(products);
-            } catch (err) { showError("篩選失敗", err); }
+            } catch (err) {
+                showError("篩選失敗", err);
+            }
         }
 
-        /* ====================================================================== */
-        /* =========================  Modal 相關函式  =========================== */
-        /* ====================================================================== */
-
-        /* --- 生成 DOM：顏色列 --- */
-        function createColorRow({ OptionID = '', Color = '', Stock = 0 } = {}) {
+        /* ---------- Size and Color Management ---------- */
+        function createColorRow({ OptionID = "", Color = "", Stock = 0 } = {}) {
             const div = document.createElement("div");
             div.className = "mb-2 color-row";
             div.innerHTML = `
-                <input type="hidden" class="color-option-id-input" value="${OptionID}">
-                <div class="row g-2">
-                    <div class="col-md-6">
-                        <input type="text" class="form-control color-input" placeholder="顏色描述" value="${Color}">
+            <input type="hidden" class="color-option-id-input" value="${OptionID}">
+            <div class="row g-2">
+                <div class="col-md-6">
+                    <input type="text" class="form-control color-input" placeholder="顏色描述" value="${Color}">
+                </div>
+                <div class="col-md-4">
+                    <div class="input-group">
+                        <button type="button" class="btn btn-outline-secondary btn-minus">-</button>
+                        <input type="number" class="form-control text-center stock-input" value="${Stock}" min="0">
+                        <button type="button" class="btn btn-outline-secondary btn-plus">+</button>
                     </div>
-                    <div class="col-md-4">
-                        <div class="input-group">
-                            <button type="button" class="btn btn-outline-secondary btn-minus">-</button>
-                            <input type="number" class="form-control text-center stock-input" value="${Stock}" min="0">
-                            <button type="button" class="btn btn-outline-secondary btn-plus">+</button>
-                        </div>
-                    </div>
-                    <div class="col-md-2" style="align-self:end;">
-                        <button type="button" class="btn btn-sm btn-outline-danger w-100 remove-color-btn">
-                            <i class="bi bi-trash"></i> 刪除
-                        </button>
-                    </div>
-                </div>`;
+                </div>
+                <div class="col-md-2" style="align-self:end;">
+                    <button type="button" class="btn btn-sm btn-outline-danger w-100 remove-color-btn">
+                        <i class="bi bi-trash"></i> 刪除
+                    </button>
+                </div>
+            </div>`;
             return div;
         }
 
-        /* --- 生成 DOM：尺寸卡片 --- */
-        function createSizeBlock({ Size = '', SizeDescription = '', Price = '', colors = [] } = {}) {
+        function createSizeBlock({ Size = "", SizeDescription = "", Price = "", colors = [] } = {}) {
             const wrap = document.createElement("div");
             wrap.className = "card mb-3 size-price-block";
-
             wrap.innerHTML = `
-                <div class="card-body">
-                    <div class="row g-3">
-                        <div class="col-md-3">
-                            <label class="form-label">尺寸</label>
-                            <input type="number" class="form-control size-input" value="${Size}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">尺寸描述</label>
-                            <input type="text" class="form-control size-desc-input" value="${SizeDescription}">
-                        </div>
-                        <div class="col-md-3">
-                            <label class="form-label">價格</label>
-                            <input type="number" class="form-control price-input" value="${Price}">
-                        </div>
-                        <div class="col-md-3 text-end">
-                            <button type="button" class="btn btn-outline-danger remove-size-btn">
-                                <i class="bi bi-trash"></i> 刪除
-                            </button>
-                        </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label">尺寸</label>
+                        <input type="number" class="form-control size-input" value="${Size}">
                     </div>
-                    <div class="row mt-3">
-                        <div class="col-12">
-                            <button type="button" class="btn btn-outline-primary add-color-btn">
-                                <i class="bi bi-plus"></i> 添加顏色
-                            </button>
-                            <div class="color-stock-container mt-3"></div>
-                        </div>
+                    <div class="col-md-3">
+                        <label class="form-label">尺寸描述</label>
+                        <input type="text" class="form-control size-desc-input" value="${SizeDescription}">
                     </div>
-                </div>`;
+                    <div class="col-md-3">
+                        <label class="form-label">價格</label>
+                        <input type="number" class="form-control price-input" value="${Price}">
+                    </div>
+                    <div class="col-md-3 text-end">
+                        <button type="button" class="btn btn-outline-danger remove-size-btn">
+                            <i class="bi bi-trash"></i> 刪除
+                        </button>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <button type="button" class="btn btn-outline-primary add-color-btn">
+                            <i class="bi bi-plus"></i> 添加顏色
+                        </button>
+                        <div class="color-stock-container mt-3"></div>
+                    </div>
+                </div>
+            </div>`;
 
-            // 填入顏色列
             const colorCt = wrap.querySelector(".color-stock-container");
             if (colors.length) {
                 colors.forEach(c => colorCt.appendChild(createColorRow(c)));
             } else {
-                colorCt.appendChild(createColorRow()); // 預設添加一個空的顏色列
+                colorCt.appendChild(createColorRow());
             }
 
             return wrap;
         }
 
-        /* --- 尺寸 / 顏色增刪按鈕狀態更新 --- */
         function updateSizeButtons() {
-            const blocks = addProductModalEl.querySelectorAll('.size-price-block');
-            const removeBtns = addProductModalEl.querySelectorAll('.size-price-block .remove-size-btn');
-            removeBtns.forEach(btn => btn.disabled = (blocks.length <= 1));
+            const blocks = addProductModalEl.querySelectorAll(".size-price-block");
+            const removeBtns = addProductModalEl.querySelectorAll(".size-price-block .remove-size-btn");
+            removeBtns.forEach(btn => (btn.disabled = blocks.length <= 1));
         }
 
         function updateColorButtons(block) {
-            const rows = block.querySelectorAll('.color-row');
-            const removeBtns = block.querySelectorAll('.remove-color-btn');
-            removeBtns.forEach(btn => btn.disabled = (rows.length <= 1));
+            const rows = block.querySelectorAll(".color-row");
+            const removeBtns = block.querySelectorAll(".remove-color-btn");
+            removeBtns.forEach(btn => (btn.disabled = rows.length <= 1));
         }
 
-        // 新增尺寸：加入後更新按鈕狀態
         function addSizeRow(data = {}) {
             const newBlock = createSizeBlock(data);
             sizePriceContainer.appendChild(newBlock);
@@ -905,32 +862,28 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
             updateColorButtons(newBlock);
         }
 
-        // 刪除尺寸：刪除後更新按鈕狀態
         function removeSizeRow(btn) {
-            btn.closest('.size-price-block').remove();
+            btn.closest(".size-price-block").remove();
             updateSizeButtons();
         }
 
-        // 新增顏色：加入後更新該 block 的按鈕狀態
         function addColorRow(btn) {
-            const block = btn.closest('.size-price-block');
-            const colorCt = block.querySelector('.color-stock-container');
+            const block = btn.closest(".size-price-block");
+            const colorCt = block.querySelector(".color-stock-container");
             colorCt.appendChild(createColorRow());
             updateColorButtons(block);
         }
 
-        // 刪除顏色：刪除後更新該 block 的按鈕狀態
         function removeColorRow(btn) {
-            const row = btn.closest('.color-row');
-            const block = btn.closest('.size-price-block');
+            const row = btn.closest(".color-row");
+            const block = btn.closest(".size-price-block");
             row.remove();
             updateColorButtons(block);
         }
 
-        /* --- 其他 UI 更新 --- */
+        /* ---------- UI Updates ---------- */
         const updateStatusText = chk => addProductModalEl.querySelector("#statusText").textContent = chk.checked ? "上架" : "下架";
 
-        /* 圖片預覽 */
         function previewMainImage(input) {
             const file = input.files[0];
             const img = addProductModalEl.querySelector("#mainImagePreview");
@@ -945,23 +898,21 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
         function previewGalleryImages(input) {
             const galleryImagesPreview = addProductModalEl.querySelector("#galleryImagesPreview");
-            galleryImagesPreview.innerHTML = ""; // 清空現有預覽
+            galleryImagesPreview.innerHTML = "";
 
-            // 將新選擇的檔案添加到 newGalleryFiles 並預覽
             Array.from(input.files).forEach(f => {
-                newGalleryFiles.push(f); // 將檔案加入全局新圖片列表
+                newGalleryFiles.push(f);
                 const img = document.createElement("img");
                 img.src = URL.createObjectURL(f);
                 img.className = "img-thumbnail";
                 img.style.cssText = "width:100px;height:100px;margin:4px";
                 galleryImagesPreview.appendChild(img);
             });
-            updateGalleryButtons(); // 更新詳細圖片按鈕狀態
+            updateGalleryButtons();
         }
 
-        /* --- 填入/重置表單 --- */
         function fillForm(p) {
-            resetForm(); // 先重置表單以清除舊狀態和臨時圖片陣列
+            resetForm();
 
             addProductModalEl.querySelector("#addProductModalLabel").textContent = "編輯商品";
             const confirmBtn = addProductModalEl.querySelector("#confirmAddProduct");
@@ -977,17 +928,14 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
             activeChk.checked = p.isActive == 1;
             updateStatusText(activeChk);
 
-            /* 主圖 */
             const mainImg = addProductModalEl.querySelector("#mainImagePreview");
             if (mainImg) {
-                mainImg.src = p.mainImage || '';
+                mainImg.src = p.mainImage || "";
                 mainImg.style.display = p.mainImage ? "block" : "none";
             }
 
-            /* 詳細圖片 */
             const galleryImagesPreview = addProductModalEl.querySelector("#galleryImagesPreview");
-            galleryImagesPreview.innerHTML = ""; // 清空預覽區
-
+            galleryImagesPreview.innerHTML = "";
             if (p.galleryImage?.length) {
                 p.galleryImage.forEach(src => {
                     const im = document.createElement("img");
@@ -996,16 +944,11 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                     im.style.cssText = "width:100px;height:100px;margin:4px";
                     galleryImagesPreview.appendChild(im);
                 });
-            } else {
-                // 如果沒有圖片，會由 updateGalleryButtons 處理顯示提示文字
             }
-            updateGalleryButtons(); // 根據是否有圖片更新按鈕狀態
+            updateGalleryButtons();
 
-            // --- 處理 尺寸／顏色 塊 ---
-            sizePriceContainer.innerHTML = ""; // 清空現有尺寸區塊
-
+            sizePriceContainer.innerHTML = "";
             if (p.sizeOptions?.length) {
-                // 將產品選項按尺寸、尺寸描述、價格分組
                 const groupedOptions = p.sizeOptions.reduce((acc, o) => {
                     const key = `${o.Size}||${o.SizeDescription}||${o.Price}`;
                     if (!acc[key]) {
@@ -1024,7 +967,6 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                     return acc;
                 }, {});
 
-                // 根據分組結果創建尺寸區塊
                 Object.values(groupedOptions).forEach(blockData => {
                     const block = createSizeBlock({
                         Size: blockData.Size,
@@ -1037,24 +979,21 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                     updateColorButtons(block);
                 });
             } else {
-                addSizeRow(); // 如果沒有尺寸選項，添加一個預設的尺寸列
+                addSizeRow();
             }
         }
 
         function resetForm() {
-            // 標題與按鈕回復
             addProductModalEl.querySelector("#addProductModalLabel").textContent = "新增商品";
             const confirmBtn = addProductModalEl.querySelector("#confirmAddProduct");
             confirmBtn.textContent = "新增商品";
             delete confirmBtn.dataset.editMode;
             delete confirmBtn.dataset.productId;
 
-            // 清空表單欄位
             addProductModalEl.querySelector("form").reset();
-            addProductModalEl.querySelector("#productActive").checked = false; // 確保下架狀態
+            addProductModalEl.querySelector("#productActive").checked = false;
             addProductModalEl.querySelector("#statusText").textContent = "下架";
 
-            // 清空主要圖片預覽和輸入
             const mainImg = addProductModalEl.querySelector("#mainImagePreview");
             if (mainImg) {
                 mainImg.src = "";
@@ -1065,24 +1004,20 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
             const newMainInput = editMainImageModalEl.querySelector("#newMainImageInput");
             if (newMainInput) newMainInput.value = "";
 
-            // 清空詳細圖片相關狀態和預覽
-            deletedGallerySrcs = []; // 清空已刪除舊圖列表
-            newGalleryFiles = [];    // 清空新增圖片列表
-
+            deletedGallerySrcs = [];
+            newGalleryFiles = [];
             const galleryImagesPreview = addProductModalEl.querySelector("#galleryImagesPreview");
-            galleryImagesPreview.innerHTML = ''; // 清空預覽區內容
+            galleryImagesPreview.innerHTML = "";
             const galleryInput = addProductModalEl.querySelector("#galleryImageInput");
-            if (galleryInput) galleryInput.value = ""; // 清空檔案輸入
+            if (galleryInput) galleryInput.value = "";
             const newGalleryInput = manageGalleryModalEl.querySelector("#newGalleryImageInput");
             if (newGalleryInput) newGalleryInput.value = "";
-            updateGalleryButtons(); // 更新詳細圖片按鈕狀態，會自動顯示 "暫無詳細圖片"
+            updateGalleryButtons();
 
-            // 清空尺寸／顏色區塊並添加一個預設行
             sizePriceContainer.innerHTML = "";
             addSizeRow();
         }
 
-        /* --- 收集所有表單資料 --- */
         function collectAllFormData(isEdit) {
             const data = {
                 product: {},
@@ -1103,18 +1038,13 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
             data.product.productActive = addProductModalEl.querySelector("#productActive").checked ? "1" : "0";
             data.product.mainImageFile = addProductModalEl.querySelector("#mainImageInput").files[0];
 
-            // 獲取詳細圖片的當前狀態 (從主預覽區獲取，因為 saveGallery 已將所有已選擇的圖片轉移到此處)
             const currentGalleryImages = Array.from(
-                addProductModalEl.querySelectorAll('#galleryImagesPreview img')
+                addProductModalEl.querySelectorAll("#galleryImagesPreview img")
             ).map(img => img.src);
-            // 篩選出舊圖 (非 blob: 開頭的 URL)
-            data.gallery.remainingSrcs = currentGalleryImages.filter(src => !src.startsWith('blob:'));
-            // 獲取已刪除的舊圖 (由 handleDeleteGalleryImage 填充)
+            data.gallery.remainingSrcs = currentGalleryImages.filter(src => !src.startsWith("blob:"));
             data.gallery.deletedSrcs = deletedGallerySrcs;
-            // 獲取新上傳的檔案 (由 handleNewGalleryUpload 或 previewGalleryImages 填充)
             data.gallery.newFiles = newGalleryFiles;
 
-            // 收集尺寸與價格選項
             document.querySelectorAll(".size-price-block").forEach(block => {
                 const size = block.querySelector(".size-input").value;
                 const desc = block.querySelector(".size-desc-input").value;
@@ -1123,7 +1053,6 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                     const optId = row.querySelector(".color-option-id-input").value;
                     const color = row.querySelector(".color-input").value.trim();
                     const stock = row.querySelector(".stock-input").value || 0;
-                    // 只有當尺寸和顏色都不為空時才添加此選項
                     if (size && color) {
                         data.options.push({
                             OptionID: optId,
@@ -1136,32 +1065,24 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                     }
                 });
             });
-            data.product.sizes = JSON.stringify(data.options); // 將選項 JSON 化放入 product 資料中
+            data.product.sizes = JSON.stringify(data.options);
 
             return data;
         }
 
-        /* ----------  圖片管理函數 - 更新按鈕顯示 ---------- */
         function updateGalleryButtons() {
             const galleryImagesPreview = addProductModalEl.querySelector("#galleryImagesPreview");
             const addBtn = addProductModalEl.querySelector("#addGalleryImage");
             const manageBtn = addProductModalEl.querySelector("#manageGallery");
+            const hasImages = galleryImagesPreview.querySelectorAll("img").length > 0;
 
-            // 檢查是否存在實際圖片元素，而不是只有 "暫無詳細圖片" 文字
-            const hasImages = galleryImagesPreview.querySelectorAll('img').length > 0;
-
-            if (hasImages) {
-                addBtn.style.display = 'none';
-                manageBtn.style.display = ''; // 顯示管理按鈕
-            } else {
-                addBtn.style.display = ''; // 顯示添加按鈕
-                manageBtn.style.display = 'none';
-                galleryImagesPreview.innerHTML = '<div class="text-muted">暫無詳細圖片</div>'; // 確保顯示提示文字
+            addBtn.style.display = hasImages ? "none" : "";
+            manageBtn.style.display = hasImages ? "" : "none";
+            if (!hasImages) {
+                galleryImagesPreview.innerHTML = '<div class="text-muted">暫無詳細圖片</div>';
             }
         }
 
-        /* ----------  對外 (for inline) ---------- */
-        // 為了確保這些函數在任何地方都能被調用 (例如可能在舊版瀏覽器或特定框架中)，保留它們在 window 物件上的暴露
         window.addSizeRow = () => addSizeRow();
         window.addColorRow = btn => addColorRow(btn);
     })();
