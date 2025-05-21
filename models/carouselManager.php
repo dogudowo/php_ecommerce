@@ -95,7 +95,8 @@ $carousel_dir = __DIR__ . '/../imgs/carousel/';
         </div>
     </div>
 </div>
-
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+<script src="api/toast.js"></script>
 <script>
     (() => {
         "use strict";
@@ -109,29 +110,6 @@ $carousel_dir = __DIR__ . '/../imgs/carousel/';
         const deleteModal = document.getElementById("deleteCarouselModal");
         const deleteImg = document.getElementById("deleteImagePreview");
         const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
-
-        // ----- Toast 容器 & 函式 -----
-        const toastContainer = document.createElement('div');
-        toastContainer.className = 'toast-container position-fixed bottom-0 end-0 p-3';
-        toastContainer.setAttribute('aria-live', 'polite');
-        toastContainer.setAttribute('aria-atomic', 'true');
-        document.body.appendChild(toastContainer);
-
-        function showToast(msg, type = 'success') {
-            const el = document.createElement('div');
-            el.className = `toast align-items-center text-white bg-${type} border-0`;
-            el.setAttribute('role', 'alert');
-            el.innerHTML = `
-                <div class="d-flex">
-                    <div class="toast-body">
-                    <i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-triangle'} me-2"></i>
-                    ${msg}
-                    </div>
-                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                </div>`;
-            toastContainer.appendChild(el);
-            new bootstrap.Toast(el, { delay: 3000 }).show();
-        }
 
         // ----- 通用 Fetch Helper -----
         async function apiPost(formData) {

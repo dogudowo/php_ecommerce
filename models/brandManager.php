@@ -173,7 +173,8 @@
         </div>
     </div>
 </div>
-
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+<script src="api/toast.js"></script>
 <script>
     (() => {
         'use strict';
@@ -213,31 +214,6 @@
             deleteBrandConfirmModal: new bootstrap.Modal(document.getElementById('deleteBrandConfirmModal')),
             deleteBrandName: document.getElementById('deleteBrandName'),
             confirmDeleteBrandBtn: document.getElementById('confirmDeleteBrandBtn')
-        };
-
-        // ---------- Toast ----------
-        const Toast = {
-            container: (() => {
-                const div = document.createElement("div");
-                div.className = "position-fixed bottom-0 end-0 p-3";
-                div.style.zIndex = 1080;
-                document.body.appendChild(div);
-                return div;
-            })(),
-            show(msg, type = 'info') {
-                const html = `
-                <div class="toast align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="d-flex">
-                        <div class="toast-body">${msg}</div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-                    </div>
-                </div>
-            `;
-                const el = document.createElement('div');
-                el.innerHTML = html;
-                this.container.appendChild(el.firstElementChild);
-                new bootstrap.Toast(this.container.lastElementChild).show();
-            }
         };
 
         // ---------- API ----------
@@ -342,7 +318,7 @@
                 `;
                 });
             } catch (e) {
-                Toast.show('載入品牌資料失敗: ' + e.message, 'danger');
+                showToast('載入品牌資料失敗: ' + e.message, 'danger');
             }
         }
 
@@ -350,11 +326,11 @@
         DOM.saveCompanyIntroBtn.onclick = async () => {
             try {
                 await API.request('updateCompanyIntro', { introduction: DOM.companyIntroTextarea.value });
-                Toast.show('公司介紹更新成功', 'success');
+                showToast('公司介紹更新成功', 'success');
                 bootstrap.Modal.getOrCreateInstance(document.getElementById('editCompanyIntroModal')).hide();
                 loadBrandData();
             } catch (e) {
-                Toast.show('更新公司介紹失敗: ' + e.message, 'danger');
+                showToast('更新公司介紹失敗: ' + e.message, 'danger');
             }
         };
 
@@ -372,7 +348,7 @@
             [...DOM.addBrandNewsImageInput.files].forEach(f => fd.append('brand_news_images[]', f));
             try {
                 await API.request('addBrand', fd);
-                Toast.show('新增品牌成功', 'success');
+                showToast('新增品牌成功', 'success');
                 DOM.addBrandModal.hide();
                 DOM.addBrandForm.reset();
                 DOM.addBrandForm.classList.remove('was-validated');
@@ -380,7 +356,7 @@
                 DOM.addBrandNewsImagePreviewContainer.innerHTML = '';
                 loadBrandData();
             } catch (e) {
-                Toast.show('新增品牌失敗: ' + e.message, 'danger');
+                showToast('新增品牌失敗: ' + e.message, 'danger');
             }
         };
 
@@ -474,12 +450,12 @@
             fd.append('delete_news_images', JSON.stringify(editState.deletedNews));
             try {
                 await API.request('updateBrand', fd);
-                Toast.show('品牌更新成功', 'success');
+                showToast('品牌更新成功', 'success');
                 DOM.editBrandModal.hide();
                 DOM.editBrandForm.classList.remove('was-validated');
                 loadBrandData();
             } catch (e) {
-                Toast.show('更新品牌失敗: ' + e.message, 'danger');
+                showToast('更新品牌失敗: ' + e.message, 'danger');
             }
         };
 
@@ -487,11 +463,11 @@
         DOM.confirmDeleteBrandBtn.onclick = async () => {
             try {
                 await API.request('deleteBrand', { brand_id: editState.brandId });
-                Toast.show('品牌刪除成功', 'success');
+                showToast('品牌刪除成功', 'success');
                 DOM.deleteBrandConfirmModal.hide();
                 loadBrandData();
             } catch (e) {
-                Toast.show('刪除品牌失敗: ' + e.message, 'danger');
+                showToast('刪除品牌失敗: ' + e.message, 'danger');
             }
         };
 

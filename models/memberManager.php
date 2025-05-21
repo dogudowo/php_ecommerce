@@ -187,6 +187,9 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
     </div>
 </div>
 
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+<script src="api/toast.js"></script>
+
 <script>
     /* ====== 共用設定 ====== */
     const MEMBER_API = 'api/MemberBackend.php';
@@ -253,9 +256,6 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
         }
     }
 
-    /* ====================
-       列渲染與共用片段
-       ==================== */
     function spinnerRow() {
         return `
             <tr>
@@ -412,26 +412,6 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
         document.querySelectorAll('.edit-member').forEach(btn => btn.onclick = editMemberHandler);
         document.querySelectorAll('.delete-member').forEach(btn => btn.onclick = deleteMemberHandler);
     }
-
-    /* Toast helper */
-    function showToast(msg, type = 'success') {
-        const tpl = `
-          <div class="toast align-items-center text-white ${type === 'success' ? 'bg-success' : 'bg-danger'} border-0" role="alert">
-            <div class="d-flex">
-              <div class="toast-body"><i class="bi ${type === 'success' ? 'bi-check-circle' : 'bi-exclamation-circle'} me-2"></i>${msg}</div>
-              <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>
-          </div>`;
-        const wrap = document.createElement('div');
-        wrap.className = 'position-fixed bottom-0 end-0 p-3';
-        wrap.style.zIndex = 1056;
-        wrap.innerHTML = tpl;
-        document.body.appendChild(wrap);
-        const toast = new bootstrap.Toast(wrap.querySelector('.toast'), { delay: 3000 });
-        toast.show();
-        toast._element.addEventListener('hidden.bs.toast', () => wrap.remove());
-    }
-
     /* 頁面 init */
     document.addEventListener('DOMContentLoaded', loadMembers);
 </script>
