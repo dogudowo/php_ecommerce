@@ -60,6 +60,16 @@ $statusList = getOrderStatusList();
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
+                    <colgroup>
+                        <col style="width: 14%;">
+                        <col style="width: 16%;">
+                        <col style="width: 14%;">
+                        <col style="width: 14%;">
+                        <col style="width: 14%;">
+                        <col style="width: 14%;">
+                        <col style="width: 14%;">
+                        <col style="width: 14%;">
+                    </colgroup>
                     <thead>
                         <tr>
                             <th>訂單ID</th>

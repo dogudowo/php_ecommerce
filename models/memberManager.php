@@ -88,7 +88,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
 
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>會員ID</th>
                             <th>姓名</th>
                             <th>Email</th>
                             <th>電話</th>
