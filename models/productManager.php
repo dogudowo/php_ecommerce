@@ -633,11 +633,10 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
             Array.from(galleryImagesPreview.querySelectorAll('img')).forEach(img => {
                 const imgDiv = document.createElement('div');
                 imgDiv.className = 'col-md-4 mb-2';
-                // 檢查圖片是否是新上傳的 blob URL，如果是，則添加對應的 class 和按鈕類型
                 const isNewBlob = img.src.startsWith('blob:');
                 imgDiv.innerHTML = `
                     <div class="card ${isNewBlob ? 'new-gallery-card' : ''}">
-                        <img src="${img.src}" class="card-img-top">
+                        <img src="${img.src}" class="rounded mx-auto d-block"  style="width: 200px; height: 200px;">
                         <div class="card-body p-2">
                             <button type="button" class="btn btn-sm btn-danger w-100 ${isNewBlob ? 'remove-new-gallery-image' : 'delete-gallery-image'}"
                                 data-src="${img.src}">
@@ -667,7 +666,7 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                     const html = `
                     <div class="col-md-4 mb-2">
                         <div class="card new-gallery-card">
-                            <img src="${e.target.result}" class="card-img-top">
+                            <img src="${e.target.result}" class="card-img-top"  style="width: 100px; height: 100px;">
                             <div class="card-body p-2">
                                 <button type="button" class="btn btn-sm btn-danger w-100 remove-new-gallery-image">
                                     <i class="bi bi-trash"></i> 刪除
