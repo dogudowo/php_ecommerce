@@ -78,7 +78,7 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
                     <thead>
                         <tr>
-                            <th>ID</th>
+                            <th>商品ID</th>
                             <th>商品名稱</th>
                             <th>類型</th>
                             <th>總庫存</th>
@@ -622,7 +622,7 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                 const isNewBlob = img.src.startsWith("blob:");
                 imgDiv.innerHTML = `
                 <div class="card ${isNewBlob ? "new-gallery-card" : ""}">
-                    <img src="${img.src}" class="card-img-top">
+                    <img src="${img.src}" class="rounded mx-auto d-block" style="width: 200px; height: 200px;">
                     <div class="card-body p-2">
                         <button type="button" class="btn btn-sm btn-danger w-100 ${isNewBlob ? "remove-new-gallery-image" : "delete-gallery-image"}" data-src="${img.src}">
                             <i class="bi bi-trash"></i> 刪除
