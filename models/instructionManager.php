@@ -141,11 +141,8 @@ require_once __DIR__ . '/../api/instruction.php';
         </div>
     </div>
 </div>
-
-<!-- Toast Container -->
-<div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 9999">
-    <!-- Toasts will be appended here by JavaScript -->
-</div>
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+<script src="api/toast.js"></script>
 
 <script>
     const handlerUrl = 'api/instruction.php';
@@ -266,22 +263,6 @@ require_once __DIR__ . '/../api/instruction.php';
         }
     });
 
-    // 顯示 Toast 通知
-    function showToast(msg, type = "success") {
-        const toastContainer = document.getElementById("toastContainer");
-        const el = document.createElement("div");
-        el.className = `toast align-items-center text-white bg-${type} border-0`;
-        el.role = "alert";
-        el.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="bi ${type === "success" ? "bi-check-circle" : "bi-exclamation-triangle"} me-2"></i>${msg}
-                </div>
-                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>`;
-        toastContainer.appendChild(el);
-        new bootstrap.Toast(el, { delay: 3000 }).show();
-    }
     const showError = (title, err) => { console.error(title, err); showToast(`${title}：${err.message || err}`, "danger"); };
 
     // 初始載入

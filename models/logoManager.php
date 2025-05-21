@@ -43,12 +43,8 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
         </div>
     </div>
 </div>
-
-<!-- Toast 容器 -->
-<div aria-live="polite" aria-atomic="true" class="position-fixed bottom-0 end-0 p-3" style="z-index:9999;">
-    <div id="toastContainer"></div>
-</div>
-
+<div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
+<script src="api/toast.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const forms = ['titleLogoForm', 'webIconForm'];
@@ -76,7 +72,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                     showToast(result.message, 'success');
                 } else {
                     showToast(result.message, 'danger');
-                    console.error(result.message);
+                    console.error(err);
                 }
             } catch (err) {
                 showToast(`發生錯誤：${err.message}`, 'warning');
@@ -92,28 +88,5 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
             document.getElementById(imgId).src = `imgs/${imgFile}?${ts}`;
         }
 
-        // 顯示 Toast 通知（Bootstrap 5）
-        function showToast(msg, type = "success") {
-            const toastContainer = document.getElementById('toastContainer');
-            const iconClass = type === "success" ? "bi-check-circle" : "bi-exclamation-triangle";
-
-            const toastEl = document.createElement('div');
-            toastEl.className = `toast align-items-center text-bg-${type} border-0 fade`;
-            toastEl.role = 'alert';
-            toastEl.innerHTML = `
-            <div class="d-flex">
-                <div class="toast-body">
-                    <i class="bi ${iconClass} me-2"></i>${msg}
-                </div>
-                <button class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
-            </div>`;
-
-            toastContainer.appendChild(toastEl);
-
-            const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
-            toast.show();
-
-            toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
-        }
     });
 </script>

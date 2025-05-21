@@ -97,9 +97,8 @@ $adLink = $adLinkObj->adLink ?? '';
         </div>
     </div>
 </div>
-
 <div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
-
+<script src="api/toast.js"></script>
 <script>
     (() => {
         /* ------------------ 共用設定 ------------------ */
@@ -115,21 +114,9 @@ $adLink = $adLinkObj->adLink ?? '';
         };
 
         const modalEl = document.getElementById('entityModal');
-        const toastWrap = document.querySelector('.toast-container');
         let curEntity = 'company', curOp = 'add', editId = '';
 
         /* ------------------ 工具 ------------------ */
-        const toast = (msg, type = 'success') => {
-            const el = document.createElement('div');
-            el.innerHTML = `<div class="toast align-items-center text-white bg-${type} border-0" role="alert" data-bs-delay="3000">
-            <div class="d-flex"><div class="toast-body">${msg}</div>
-            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button></div></div>`;
-            const t = el.firstElementChild;
-            toastWrap.appendChild(t);
-            new bootstrap.Toast(t).show();
-            t.addEventListener('hidden.bs.toast', () => t.remove());
-        };
-
         const actionOf = (entity, op) => ({
             company: {
                 getAll: 'getAllCompanies', get: 'getCompany', add: 'addCompany', update: 'updateCompany', delete: 'deleteCompany'
@@ -147,7 +134,7 @@ $adLink = $adLinkObj->adLink ?? '';
                 if (!json.success) throw Error(json.message);
                 const tbody = document.getElementById(`${entity}TableBody`);
                 tbody.innerHTML = json.data.map(row => renderRow(entity, row)).join('');
-            } catch (e) { toast(`${entity === 'company' ? '公司' : '門市'}資料載入失敗：${e.message || e}`, 'danger'); }
+            } catch (e) { showToast(`${entity === 'company' ? '公司' : '門市'}資料載入失敗：${e.message || e}`, 'danger'); }
         };
 
         const renderRow = (entity, row) => {
@@ -196,7 +183,7 @@ $adLink = $adLinkObj->adLink ?? '';
                     const json = await res.json();
                     if (!json.success) throw Error(json.message);
                     data = json.data;
-                } catch (e) { toast('載入編輯資料失敗：' + (e.message || e), 'danger'); return; }
+                } catch (e) { showToast('載入編輯資料失敗：' + (e.message || e), 'danger'); return; }
             }
             buildForm(entity, data);
             bootstrap.Modal.getOrCreateInstance(modalEl).show();
@@ -212,10 +199,10 @@ $adLink = $adLinkObj->adLink ?? '';
                 const res = await fetch('api/about.php', { method: 'POST', body });
                 const json = await res.json();
                 if (!json.success) throw Error(json.message);
-                toast('操作成功');
+                showToast('更新成功', 'success');
                 bootstrap.Modal.getInstance(modalEl).hide();
                 loadTable(curEntity);
-            } catch (e) { toast('操作失敗：' + (e.message || e), 'danger'); }
+            } catch (e) { showToast('操作失敗：' + (e.message || e), 'danger'); }
         };
 
         /* ------------------ 刪除 ------------------ */
@@ -226,9 +213,9 @@ $adLink = $adLinkObj->adLink ?? '';
                 const res = await fetch('api/about.php', { method: 'POST', body });
                 const json = await res.json();
                 if (!json.success) throw Error(json.message);
-                toast('刪除成功');
+                showToast('刪除成功', 'success');
                 loadTable(entity);
-            } catch (e) { toast('刪除失敗：' + (e.message || e), 'danger'); }
+            } catch (e) { showToast('刪除失敗：' + (e.message || e), 'danger'); }
         };
 
         /* ------------------ 廣告連結 ------------------ */
@@ -238,8 +225,8 @@ $adLink = $adLinkObj->adLink ?? '';
                 const res = await fetch('api/UpdateLink.php', { method: 'POST', body: JSON.stringify({ action: 'saveAdLink', adLink }) });
                 const json = await res.json();
                 if (!json.success) throw Error(json.message);
-                toast('更新成功');
-            } catch (e) { toast('更新失敗：' + (e.message || e), 'danger'); }
+                showToast('更新成功', 'success');
+            } catch (e) { showToast('更新失敗：' + (e.message || e), 'danger'); }
         });
 
         /* ------------------ 事件委派 ------------------ */

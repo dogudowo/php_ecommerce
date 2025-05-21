@@ -50,36 +50,13 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
     </div>
 </div>
 <div class="toast-container position-fixed bottom-0 end-0 p-3"></div>
-
+<script src="api/toast.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         /** ================= 常量 ================= */
         const API_URL = 'api/UpdateLink.php';
         const FIELDS = ['line', 'facebook', 'instagram', 'youtube'];
         const inputIds = FIELDS.map(k => `${k}Link`);
-
-        /** ================= Toast ================= */
-        let $toastContainer = $('.toast-container');
-        if (!$toastContainer.length) {
-            $toastContainer = $('<div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index:1055"></div>').appendTo('body');
-        }
-        const showToast = (msg, lvl = 'info', delay = 5000) => {
-            const bg = { success: 'bg-success', danger: 'bg-danger', warning: 'bg-warning', info: 'bg-info' }[lvl] || 'bg-info';
-            const toastHtml = `
-                <div class="toast align-items-center text-white ${bg} border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="${delay}">
-                    <div class="d-flex">
-                        <div class="toast-body">
-                            <i class="bi ${lvl === 'danger' ? 'bi-exclamation-triangle' : lvl === 'success' ? 'bi-check-circle' : 'bi-info-circle'} me-2"></i>${msg}
-                        </div>
-                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                    </div>
-                </div>
-            `;
-            $toastContainer.html(toastHtml).css('z-index', '2000');
-            const toastEl = $toastContainer.find('.toast')[0];
-            new bootstrap.Toast(toastEl).show();
-            $(toastEl).on('hidden.bs.toast', () => $(toastEl).remove());
-        };
 
         /** ================= DOM ================= */
         const saveBtn = document.getElementById('saveSettingsBtn');
