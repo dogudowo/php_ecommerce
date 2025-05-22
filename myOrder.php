@@ -61,14 +61,26 @@ $orders = getMemberOrders($memberId);
                 </div>
                 <div class="card-body">
                     <ul class="nav nav-tabs mb-3" id="orderTabs">
-                        <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab"
-                                data-bs-target="#pending">進行中</button></li>
-                        <li class="nav-item"><button class="nav-link" data-bs-toggle="tab"
-                                data-bs-target="#completed">已完成</button></li>
+                        <li class="nav-item">
+                            <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#pending">
+                                <i class="bi bi-clock-history me-1"></i>進行中
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#completed">
+                                <i class="bi bi-check-circle me-1"></i>已完成
+                            </button>
+                        </li>
+                        <li class="nav-item">
+                            <button class="nav-link" data-bs-toggle="tab" data-bs-target="#repairs">
+                                <i class="bi bi-tools me-1"></i>維修記錄
+                            </button>
+                        </li>
                     </ul>
                     <div class="tab-content" id="orderTabsContent">
                         <?php renderOrderTab($orders, 'Pending', '進行中'); ?>
                         <?php renderOrderTab($orders, 'Completed', '已完成'); ?>
+                        <?php renderRepairTab($orders, '維修記錄'); ?>
                     </div>
                 </div>
             </div>

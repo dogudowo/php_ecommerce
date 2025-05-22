@@ -255,14 +255,103 @@ function getOrderDetails(int $orderId, ?PDO $pdo = null): array
 }
 
 /* ========  前端渲染（若需要） ======== */
+function renderRepairTab(array $orders, string $title, ?PDO $pdo = null): void
+{
+    $pdo = $pdo ?? db_connect();
+    
+    echo '<div class="tab-pane fade" id="repairs" role="tabpanel" aria-labelledby="repairs-tab">';
+    
+    // 收集所有維修記錄
+    $allRepairs = [];
+    foreach ($orders as $order) {
+        $warranties = getOrderWarranties((int) $order['OrderID'], $pdo);
+        foreach ($warranties as $warranty) {
+            if (isset($warranty['RepairID'])) {
+                $allRepairs[] = [
+                    'order' => $order,
+                    'repair' => $warranty
+                ];
+            }
+        }
+    }
+    
+    if (empty($allRepairs)) {
+        echo '<div class="no-products-alert alert alert-info text-center mt-4">⚠️ 目前沒有維修記錄</div>';
+    } else {
+        // 按日期排序（最新的在前）
+        usort($allRepairs, function($a, $b) {
+            return strtotime($b['repair']['RepairDate']) - strtotime($a['repair']['RepairDate']);
+        });
+        
+        echo '<div class="list-group">';
+        foreach ($allRepairs as $item) {
+            $repair = $item['repair'];
+            $order = $item['order'];
+            ?>
+            <div class="list-group-item mb-4 border rounded">
+                <div class="d-flex w-100 justify-content-between align-items-center">
+                    <div>
+                        <h5 class="mb-1">維修單號: REP-<?= $repair['RepairID'] ?></h5>
+                        <p class="mb-0 text-muted">訂單號碼: ORD-<?= $order['OrderID'] ?></p>
+                    </div>
+                    <small class="text-muted"><?= date('Y-m-d H:i', strtotime($repair['RepairDate'])) ?></small>
+                </div>
+                
+                <div class="mt-3">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="mb-2"><?= htmlspecialchars($repair['ProductName']) ?></h6>
+                            <?php if ($repair['RepairCommit']): ?>
+                                <p class="mb-2">維修說明: <?= htmlspecialchars($repair['RepairCommit']) ?></p>
+                            <?php endif; ?>
+                            <p class="mb-0">保固到期日: <?= date('Y-m-d', strtotime($repair['WarrantyDate'])) ?></p>
+                            <?php if ($repair['Price'] !== null): ?>
+                                <p class="mb-0">維修金額: $<?= number_format($repair['Price']) ?></p>
+                            <?php endif; ?>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?> fs-6">
+                                <?= htmlspecialchars($repair['RepairStatus']) ?>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <?php
+        }
+        echo '</div>';
+    }
+    
+    echo '</div>';
+}
+
 function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo = null): void
 {
     $pdo = $pdo ?? db_connect();
 
-    // 進行中(Pending & Shipping) vs 其他
+    // 進行中(Pending & Shipping) vs 已完成(Completed)
     $filtered = ($status === 'Pending')
-        ? array_filter($orders, fn($o) => in_array($o['Status'], ['Pending', 'Shipping'], true))
-        : array_filter($orders, fn($o) => !in_array($o['Status'], ['Pending', 'Shipping'], true));
+        ? array_filter($orders, function($o) use ($pdo) {
+            // 檢查訂單狀態
+            $orderStatus = in_array($o['Status'], ['Pending', 'Shipping'], true);
+            
+            // 檢查維修狀態
+            $warranties = getOrderWarranties((int) $o['OrderID'], $pdo);
+            $hasActiveRepair = false;
+            foreach ($warranties as $warranty) {
+                if (isset($warranty['RepairStatus']) && 
+                    in_array($warranty['RepairStatus'], ['待處理', '維修中', '已送達'], true)) {
+                    $hasActiveRepair = true;
+                    break;
+                }
+            }
+            
+            return $orderStatus || $hasActiveRepair;
+        })
+        : array_filter($orders, function($o) {
+            // 已完成頁面只檢查訂單狀態是否為 Completed
+            return $o['Status'] === 'Completed';
+        });
 
     echo '<div class="tab-pane fade ' . ($status === 'Pending' ? 'show active' : '') .
         '" id="' . strtolower($status) . '" role="tabpanel" aria-labelledby="' .
@@ -272,58 +361,178 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
         echo '<div class="list-group">';
         foreach ($filtered as $order) {
             $detail = getOrderDetails((int) $order['OrderID'], $pdo);
-            ?>
-            <div class="list-group-item mb-4 border rounded">
-                <div class="d-flex w-100 justify-content-between">
-                    <h5 class="mb-1">訂單號碼: ORD-<?= $order['OrderID'] ?></h5>
-                    <small><?= $order['OrderDate'] ?></small>
-                </div>
-                <?php
-                foreach ($detail['items'] as $item): ?>
-                    <div class="d-flex align-items-center mb-2 border-top mt-2 pt-2">
-                        <div>
-                            <p class="mb-1 h5"><?= $item['ProductName'] ?></p>
-                            <p class="mb-0">顏色: <?= "{$item['Color']}" ?></p>
-                            <p class="mb-0">數量: <?= $item['Quantity'] ?> 件</p>
-                            <p class="mb-0">單價: $<?= $item['Price'] ?></p>
+            $warranties = getOrderWarranties((int) $order['OrderID'], $pdo);
+            $activeRepairs = array_filter($warranties, function($w) {
+                return isset($w['RepairStatus']) && 
+                       in_array($w['RepairStatus'], ['待處理', '維修中', '已送達'], true);
+            });
+            
+            // 如果是進行中頁面且有維修項目，先顯示維修項目
+            if ($status === 'Pending' && !empty($activeRepairs)) {
+                foreach ($activeRepairs as $repair) {
+                    ?>
+                    <div class="list-group-item mb-4 border rounded">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">維修單號: REP-<?= $repair['RepairID'] ?></h5>
+                            <small><?= $repair['RepairDate'] ?></small>
+                        </div>
+                        <div class="d-flex align-items-center mb-2 border-top mt-2 pt-2">
+                            <div>
+                                <p class="mb-1 h5"><?= $repair['ProductName'] ?></p>
+                                <p class="mb-0">維修狀態: 
+                                    <span class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?>">
+                                        <?= getRepairStatusText($repair['RepairStatus']) ?>
+                                    </span>
+                                </p>
+                                <?php if ($repair['RepairCommit']): ?>
+                                    <p class="mb-0">維修說明: <?= htmlspecialchars($repair['RepairCommit']) ?></p>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                            <div class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?>">
+                                <?= getRepairStatusText($repair['RepairStatus']) ?>
+                            </div>
+                            <?php if ($repair['Price'] !== null): ?>
+                                <div class="text-center fw-bold fs-5 text-danger">維修金額 $<?= number_format($repair['Price']) ?></div>
+                            <?php endif; ?>
+                            <div class="d-flex align-items-center">
+                                <?php if ($repair['RepairStatus'] === '已送達'): ?>
+                                    <button class="btn btn-success btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>" <?php if (isset($repair['RepairID'])): ?>data-repair-id="<?= $repair['RepairID'] ?>"<?php endif; ?>>
+                                        <?= ($repair['RepairStatus'] === '已送達' && (int)($repair['Price']) === 0) ? '確認' : '付款' ?>
+                                    </button>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                     <?php
-                endforeach; ?>
-                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
-                    <span class="badge fs-6 <?= getStatusClass($order['Status']) ?>">
-                        <?= getStatusText($order['Status']) ?>
-                    </span>
-                    <div class="text-center fw-bold fs-5 text-danger">總計 $<?= number_format($detail['total_amount']) ?></div>
-                    <div class="d-flex align-items-center">
-                        <?php
-                        if ($status === 'Pending'): ?>
-                            <?php
-                            if ($order['Status'] === 'Shipping'): ?>
-                                <button class="btn btn-success btn-sm" data-action="pay"
-                                    data-order-id="<?= $order['OrderID'] ?>">付款</button>
-                                <?php
-                            elseif ($order['Status'] === 'Pending'): ?>
-                                <button class="btn btn-secondary btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>"
-                                    disabled>付款</button>
-                                <?php
-                            endif; ?>
-                            <?php
-                        else: ?>
-                            <button class="btn btn-warning btn-sm" data-action="repair"
-                                data-order-id="<?= $order['OrderID'] ?>">維修</button>
-                            <?php
-                        endif; ?>
-                    </div>
-                </div>
-            </div>
-            <?php
+                }
+            }
+            
+            // 如果是進行中頁面且訂單狀態為 Pending 或 Shipping，顯示訂單
+            if ($status === 'Pending' && in_array($order['Status'], ['Pending', 'Shipping'], true)) {
+                renderOrderItem($order, $detail);
+            }
+            
+            // 如果是已完成頁面，顯示訂單
+            if ($status !== 'Pending') {
+                renderOrderItem($order, $detail);
+            }
         }
         echo '</div>';
     } else {
         echo '<div class="no-products-alert alert alert-info text-center mt-4">⚠️ 目前沒有' . $title . '的訂單</div>';
     }
     echo '</div>';
+}
+
+// 新增一個輔助函數來渲染訂單項目
+function renderOrderItem($order, $detail) {
+    ?>
+    <div class="list-group-item mb-4 border rounded">
+        <div class="d-flex w-100 justify-content-between">
+            <h5 class="mb-1">訂單號碼: ORD-<?= $order['OrderID'] ?></h5>
+            <small><?= $order['OrderDate'] ?></small>
+        </div>
+        <?php foreach ($detail['items'] as $item): ?>
+            <div class="d-flex align-items-center mb-2 border-top mt-2 pt-2">
+                <div>
+                    <p class="mb-1 h5"><?= $item['ProductName'] ?></p>
+                    <p class="mb-0">顏色: <?= "{$item['Color']}" ?></p>
+                    <p class="mb-0">數量: <?= $item['Quantity'] ?> 件</p>
+                    <p class="mb-0">單價: $<?= $item['Price'] ?></p>
+                </div>
+            </div>
+        <?php endforeach; ?>
+        <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+            <div class="badge <?= getStatusClass($order['Status']) ?>">
+                <?php echo htmlspecialchars(getStatusText($order['Status'])); ?>
+            </div>
+            <div class="text-center fw-bold fs-5 text-danger">總計 $<?= number_format($detail['total_amount']) ?></div>
+            <div class="d-flex align-items-center">
+                <?php if ($order['Status'] === 'Completed'): ?>
+                    <button class="btn btn-primary btn-sm me-2" data-bs-toggle="modal" data-bs-target="#repairModal<?= $order['OrderID'] ?>">
+                        <i class="bi bi-tools"></i> 申請維修
+                    </button>
+                <?php endif; ?>
+                <?php if ($order['Status'] === 'Shipping'): ?>
+                    <button class="btn btn-success btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>">付款</button>
+                <?php elseif ($order['Status'] === 'Pending'): ?>
+                    <button class="btn btn-secondary btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>" disabled>付款</button>
+                <?php endif; ?>
+            </div>
+        </div>
+    </div>
+
+    <?php if ($order['Status'] === 'Completed'): ?>
+    <!-- 維修申請 Modal -->
+    <div class="modal fade" id="repairModal<?= $order['OrderID'] ?>" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">申請維修 - 訂單 #<?= $order['OrderID'] ?></h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="repairForm<?= $order['OrderID'] ?>">
+                        <div class="mb-3">
+                            <label class="form-label">選擇要維修的商品：</label>
+                            <?php
+                            $warranties = getOrderWarranties((int) $order['OrderID']);
+                            foreach ($warranties as $warranty):
+                                if (!isset($warranty['RepairID'])): // 只顯示尚未維修的商品
+                                    // 檢查保固是否真的有效（檢查到期日）
+                                    $warrantyDate = strtotime($warranty['WarrantyDate']);
+                                    $isWarrantyValid = $warranty['WarrantyStatus'] && $warrantyDate > time();
+                                    $warrantyStatus = $isWarrantyValid ? '有效' : '已過期';
+                                    $warrantyClass = $isWarrantyValid ? 'text-success' : 'text-danger';
+                            ?>
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input" type="checkbox" name="warranty_ids[]" 
+                                           value="<?= $warranty['WarrantyID'] ?>" id="warranty<?= $warranty['WarrantyID'] ?>">
+                                    <label class="form-check-label" for="warranty<?= $warranty['WarrantyID'] ?>">
+                                        <?= htmlspecialchars($warranty['ProductName']) ?>
+                                        <br>
+                                        <small class="ms-4">
+                                            <span class="<?= $warrantyClass ?>">
+                                                <i class="bi <?= $isWarrantyValid ? 'bi-shield-check' : 'bi-shield-x' ?>"></i>
+                                                保固狀態：<?= $warrantyStatus ?>
+                                            </span>
+                                            <br>
+                                            <span class="text-muted ms-4">
+                                                到期日：<?= date('Y-m-d', strtotime($warranty['WarrantyDate'])) ?>
+                                            </span>
+                                            <?php if (!$isWarrantyValid): ?>
+                                                <br>
+                                                <span class="text-warning ms-4">
+                                                    <i class="bi bi-exclamation-triangle"></i>
+                                                    注意：此商品已過保，維修將收取額外費用
+                                                </span>
+                                            <?php endif; ?>
+                                        </small>
+                                    </label>
+                                </div>
+                            <?php 
+                                endif;
+                            endforeach; 
+                            ?>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">維修說明：</label>
+                            <textarea class="form-control" id="repairCommit<?= $order['OrderID'] ?>" rows="3" 
+                                      placeholder="請描述商品需要維修的問題..."></textarea>
+                        </div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="button" class="btn btn-primary submit-repair" data-order-id="<?= $order['OrderID'] ?>">送出維修申請</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <?php endif; ?>
+    <?php
 }
 
 /* =========  建立訂單 ========= */
@@ -466,7 +675,7 @@ function updateOrderStatus(int $memberId, int $orderId, string $newStatus, strin
         );
         $updateOrder->execute(['status' => $newStatus, 'orderId' => $orderId]);
 
-        // 3. 若完成付款，建立收據與保固
+        // 3. 若完成付款，建立收據與保固，並更新相關維修訂單狀態
         if ($newStatus === 'Completed') {
             // 3-1. 產生收據 ID
             $receiptId = $pdo->query(
@@ -516,6 +725,17 @@ function updateOrderStatus(int $memberId, int $orderId, string $newStatus, strin
                     ]);
                 }
             }
+
+            // 3-4. 更新相關維修訂單狀態
+            $updateRepairs = $pdo->prepare("
+                UPDATE Repairs r
+                JOIN ReceiptItem ri ON r.WarrantyID = ri.WarrantyID
+                JOIN Receipt rc ON ri.ReceiptID = rc.ReceiptID
+                SET r.RepairStatus = '已完成'
+                WHERE rc.OrderID = :orderId 
+                AND r.RepairStatus = '已送達'
+            ");
+            $updateRepairs->execute(['orderId' => $orderId]);
         }
 
         // 關鍵紀錄：交易提交
@@ -581,4 +801,161 @@ function updateMember(
         return ['success' => false, 'message' => '操作失敗：' . $e->getMessage()];
     }
 }
+
+// 添加獲取訂單保固資訊的函數
+function getOrderWarranties(int $orderId, ?PDO $pdo = null): array
+{
+    $pdo = $pdo ?? db_connect();
+    
+    // 簡化查詢，先確保基本資料能正確獲取
+    $sql = <<<SQL
+        SELECT  w.WarrantyID,
+                w.WarrantyDate,
+                w.WarrantyStatus,
+                orec.ProductName,
+                r.RepairID,
+                r.RepairDate,
+                r.RepairStatus,
+                r.RepairCommit,
+                r.Price
+        FROM    Orders o
+        JOIN    OrderRecord orec ON o.OrderID = orec.OrderID
+        JOIN    ReceiptItem ri ON orec.RecordID = ri.OrderRecordID
+        JOIN    Warranty w ON ri.WarrantyID = w.WarrantyID
+        LEFT JOIN Repairs r ON w.WarrantyID = r.WarrantyID
+        WHERE   o.OrderID = :orderId
+    SQL;
+    
+    $stmt = $pdo->prepare($sql);
+    $stmt->execute(['orderId' => $orderId]);
+    $results = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    
+    return $results;
+}
+
+// 添加處理維修申請的函數
+function createRepairRequest(array $warrantyIds, ?PDO $pdo = null, string $repairCommit = ''): array
+{
+    $pdo = $pdo ?? db_connect();
+    try {
+        $pdo->beginTransaction();
+
+        $stmt = $pdo->query("SELECT MAX(RepairID) as maxId FROM Repairs");
+        $result = $stmt->fetch(PDO::FETCH_ASSOC);
+        $repairId = $result['maxId'] ? $result['maxId'] + 1 : 1;
+
+        $createRepair = $pdo->prepare("
+            INSERT INTO Repairs (RepairID, WarrantyID, RepairDate, RepairStatus, RepairCommit, Price) 
+            VALUES (:repairId, :warrantyId, NOW(), :status, :repairCommit, :price)
+        ");
+
+        foreach ($warrantyIds as $warrantyId) {
+            // 檢查保固狀態
+            $checkWarranty = $pdo->prepare("
+                SELECT WarrantyStatus, WarrantyDate 
+                FROM Warranty 
+                WHERE WarrantyID = :warrantyId
+            ");
+            $checkWarranty->execute(['warrantyId' => $warrantyId]);
+            $warranty = $checkWarranty->fetch(PDO::FETCH_ASSOC);
+            
+            // 判斷是否在保固期內
+            $isWarrantyValid = $warranty['WarrantyStatus'] && strtotime($warranty['WarrantyDate']) > time();
+            
+            $createRepair->execute([
+                'repairId' => $repairId,
+                'warrantyId' => $warrantyId,
+                'status' => '待處理',
+                'repairCommit' => $repairCommit,
+                'price' => $isWarrantyValid ? 0 : null // 保固內免費，保固外待定
+            ]);
+            $repairId++;
+        }
+
+        $pdo->commit();
+        return ['success' => true, 'message' => '維修申請已送出'];
+    } catch (Throwable $e) {
+        $pdo->rollBack();
+        error_log('創建維修申請失敗：' . $e->getMessage());
+        return ['success' => false, 'message' => '操作失敗：' . $e->getMessage()];
+    }
+}
+
+// 添加API端點處理維修申請
+if ($method === 'POST' && $action === 'createRepair') {
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    if (empty($input['warrantyIds'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => '請選擇要維修的商品']);
+        exit;
+    }
+    $repairCommit = $input['repairCommit'] ?? '';
+    $result = createRepairRequest($input['warrantyIds'], null, $repairCommit);
+    echo json_encode($result);
+    exit;
+}
+
+// 添加維修狀態相關的輔助函數
+function getRepairStatusClass(string $status): string
+{
+    return [
+        '待處理' => 'bg-secondary',
+        '處理中' => 'bg-info',
+        '維修中' => 'bg-primary',
+        '已完成' => 'bg-success',
+        '已送達' => 'bg-primary',
+        '已取消' => 'bg-warning',
+        '異常' => 'bg-danger'
+    ][$status] ?? 'bg-secondary';
+}
+
+function getRepairStatusText(string $status): string
+{
+    return $status; // 直接返回中文狀態
+}
 ?>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // 處理維修申請提交
+    document.querySelectorAll('.submit-repair').forEach(button => {
+        button.addEventListener('click', function() {
+            const orderId = this.dataset.orderId;
+            const form = document.getElementById(`repairForm${orderId}`);
+            const selectedWarranties = Array.from(form.querySelectorAll('input[name="warranty_ids[]"]:checked'))
+                .map(checkbox => checkbox.value);
+
+            if (selectedWarranties.length === 0) {
+                alert('請選擇要維修的商品');
+                return;
+            }
+
+            // 發送維修申請
+            const repairCommit = document.getElementById(`repairCommit${orderId}`).value;
+            fetch('api/order.php?action=createRepair', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    warrantyIds: selectedWarranties,
+                    repairCommit: repairCommit
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('維修申請已成功送出');
+                    // 可以選擇重新載入頁面或更新UI
+                    location.reload();
+                } else {
+                    alert(data.message || '送出失敗，請稍後再試');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('發生錯誤，請稍後再試');
+            });
+        });
+    });
+});
+</script>
