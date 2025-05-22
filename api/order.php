@@ -398,7 +398,9 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                             <?php endif; ?>
                             <div class="d-flex align-items-center">
                                 <?php if ($repair['RepairStatus'] === '已送達'): ?>
-                                    <button class="btn btn-success btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>">付款</button>
+                                    <button class="btn btn-success btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>" <?php if (isset($repair['RepairID'])): ?>data-repair-id="<?= $repair['RepairID'] ?>"<?php endif; ?>>
+                                        <?= ($repair['RepairStatus'] === '已送達' && (int)($repair['Price']) === 0) ? '確認' : '付款' ?>
+                                    </button>
                                 <?php endif; ?>
                             </div>
                         </div>
@@ -673,7 +675,7 @@ function updateOrderStatus(int $memberId, int $orderId, string $newStatus, strin
         );
         $updateOrder->execute(['status' => $newStatus, 'orderId' => $orderId]);
 
-        // 3. 若完成付款，建立收據與保固
+        // 3. 若完成付款，建立收據與保固，並更新相關維修訂單狀態
         if ($newStatus === 'Completed') {
             // 3-1. 產生收據 ID
             $receiptId = $pdo->query(
@@ -723,6 +725,17 @@ function updateOrderStatus(int $memberId, int $orderId, string $newStatus, strin
                     ]);
                 }
             }
+
+            // 3-4. 更新相關維修訂單狀態
+            $updateRepairs = $pdo->prepare("
+                UPDATE Repairs r
+                JOIN ReceiptItem ri ON r.WarrantyID = ri.WarrantyID
+                JOIN Receipt rc ON ri.ReceiptID = rc.ReceiptID
+                SET r.RepairStatus = '已完成'
+                WHERE rc.OrderID = :orderId 
+                AND r.RepairStatus = '已送達'
+            ");
+            $updateRepairs->execute(['orderId' => $orderId]);
         }
 
         // 關鍵紀錄：交易提交
@@ -852,7 +865,7 @@ function createRepairRequest(array $warrantyIds, ?PDO $pdo = null, string $repai
             $createRepair->execute([
                 'repairId' => $repairId,
                 'warrantyId' => $warrantyId,
-                'status' => REPAIR_STATUS['PENDING'],
+                'status' => '待處理',
                 'repairCommit' => $repairCommit,
                 'price' => $isWarrantyValid ? 0 : null // 保固內免費，保固外待定
             ]);
