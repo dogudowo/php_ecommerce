@@ -66,24 +66,14 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
         <div class="card-body">
             <div class="table-responsive">
                 <table id="productTable" class="table table-hover align-middle">
-                    <!-- 固定欄寬 -->
-                    <colgroup>
-                        <col style="width: 10%;"> <!-- ID -->
-                        <col style="width: 44%;"> <!-- 商品名稱 -->
-                        <col style="width: 16%;"> <!-- 類型 -->
-                        <col style="width: 10%;"> <!-- 總庫存 -->
-                        <col style="width: 10%;"> <!-- 狀態 -->
-                        <col style="width: 10%;"> <!-- 操作 -->
-                    </colgroup>
-
                     <thead>
                         <tr>
-                            <th>商品ID</th>
-                            <th>商品名稱</th>
-                            <th>類型</th>
-                            <th>總庫存</th>
-                            <th>狀態</th>
-                            <th>操作</th>
+                            <th style="width: 7%;">商品ID</th>
+                            <th style="width: 50%;">商品名稱</th>
+                            <th style="width: 16%;">類型</th>
+                            <th style="width: 10%;">總庫存</th>
+                            <th style="width: 10%;">狀態</th>
+                            <th style="width: 10%;">操作</th>
                         </tr>
                     </thead>
                     <tbody id="productTableBody">

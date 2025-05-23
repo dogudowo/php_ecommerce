@@ -60,25 +60,15 @@ $statusList = getOrderStatusList();
         <div class="card-body">
             <div class="table-responsive">
                 <table class="table table-hover">
-                    <colgroup>
-                        <col style="width: 14%;">
-                        <col style="width: 16%;">
-                        <col style="width: 14%;">
-                        <col style="width: 14%;">
-                        <col style="width: 14%;">
-                        <col style="width: 14%;">
-                        <col style="width: 14%;">
-                        <col style="width: 14%;">
-                    </colgroup>
                     <thead>
                         <tr>
-                            <th>訂單ID</th>
-                            <th>會員名稱</th>
-                            <th>訂單日期</th>
-                            <th>商品數量</th>
-                            <th>總金額</th>
-                            <th>狀態</th>
-                            <th>操作</th>
+                            <th style="width: 10%;">訂單ID</th>
+                            <th style="width: 20%;">會員名稱</th>
+                            <th style="width: 14%;">訂單日期</th>
+                            <th style="width: 14%;">商品數量</th>
+                            <th style="width: 14%;">總金額</th>
+                            <th style="width: 14%;">狀態</th>
+                            <th style="width: 14%;">操作</th>
                         </tr>
                     </thead>
                     <tbody id="orderTableBody">

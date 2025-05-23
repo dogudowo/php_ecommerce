@@ -23,12 +23,12 @@ $adLink = $adLinkObj->adLink ?? '';
                 <table class="table table-striped align-middle">
                     <thead>
                         <tr>
-                            <th>統一編號</th>
-                            <th>公司名稱</th>
-                            <th>電子郵件</th>
-                            <th>電話</th>
-                            <th>傳真</th>
-                            <th>操作</th>
+                            <th style="width: 10%;">統一編號</th>
+                            <th style="width: 15%;">公司名稱</th>
+                            <th style="width: 45%;">電子郵件</th>
+                            <th style="width: 10%;">電話</th>
+                            <th style="width: 10%;">傳真</th>
+                            <th style="width: 10%;">操作</th>
                         </tr>
                     </thead>
                     <tbody id="companyTableBody"></tbody>
@@ -50,12 +50,12 @@ $adLink = $adLinkObj->adLink ?? '';
                 <table class="table table-striped align-middle">
                     <thead>
                         <tr>
-                            <th class="d-none">統一編號</th>
-                            <th>門市名稱</th>
-                            <th>電話</th>
-                            <th>地址</th>
-                            <th>服務時間</th>
-                            <th>操作</th>
+                            <th class="d-none" style="width: 10%;">統一編號</th>
+                            <th style="width: 12%;">門市名稱</th>
+                            <th style="width: 10%;">電話</th>
+                            <th style="width: 28%;">地址</th>
+                            <th style="width: 40%;">服務時間</th>
+                            <th style="width: 10%;">操作</th>
                         </tr>
                     </thead>
                     <tbody id="storeTableBody"></tbody>
