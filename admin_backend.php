@@ -122,10 +122,10 @@ $current = $_GET['page'] ?? 'productManager';
                             include 'backend/aboutManager.php';
                             break;
                         case 'orderManager':
-                            include 'backend/backend/orderManager.php';
+                            include 'backend/orderManager.php';
                             break;
                         case 'repairOrderManager':
-                            include 'backend/backend/repairOrderManager.php';
+                            include 'backend/repairOrderManager.php';
                             break;
                         case 'memberManager':
                             include 'backend/memberManager.php';

@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
 
-require_once __DIR__ . '/../../../../api/error_handler.php';
-require_once __DIR__ . '/../../../../api/db.php';
+require_once __DIR__ . '/error_handler.php';
+require_once __DIR__ . '/db.php';
 
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
@@ -20,7 +20,7 @@ if ($isDirectCall) {
     handleOrderApi();
     exit;
 } elseif (!defined('INCLUDED_FROM_ADMIN') && !($_SESSION['logged_in'] ?? false)) {
-    header('Location: ../../../../login.php');
+    header('Location: ../login.php');
     exit;
 }
 

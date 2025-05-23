@@ -1,5 +1,5 @@
 <?php
-require_once __DIR__ . '/../../../api/db.php'; // 根據你的專案結構調整路徑
+require_once __DIR__ . '/db.php'; // 根據你的專案結構調整路徑
 header('Content-Type: application/json');
 
 if (empty($_POST['repair_id']) || empty($_POST['new_status'])) {
@@ -7,7 +7,7 @@ if (empty($_POST['repair_id']) || empty($_POST['new_status'])) {
     exit;
 }
 
-$repairId = (int)$_POST['repair_id'];
+$repairId = (int) $_POST['repair_id'];
 $newStatus = $_POST['new_status'];
 
 try {

@@ -1,15 +1,15 @@
 <?php
-require_once __DIR__ . '/../../api/error_handler.php';
+require_once __DIR__ . '/../api/error_handler.php';
 // 維修訂單管理文件
 
 // 防止直接訪問此文件
 if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
-    header('Location: ../../login.php');
+    header('Location: ../login.php');
     exit;
 }
 
 // 引入數據庫連接
-require_once __DIR__ . '/../../api/db.php';
+require_once __DIR__ . '/../api/db.php';
 
 // 獲取所有維修訂單
 function getAllRepairOrders()
@@ -60,7 +60,8 @@ function getRepairStatusClass($status)
 }
 
 // 查詢過濾
-function getFilteredRepairOrders($status, $memberId) {
+function getFilteredRepairOrders($status, $memberId)
+{
     $pdo = getDBConnection();
     $sql = "SELECT r.RepairID, r.RepairDate, r.RepairStatus, r.RepairCommit,
                   w.WarrantyID, w.WarrantyDate, w.WarrantyStatus, 
@@ -126,7 +127,8 @@ $tab = $_GET['tab'] ?? 'product';
                     <select class="form-select" id="filterRepairStatus" name="status">
                         <option value="">全部狀態</option>
                         <?php foreach ($statusList as $key => $value): ?>
-                            <option value="<?php echo htmlspecialchars($key); ?>" <?php if (isset($_GET['status']) && $_GET['status'] === $key) echo 'selected'; ?>>
+                            <option value="<?php echo htmlspecialchars($key); ?>" <?php if (isset($_GET['status']) && $_GET['status'] === $key)
+                                   echo 'selected'; ?>>
                                 <?php echo htmlspecialchars($value); ?>
                             </option>
                         <?php endforeach; ?>
@@ -134,7 +136,9 @@ $tab = $_GET['tab'] ?? 'product';
                 </div>
                 <div class="col-md-3">
                     <label for="filterMemberId" class="form-label">會員ID</label>
-                    <input type="text" class="form-control" id="filterMemberId" name="member_id" value="<?php echo isset($_GET['member_id']) ? htmlspecialchars($_GET['member_id']) : ''; ?>" placeholder="請輸入會員ID">
+                    <input type="text" class="form-control" id="filterMemberId" name="member_id"
+                        value="<?php echo isset($_GET['member_id']) ? htmlspecialchars($_GET['member_id']) : ''; ?>"
+                        placeholder="請輸入會員ID">
                 </div>
                 <div class="col-md-3">
                     <button type="submit" class="btn btn-primary">查詢</button>
@@ -167,7 +171,7 @@ $tab = $_GET['tab'] ?? 'product';
                             </tr>
                         <?php else: ?>
                             <?php
-                            require_once __DIR__ . '/../../api/error_handler.php';
+                            require_once __DIR__ . '/../api/error_handler.php';
                             foreach ($repairOrders as $repair): ?>
                                 <tr>
                                     <td><?php echo htmlspecialchars($repair['RepairID']); ?></td>
@@ -178,7 +182,7 @@ $tab = $_GET['tab'] ?? 'product';
                                     <td>
                                         <span class="badge <?php echo getRepairStatusClass($repair['RepairStatus']); ?>">
                                             <?php
-                                            require_once __DIR__ . '/../../api/error_handler.php';
+                                            require_once __DIR__ . '/../api/error_handler.php';
                                             echo htmlspecialchars($statusList[$repair['RepairStatus']] ?? $repair['RepairStatus']); ?>
                                         </span>
                                     </td>
@@ -188,16 +192,13 @@ $tab = $_GET['tab'] ?? 'product';
                                                 data-id="<?php echo htmlspecialchars($repair['RepairID']); ?>"
                                                 data-commit="<?php echo htmlspecialchars($repair['RepairCommit'] ?? ''); ?>"
                                                 data-warranty-date="<?php echo htmlspecialchars($repair['WarrantyDate'] ?? ''); ?>"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#repairDetailModal"
-                                                title="查看詳情">
+                                                data-bs-toggle="modal" data-bs-target="#repairDetailModal" title="查看詳情">
                                                 <i class="bi bi-eye"></i>
                                             </button>
                                             <button type="button" class="btn btn-sm btn-outline-success update-repair-status"
                                                 data-id="<?php echo htmlspecialchars($repair['RepairID']); ?>"
                                                 data-status="<?php echo htmlspecialchars($repair['RepairStatus']); ?>"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#updateRepairStatusModal">
+                                                data-bs-toggle="modal" data-bs-target="#updateRepairStatusModal">
                                                 <i class="bi bi-arrow-repeat"></i>
                                             </button>
                                         </div>
@@ -239,7 +240,8 @@ $tab = $_GET['tab'] ?? 'product';
     </div>
 
     <!-- 變更維修狀態 Modal -->
-    <div class="modal fade" id="updateRepairStatusModal" tabindex="-1" aria-labelledby="updateRepairStatusModalLabel" aria-hidden="true">
+    <div class="modal fade" id="updateRepairStatusModal" tabindex="-1" aria-labelledby="updateRepairStatusModalLabel"
+        aria-hidden="true">
         <div class="modal-dialog">
             <form id="updateRepairStatusForm" class="modal-content">
                 <div class="modal-header">
@@ -252,7 +254,9 @@ $tab = $_GET['tab'] ?? 'product';
                         <label for="modalNewStatus" class="form-label">選擇新狀態</label>
                         <select class="form-select" id="modalNewStatus" name="new_status" required>
                             <?php foreach ($statusList as $key => $value): ?>
-                                <option value="<?php echo htmlspecialchars($key); ?>"><?php echo htmlspecialchars($value); ?></option>
+                                <option value="<?php echo htmlspecialchars($key); ?>">
+                                    <?php echo htmlspecialchars($value); ?>
+                                </option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -297,7 +301,7 @@ $tab = $_GET['tab'] ?? 'product';
         const newStatus = document.getElementById('modalNewStatus').value;
 
         try {
-            const response = await fetch('models/backend/functions/updateRepairStatus.php', {
+            const response = await fetch('api/updateRepairStatus.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
                 body: `repair_id=${encodeURIComponent(repairId)}&new_status=${encodeURIComponent(newStatus)}`

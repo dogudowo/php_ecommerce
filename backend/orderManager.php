@@ -1,15 +1,15 @@
 <?php
-require_once __DIR__ . '/../../api/error_handler.php';
+require_once __DIR__ . '/../api/error_handler.php';
 // 訂單管理文件
 
 // 防止直接訪問此文件
 if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
-    header('Location: ../../login.php');
+    header('Location: ../login.php');
     exit;
 }
 
 // 引入訂單管理函數
-require_once __DIR__ . '/functions/order/orderFunctions.php';
+require_once __DIR__ . '/../api/orderFunctions.php';
 
 // 獲取訂單狀態列表
 $statusList = getOrderStatusList();
@@ -232,7 +232,7 @@ $statusList = getOrderStatusList();
     // 使用PHP函數獲取訂單詳情
     async function getOrderDetailsFromBackend(orderId) {
         try {
-            const response = await fetch('models/backend/functions/order/orderFunctions.php?orderId=' + orderId);
+            const response = await fetch('api/orderFunctions.php?orderId=' + orderId);
             const data = await response.json();
             return data.success ? data.data : null;
         } catch (error) {
@@ -450,7 +450,7 @@ $statusList = getOrderStatusList();
 
         try {
             // 使用 fetch API 發送 POST 請求
-            const response = await fetch('models/backend/functions/order/orderFunctions.php', {
+            const response = await fetch('api/orderFunctions.php', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
