@@ -107,37 +107,37 @@ $current = $_GET['page'] ?? 'productManager';
                     <?php
                     switch ($current) {
                         case 'carouselManager':
-                            include 'models/carouselManager.php';
+                            include 'backend/carouselManager.php';
                             break;
                         case 'brandManager':
-                            include 'models/brandManager.php';
+                            include 'backend/brandManager.php';
                             break;
                         case 'instructionManager':
-                            include 'models/instructionManager.php';
+                            include 'backend/instructionManager.php';
                             break;
                         case 'repairManager':
-                            include 'models/repairManager.php';
+                            include 'backend/repairManager.php';
                             break;
                         case 'aboutManager':
-                            include 'models/aboutManager.php';
+                            include 'backend/aboutManager.php';
                             break;
                         case 'orderManager':
-                            include 'models/backend/orderManager.php';
+                            include 'backend/backend/orderManager.php';
                             break;
                         case 'repairOrderManager':
-                            include 'models/backend/repairOrderManager.php';
+                            include 'backend/backend/repairOrderManager.php';
                             break;
                         case 'memberManager':
-                            include 'models/memberManager.php';
+                            include 'backend/memberManager.php';
                             break;
                         case 'linkManager':
-                            include 'models/linkManager.php';
+                            include 'backend/linkManager.php';
                             break;
                         case 'logoManager':
-                            include 'models/logoManager.php';
+                            include 'backend/logoManager.php';
                             break;
                         default:
-                            include 'models/productManager.php';
+                            include 'backend/productManager.php';
                             break;
                     }
                     ?>
