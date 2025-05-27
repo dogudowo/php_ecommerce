@@ -13,15 +13,20 @@ require_once __DIR__ . '/../api/orderFunctions.php';
 
 // 獲取訂單狀態列表
 $statusList = getOrderStatusList();
+$statusClasses = [
+    'Completed' => 'success',
+    'Pending' => 'info text-dark',
+    'Shipping' => 'primary',
+    'Cancel' => 'warning',
+    'abnormal' => 'danger'
+];
 ?>
 
 <div class="container-fluid p-0">
     <!-- 訂單管理頁面標題 -->
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h3><i class="bi bi-cart-check me-2"></i>訂單管理</h3>
-        <div>
-
-        </div>
+        <div></div>
     </div>
 
     <!-- 訂單篩選區 -->
@@ -126,7 +131,8 @@ $statusList = getOrderStatusList();
                                     <input type="radio" class="btn-check" name="orderStatusRadio"
                                         id="status_<?php echo htmlspecialchars($key); ?>"
                                         value="<?php echo htmlspecialchars($key); ?>" autocomplete="off">
-                                    <label class="btn btn-outline-primary"
+                                    <label
+                                        class="btn btn-outline-<?php echo htmlspecialchars($statusClasses[$key] ?? 'primary'); ?>"
                                         for="status_<?php echo htmlspecialchars($key); ?>">
                                         <?php echo htmlspecialchars($value); ?>
                                     </label>
@@ -229,20 +235,10 @@ $statusList = getOrderStatusList();
         }
     }
 
-    // 訂單篩選功能
-    document.getElementById('filterStatus').addEventListener('change', filterOrders);
-    document.getElementById('filterDateFrom').addEventListener('change', filterOrders);
-    document.getElementById('filterDateTo').addEventListener('change', filterOrders);
-    document.getElementById('searchOrder').addEventListener('input', filterOrders);
-
-    function filterOrders() {
-        console.log('篩選訂單功能尚未實現');
-    }
-
     // 查看訂單詳情 (使用事件委派)
     $(document).on('click', '.view-order', async function () {
         const orderId = this.getAttribute('data-id');
-        console.log('查看訂單詳情：', orderId);
+        // console.log('查看訂單詳情：', orderId);
 
         try {
             // 顯示載入中提示
@@ -409,7 +405,7 @@ $statusList = getOrderStatusList();
     $(document).on('click', '.update-status', function () {
         const orderId = this.getAttribute('data-id');
         const currentStatus = this.getAttribute('data-status');
-        console.log('更新訂單狀態：', orderId, currentStatus);
+        // console.log('更新訂單狀態：', orderId, currentStatus);
 
         // 設置當前訂單ID
         document.getElementById('updateOrderId').value = orderId;
@@ -428,7 +424,7 @@ $statusList = getOrderStatusList();
         // 從選中的 radio button 獲取選定的狀態值
         const status = document.querySelector('#updateStatusModal input[name="orderStatusRadio"]:checked').value;
 
-        console.log('保存訂單狀態更新：', orderId, status);
+        // console.log('保存訂單狀態更新：', orderId, status);
 
         // 顯示載入中提示
         const saveButton = document.getElementById('saveStatus');
