@@ -101,32 +101,6 @@ $orders = getMemberOrders($memberId);
     </div>
 </div>
 
-<!-- ---------- 付款確認 Modal ---------- -->
-<div class="modal fade" id="paymentConfirmModal" tabindex="-1">
-    <div class="modal-dialog">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 id="paymentConfirmModalLabel" class="modal-title">確認付款</h5>
-            </div>
-            <div class="modal-body" id="paymentModalBody"></div>
-            <div class="modal-body">
-                <h6 class="mb-3">選擇付款方式</h6>
-                <?php foreach (['信用卡' => 'creditCard', 'ATM轉帳' => 'atmTransfer', 'LinePay' => 'linePay'] as $label => $id): ?>
-                        <div class="form-check mb-2">
-                            <input class="form-check-input" type="radio" name="paymentMethod" id="<?= $id ?>"
-                                value="<?= $label ?>" <?= $id === 'creditCard' ? 'checked' : '' ?>>
-                            <label class="form-check-label" for="<?= $id ?>"><?= $label ?></label>
-                        </div>
-                <?php endforeach; ?>
-            </div>
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                <button class="btn btn-primary" id="confirmPaymentBtn">確認</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <!-- ---------- 編輯會員資料 Modal ---------- -->
 <div class="modal fade" id="editMemberModal" tabindex="-1">
     <div class="modal-dialog">
@@ -145,11 +119,11 @@ $orders = getMemberOrders($memberId);
                         'address' => ['地址', 'Address']
                     ];
                     foreach ($map as $name => [$label, $col]): ?>
-                            <div class="mb-3">
-                                <label class="form-label"><?= $label ?></label>
-                                <input class="form-control" name="<?= $name ?>" value="<?= h($currentMember[$col]) ?>"
-                                    <?= $name === 'email' ? 'type=email' : '' ?>>
-                            </div>
+                        <div class="mb-3">
+                            <label class="form-label"><?= $label ?></label>
+                            <input class="form-control" name="<?= $name ?>" value="<?= h($currentMember[$col]) ?>"
+                                <?= $name === 'email' ? 'type=email' : '' ?>>
+                        </div>
                     <?php endforeach; ?>
                 </div>
                 <div class="modal-footer">
@@ -200,7 +174,6 @@ $orders = getMemberOrders($memberId);
 <script>
     (() => {
         const msgModal = new bootstrap.Modal('#messageModal');
-        const payModal = new bootstrap.Modal('#paymentConfirmModal');
         const resetPwdModal = new bootstrap.Modal('#resetPasswordModal');
         let currentOrderId = null;
 
@@ -213,12 +186,11 @@ $orders = getMemberOrders($memberId);
 
         const showMsg = t => { document.getElementById('modalMessage').textContent = t; msgModal.show(); };
 
-        /* -------- 再買一次 / 付款 -------- */
+        /* -------- 再買一次 -------- */
         document.addEventListener('click', async ev => {
             const el = ev.target.closest('[data-action]');
             if (!el) return;
             if (el.dataset.action === 'reorder') return reorder(el.dataset.orderId);
-            if (el.dataset.action === 'pay') return preparePay(el.dataset.orderId);
         });
 
         async function reorder(orderId) {
@@ -231,32 +203,6 @@ $orders = getMemberOrders($memberId);
                 d.success ? location.href = 'cart.php' : showMsg('再買一次失敗：' + d.message);
             } catch (e) { console.error(e); showMsg('發生錯誤，請稍後再試'); }
         }
-
-        function preparePay(orderId) {
-            currentOrderId = orderId;
-            document.getElementById('paymentConfirmModalLabel').textContent = `訂單編號: ORD-${orderId}`;
-            document.getElementById('paymentModalBody').innerHTML = `<p>訂單總金額: NT$${(CONFIG.orderAmountMap[orderId] ?? 0).toLocaleString()}</p>`;
-            payModal.show();
-        }
-
-        document.getElementById('confirmPaymentBtn').addEventListener('click', async () => {
-            if (!currentOrderId) return;
-            try {
-                const res = await fetch('api/order.php?action=updateOrderStatus', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        memberId: CONFIG.memberId, order_id: currentOrderId, new_status: 'Completed',
-                        paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value
-                    })
-                });
-                const d = await res.json();
-                payModal.hide();
-                if (d.success) {
-                    showMsg('付款成功！');
-                    document.getElementById('messageModal').addEventListener('hidden.bs.modal', () => location.reload(), { once: true });
-                } else showMsg('更新失敗：' + d.message);
-            } catch (e) { console.error(e); payModal.hide(); showMsg('發生錯誤，請稍後再試'); }
-        });
 
         /* -------- 會員資料更新 -------- */
         document.getElementById('memberEditForm').addEventListener('submit', async ev => {

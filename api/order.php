@@ -50,7 +50,7 @@ if ($method === 'GET' && $action === 'filter') {
 
 if ($method === 'POST' && $action === 'createOrder') {
     $input = json_decode(file_get_contents('php://input'), true) ?? [];
-    foreach (['memberId', 'name', 'phone', 'address'] as $key) {
+    foreach (['memberId', 'name', 'phone', 'address', 'paymentMethod'] as $key) {
         if (empty($input[$key])) {
             http_response_code(400);
             echo json_encode(['success' => false, 'message' => "缺少必要參數：{$key}"]);
@@ -62,7 +62,8 @@ if ($method === 'POST' && $action === 'createOrder') {
         $input['name'],
         $input['phone'],
         $input['address'],
-        $input['note'] ?? ''
+        $input['note'] ?? '',
+        $input['paymentMethod']
     );
     echo json_encode($result);
     exit;
@@ -398,13 +399,7 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                             <?php if ($repair['Price'] !== null): ?>
                                 <div class="text-center fw-bold fs-5 text-danger">維修金額 $<?= number_format($repair['Price']) ?></div>
                             <?php endif; ?>
-                            <div class="d-flex align-items-center">
-                                <?php if ($repair['RepairStatus'] === '已送達'): ?>
-                                    <button class="btn btn-success btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>" <?php if (isset($repair['RepairID'])): ?>data-repair-id="<?= $repair['RepairID'] ?>" <?php endif; ?>>
-                                        <?= ($repair['RepairStatus'] === '已送達' && (int) ($repair['Price']) === 0) ? '確認' : '付款' ?>
-                                    </button>
-                                <?php endif; ?>
-                            </div>
+
                         </div>
                     </div>
                     <?php
@@ -458,13 +453,6 @@ function renderOrderItem($order, $detail)
                         data-bs-target="#repairModal<?= $order['OrderID'] ?>">
                         <i class="bi bi-tools"></i> 申請維修
                     </button>
-                <?php endif; ?>
-                <?php if ($order['Status'] === 'Shipping'): ?>
-                    <button class="btn btn-success btn-sm" data-action="pay"
-                        data-order-id="<?= $order['OrderID'] ?>">付款</button>
-                <?php elseif ($order['Status'] === 'Pending'): ?>
-                    <button class="btn btn-secondary btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>"
-                        disabled>付款</button>
                 <?php endif; ?>
             </div>
         </div>
@@ -543,7 +531,7 @@ function renderOrderItem($order, $detail)
 }
 
 /* =========  建立訂單 ========= */
-function createOrder(int $memberId, string $name, string $phone, string $address, string $note = ''): array
+function createOrder(int $memberId, string $name, string $phone, string $address, string $note = '', string $paymentMethod = ''): array
 {
     $pdo = db_connect();
     try {
@@ -622,8 +610,15 @@ function createOrder(int $memberId, string $name, string $phone, string $address
         $pdo->prepare("DELETE FROM CartItem WHERE MemberID = :memberId")
             ->execute(['memberId' => $memberId]);
 
+        /* 4. 建立收據 */
+        $receiptResult = createReceipt($memberId, $orderId, $paymentMethod, $pdo);
+        if (!$receiptResult['success']) {
+            $pdo->rollBack();
+            return ['success' => false, 'message' => $receiptResult['message']];
+        }
+
         $pdo->commit();
-        return ['success' => true, 'orderId' => $orderId];
+        return ['success' => true, 'orderId' => $orderId, 'receiptId' => $receiptResult['receiptId']];
 
     } catch (Throwable $e) {
         $pdo->rollBack();
@@ -659,6 +654,64 @@ function getCartItems(int $memberId, ?PDO $pdo = null): array
 
 /* =========  更新訂單狀態 ========= */
 
+function createReceipt(int $memberId, int $orderId, string $paymentMethod, PDO $pdo): array
+{
+    try {
+        // 3-1. 產生收據 ID
+        $receiptId = $pdo->query(
+            "SELECT IFNULL(MAX(CAST(ReceiptID AS UNSIGNED)), 0) + 1 AS newId FROM Receipt"
+        )->fetchColumn();
+
+        // 3-2. 新增收據
+        $createReceipt = $pdo->prepare(
+            "INSERT INTO Receipt
+             (ReceiptID, OrderID, MemberID, PaymentMethod, PaymentDate)
+             VALUES (:receiptId, :orderId, :memberId, :paymentMethod, NOW())"
+        );
+        $createReceipt->execute([
+            'receiptId' => $receiptId,
+            'orderId' => $orderId,
+            'memberId' => $memberId,
+            'paymentMethod' => $paymentMethod
+        ]);
+
+        // 3-3. 建立保固並關聯到收據項目
+        $items = $pdo->prepare(
+            "SELECT OrderRecordID, Quantity FROM OrderItem WHERE OrderID = :orderId"
+        );
+        $items->execute(['orderId' => $orderId]);
+        $items = $items->fetchAll(PDO::FETCH_ASSOC);
+
+        $createWarranty = $pdo->prepare(
+            "INSERT INTO Warranty (WarrantyID, WarrantyDate, WarrantyStatus)
+             VALUES (:warrantyId, DATE_ADD(NOW(), INTERVAL 1 YEAR), true)"
+        );
+        $createReceiptItem = $pdo->prepare(
+            "INSERT INTO ReceiptItem (ReceiptID, OrderRecordID, WarrantyID)
+             VALUES (:receiptId, :orderRecordId, :warrantyId)"
+        );
+
+        foreach ($items as $item) {
+            for ($i = 0; $i < $item['Quantity']; $i++) {
+                $warrantyId = $pdo->query(
+                    "SELECT IFNULL(MAX(WarrantyID), 0) + 1 AS newId FROM Warranty"
+                )->fetchColumn();
+
+                $createWarranty->execute(['warrantyId' => $warrantyId]);
+                $createReceiptItem->execute([
+                    'receiptId' => $receiptId,
+                    'orderRecordId' => $item['OrderRecordID'],
+                    'warrantyId' => $warrantyId
+                ]);
+            }
+        }
+        return ['success' => true, 'receiptId' => $receiptId];
+    } catch (Throwable $e) {
+        error_log('[createReceipt] Error: ' . $e->getMessage());
+        return ['success' => false, 'message' => '建立收據失敗: ' . $e->getMessage()];
+    }
+}
+
 function updateOrderStatus(int $memberId, int $orderId, string $newStatus, string $paymentMethod = '信用卡'): array
 {
     $pdo = db_connect();
@@ -682,54 +735,16 @@ function updateOrderStatus(int $memberId, int $orderId, string $newStatus, strin
         );
         $updateOrder->execute(['status' => $newStatus, 'orderId' => $orderId]);
 
-        // 3. 若完成付款，建立收據與保固，並更新相關維修訂單狀態
+        // 3. 若完成付款，更新相關維修訂單狀態 (收據和保固已在 createOrder 或手動觸發 updateOrderStatus 時建立)
         if ($newStatus === 'Completed') {
-            // 3-1. 產生收據 ID
-            $receiptId = $pdo->query(
-                "SELECT IFNULL(MAX(CAST(ReceiptID AS UNSIGNED)), 0) + 1 AS newId FROM Receipt"
-            )->fetchColumn();
-
-            // 3-2. 新增收據
-            $createReceipt = $pdo->prepare(
-                "INSERT INTO Receipt
-                 (ReceiptID, OrderID, MemberID, PaymentMethod, PaymentDate)
-                 VALUES (:receiptId, :orderId, :memberId, :paymentMethod, NOW())"
-            );
-            $createReceipt->execute([
-                'receiptId' => $receiptId,
-                'orderId' => $orderId,
-                'memberId' => $memberId,
-                'paymentMethod' => $paymentMethod
-            ]);
-
-            // 3-3. 建立保固並關聯到收據項目
-            $items = $pdo->prepare(
-                "SELECT OrderRecordID, Quantity FROM OrderItem WHERE OrderID = :orderId"
-            );
-            $items->execute(['orderId' => $orderId]);
-            $items = $items->fetchAll(PDO::FETCH_ASSOC);
-
-            $createWarranty = $pdo->prepare(
-                "INSERT INTO Warranty (WarrantyID, WarrantyDate, WarrantyStatus)
-                 VALUES (:warrantyId, DATE_ADD(NOW(), INTERVAL 1 YEAR), true)"
-            );
-            $createReceiptItem = $pdo->prepare(
-                "INSERT INTO ReceiptItem (ReceiptID, OrderRecordID, WarrantyID)
-                 VALUES (:receiptId, :orderRecordId, :warrantyId)"
-            );
-
-            foreach ($items as $item) {
-                for ($i = 0; $i < $item['Quantity']; $i++) {
-                    $warrantyId = $pdo->query(
-                        "SELECT IFNULL(MAX(WarrantyID), 0) + 1 AS newId FROM Warranty"
-                    )->fetchColumn();
-
-                    $createWarranty->execute(['warrantyId' => $warrantyId]);
-                    $createReceiptItem->execute([
-                        'receiptId' => $receiptId,
-                        'orderRecordId' => $item['OrderRecordID'],
-                        'warrantyId' => $warrantyId
-                    ]);
+            // 檢查是否已存在收據，如果不存在，則建立它 (這種情況可能發生在手動將訂單標記為已完成時)
+            $checkReceipt = $pdo->prepare("SELECT ReceiptID FROM Receipt WHERE OrderID = :orderId");
+            $checkReceipt->execute(['orderId' => $orderId]);
+            if (!$checkReceipt->fetch()) {
+                $receiptResult = createReceipt($memberId, $orderId, $paymentMethod, $pdo);
+                if (!$receiptResult['success']) {
+                    $pdo->rollBack();
+                    return ['success' => false, 'message' => '在更新訂單狀態時建立收據失敗: ' . $receiptResult['message']];
                 }
             }
 

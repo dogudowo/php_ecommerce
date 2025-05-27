@@ -82,8 +82,6 @@ $statusList = getOrderStatusList();
                     </tbody>
                 </table>
             </div>
-
-
         </div>
     </div>
 

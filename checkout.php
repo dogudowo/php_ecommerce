@@ -176,6 +176,20 @@ include __DIR__ . "/header.php";
                             <span>總金額</span>
                             <span>$${numberFormat(total)}</span>
                         </div>
+                        <hr>
+                        <h6 class="mb-3">選擇付款方式</h6>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="creditCard" value="信用卡" checked>
+                            <label class="form-check-label" for="creditCard">信用卡</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="atmTransfer" value="ATM轉帳">
+                            <label class="form-check-label" for="atmTransfer">ATM轉帳</label>
+                        </div>
+                        <div class="form-check mb-2">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="linePay" value="LinePay">
+                            <label class="form-check-label" for="linePay">LinePay</label>
+                        </div>
                         <button id="submitOrder" class="btn btn-primary w-100 mt-3">確認結帳</button>
                     </div>
                 </div>
@@ -333,7 +347,8 @@ include __DIR__ . "/header.php";
                             name: name,
                             phone: phone,
                             address: address + (city ? ', ' + city : ''),
-                            note: note
+                            note: note,
+                            paymentMethod: document.querySelector('input[name="paymentMethod"]:checked').value
                         })
                     });
 
