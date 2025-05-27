@@ -310,8 +310,8 @@ function renderRepairTab(array $orders, string $title, ?PDO $pdo = null): void
                             <?php endif; ?>
                         </div>
                         <div class="col-md-4 text-end">
-                            <span class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?> fs-6">
-                                <?= htmlspecialchars($repair['RepairStatus']) ?>
+                            <span class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?>">
+                                <?= getRepairStatusText($repair['RepairStatus']) ?>
                             </span>
                         </div>
                     </div>
