@@ -18,6 +18,25 @@ $edit_option_id = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
 <!-- Alert 顯示位置 -->
 <div id="alertPlaceholder" class="position-fixed top-50 start-50 translate-middle-x mt-3" style="z-index: 1100;"></div>
 
+<!-- 登入提示 Modal -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginModalLabel">登入提示</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                請先登入會員才能加入購物車
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <a href="login.php" class="btn btn-primary">前往登入</a>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php include "footer.php"; ?>
 
 <!-- 先把 PHP 變數傳給 JS -->
@@ -203,7 +222,8 @@ $edit_option_id = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
         document.getElementById('add-to-cart').addEventListener('click', async () => {
             const memberId = <?= isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0 ?>;
             if (!memberId) {
-                alert('請先登入');
+                const modal = new bootstrap.Modal(document.getElementById('loginModal'));
+                modal.show();
                 return;
             }
             const qty = parseInt(document.getElementById('quantity').value);
