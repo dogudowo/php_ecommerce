@@ -2,12 +2,12 @@
 
 <div class="container mx-auto m-0 p-0">
     <div class="container text-center border-bottom border-black">
-        <img src="imgs/title.png" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
+        <img src="imgs/title.png?t=<?php echo time(); ?>" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
         <h1 class="h1">保固維修</h1>
     </div>
     <div class="container text-center mt-3">
         <a class="btn btn-outline-success" style="border-radius: 20px;" target="_blank""
-            href=" imgs/repair/price/AllenRepairPrice0609.jpg">維修價格表</a>
+            href=" imgs/repair/price/AllenRepairPrice0609.jpg?t=<?php echo time(); ?>">維修價格表</a>
         <?php
         $keyReportPath = '';
         $srcDir = __DIR__ . '/src/';
@@ -40,12 +40,14 @@
                 <!-- 中文內容 -->
                 <div class="container w-100">
                     <div class="container my-3 d-flex justify-content-center">
-                        <img src="imgs/repair/context-ch/repairContext.jpg" alt="" class="img-fluid">
+                        <img src="imgs/repair/context-ch/repairContext.jpg?t=<?php echo time(); ?>" alt=""
+                            class="img-fluid">
                     </div>
 
                     <h3>維修流程</h3>
                     <div class="container my-3 d-flex justify-content-center">
-                        <img src="imgs/repair/context-ch/repairRundown.jpg" alt="" class="img-fluid">
+                        <img src="imgs/repair/context-ch/repairRundown.jpg?t=<?php echo time(); ?>" alt=""
+                            class="img-fluid">
                     </div>
                 </div>
             </div>
@@ -54,12 +56,14 @@
                 <!-- 英文內容 -->
                 <div class="container">
                     <div class="container my-3 d-flex justify-content-center">
-                        <img src="imgs/repair/context-en/repairContextUS.jpg" alt="" class="img-fluid">
+                        <img src="imgs/repair/context-en/repairContextUS.jpg?t=<?php echo time(); ?>" alt=""
+                            class="img-fluid">
                     </div>
 
                     <h3 class="text-decoration-underline">Repair Rundown</h3>
                     <div class="container my-3 d-flex justify-content-center">
-                        <img src="imgs/repair/context-en/repairRundownEN.jpg" alt="" class="img-fluid">
+                        <img src="imgs/repair/context-en/repairRundownEN.jpg?t=<?php echo time(); ?>" alt=""
+                            class="img-fluid">
                     </div>
                 </div>
             </div>

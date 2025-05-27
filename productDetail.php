@@ -7,7 +7,7 @@ $edit_option_id = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
 <?php include "header.php"; ?>
 
 <div class="container text-center border-bottom border-black ">
-    <img src="imgs/title.png" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
+    <img src="imgs/title.png?t=<?php echo time(); ?>" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
     <h1 class="h1" id="product-name"></h1>
 </div>
 
@@ -72,7 +72,7 @@ $edit_option_id = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
         const html = `
         <div class="row">
             <div class="col-lg-6 col-none">
-                <img src="${mainImg}" class="img-fluid" alt="main image" />
+                <img src="${mainImg}?t=<?php echo time(); ?>" class="img-fluid" alt="main image" />
             </div>
             <div class="col-lg-6 col-12">
                 <div class="container my-4">
@@ -132,7 +132,7 @@ $edit_option_id = isset($_GET['edit']) ? (int) $_GET['edit'] : 0;
             <div class="row mt-5 col-12 col-lg-9 mx-auto m-0 p-0" id="gallery-container">
                 ${p.galleryImages.map(img => `
                 <div class="text-center">
-                    <img src="${img.url}" class="img-fluid" alt="gallery image" />
+                    <img src="${img.url}?t=<?php echo time(); ?>" class="img-fluid" alt="gallery image" />
                 </div>
                 `).join('')}
             </div>

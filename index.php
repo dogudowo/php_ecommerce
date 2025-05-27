@@ -53,7 +53,7 @@ $featureds = getProductsByType('featured');
                 item.className = `carousel-item ${i === 0 ? 'active' : ''}`;
 
                 const imgElement = document.createElement('img');
-                imgElement.src = img;
+                imgElement.src = img + '?t=' + Date.now();
                 imgElement.className = 'd-block w-100';
                 imgElement.alt = 'slide';
                 // imgElement.style.height = '630px';

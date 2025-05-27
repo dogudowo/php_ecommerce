@@ -74,7 +74,7 @@ include __DIR__ . "/header.php";
                             <tr data-option-id="${item.OptionID}" data-price="${item.Price}">
                                 <td style="vertical-align: middle;">
                                     <div style="width: 50px; height: 50px; overflow: hidden;">
-                                        <img src="imgs/products/${item.ProductID}/main.jpg" alt="商品圖片"
+                                        <img src="imgs/products/${item.ProductID}/main.jpg?t=<?php echo time(); ?>" alt="商品圖片"
                                             style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
                                     </div>
                                 </td>
@@ -113,7 +113,7 @@ include __DIR__ . "/header.php";
                                 <div class="row g-0">
                                     <div class="col-3">
                                         <div style="aspect-ratio: 1; overflow: hidden;">
-                                            <img src="imgs/products/${item.ProductID}/main.jpg" alt="商品圖片"
+                                            <img src="imgs/products/${item.ProductID}/main.jpg?t=<?php echo time(); ?>" alt="商品圖片"
                                                 style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
                                         </div>
                                     </div>

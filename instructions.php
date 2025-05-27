@@ -3,7 +3,7 @@ require_once __DIR__ . '/header.php';
 ?>
 
 <div class="container text-center border-bottom border-black">
-    <img src="imgs/title.png" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
+    <img src="imgs/title.png?t=<?php echo time(); ?>" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
     <h1 class="h1">購物說明</h1>
 </div>
 

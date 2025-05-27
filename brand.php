@@ -1,7 +1,7 @@
 <?php require_once 'header.php'; ?>
 
 <div class="container text-center border-bottom border-black">
-    <img src="imgs/title.png" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
+    <img src="imgs/title.png?t=<?php echo time(); ?>" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
     <h1 class="h1">品牌介紹</h1>
 </div>
 
@@ -43,12 +43,12 @@
 
                     // 3. 顯示品牌內容
                     const logosHtml = brandData.logos.map(logo =>
-                        `<img class="img" src="${logo.replace('../', '')}" alt="${brandId}" height="50vh">`
+                        `<img class="img" src="${logo.replace('../', '')}?t=<?php echo time(); ?>" alt="${brandId}" height="50vh">`
                     ).join('');
 
                     const imagesHtml = brandData.images.map(image =>
                         `<div class="col-md-4 mb-3 d-flex flex-column">
-                            <img class="img-fluid rounded" src="${image.replace('../', '')}" alt="${brandId}最新資訊">
+                            <img class="img-fluid rounded" src="${image.replace('../', '')}?t=<?php echo time(); ?>" alt="${brandId}最新資訊">
                          </div>`
                     ).join('');
 
