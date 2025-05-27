@@ -381,9 +381,9 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                         <div class="d-flex align-items-center mb-2 border-top mt-2 pt-2">
                             <div>
                                 <p class="mb-1 h5"><?= $repair['ProductName'] ?></p>
-                                <p class="mb-0">維修狀態:
-                                    <span class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?>">
-                                        <?= getRepairStatusText($repair['RepairStatus']) ?>
+                                <p class="mb-0">保固編號:
+                                    <span>
+                                        <?= $repair['WarrantyID'] ?>
                                     </span>
                                 </p>
                                 <?php if ($repair['RepairCommit']): ?>
