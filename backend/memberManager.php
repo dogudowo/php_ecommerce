@@ -56,7 +56,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                     <label for="filterAdmin" class="form-label">會員類型</label>
                     <select class="form-select" id="filterAdmin">
                         <option value="">全部類型</option>
-                        <option value="0">一般會員</option>
+                        <option value="0">會員</option>
                         <option value="1">員工</option>
                         <option value="2">管理員</option>
                     </select>
@@ -74,28 +74,16 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
         <div class="card-body">
             <div class="table-responsive">
                 <table id="memberTable" class="table table-hover align-middle">
-                    <!-- 固定欄寬 -->
-                    <colgroup>
-                        <col style="width: 6%;"> <!-- ID -->
-                        <col style="width: 14%;"> <!-- 姓名 -->
-                        <col style="width: 22%;"> <!-- Email -->
-                        <col style="width: 14%;"> <!-- 電話 -->
-                        <col style="width: 10%;"> <!-- 城市 -->
-                        <col style="width: 10%;"> <!-- 訂單數 -->
-                        <col style="width: 12%;"> <!-- 類型 -->
-                        <col style="width: 12%;"> <!-- 操作 -->
-                    </colgroup>
-
                     <thead>
                         <tr>
-                            <th>會員ID</th>
-                            <th>姓名</th>
-                            <th>Email</th>
-                            <th>電話</th>
-                            <th>城市</th>
-                            <th>訂單數</th>
-                            <th>類型</th>
-                            <th>操作</th>
+                            <th style="width: 6%;">會員ID</th>
+                            <th style="width: 14%;">姓名</th>
+                            <th style="width: 20%;">Email</th>
+                            <th style="width: 14%;">電話</th>
+                            <th style="width: 10%;">城市</th>
+                            <th style="width: 10%;">訂單數</th>
+                            <th style="width: 12%;">類型</th>
+                            <th style="width: 14%;">操作</th>
                         </tr>
                     </thead>
                     <tbody id="memberTableBody">
@@ -145,7 +133,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                             <div class="btn-group" role="group" aria-label="會員類型">
                                 <input type="radio" class="btn-check" name="editMemberType" id="editMemberType0"
                                     value="0" autocomplete="off">
-                                <label class="btn btn-outline-primary" for="editMemberType0">一般會員</label>
+                                <label class="btn btn-outline-primary" for="editMemberType0">會員</label>
                                 <input type="radio" class="btn-check" name="editMemberType" id="editMemberType1"
                                     value="1" autocomplete="off">
                                 <label class="btn btn-outline-primary" for="editMemberType1">員工</label>
@@ -270,7 +258,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
     function badgeByRole(isAdmin) {
         return isAdmin == 2 ? '<span class="badge bg-primary">管理員</span>' :
             isAdmin == 1 ? '<span class="badge bg-success">員工</span>' :
-                '<span class="badge bg-secondary">一般會員</span>';
+                '<span class="badge bg-secondary">會員</span>';
     }
 
     function buildRow(m) {

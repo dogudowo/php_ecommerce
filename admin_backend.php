@@ -74,7 +74,7 @@ $current = $_GET['page'] ?? 'productManager';
                             <?php foreach ($sections as $key => $sec): ?>
                                 <li class="nav-item" role="presentation">
                                     <button
-                                        class="nav-link<?= in_array($current, $sec['pages']) ? ' active' : ''; ?> px-2 mx-0"
+                                        class="nav-link<?= in_array($current, $sec['pages']) ? ' active' : ''; ?> px-2 mx-0 py-2"
                                         id="<?= $sec['tab_id']; ?>" type="button"
                                         onclick="location.search='?page=<?= $sec['pages'][0]; ?>'">
                                         <i class="bi <?= $key === 'frontend' ? 'bi-display' : 'bi-gear'; ?> me-1"></i>
