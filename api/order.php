@@ -288,32 +288,47 @@ function renderRepairTab(array $orders, string $title, ?PDO $pdo = null): void
             $repair = $item['repair'];
             $order = $item['order'];
             ?>
-            <div class="list-group-item mb-4 border rounded">
-                <div class="d-flex w-100 justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-1">維修單號: REP-<?= $repair['RepairID'] ?></h5>
-                        <p class="mb-0 text-muted">訂單號碼: ORD-<?= $order['OrderID'] ?></p>
+            <div class="list-group-item mb-4 border rounded py-3">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <div class="mb-1 h4">
+                            <strong>維修單號：</strong> REP-<?= $repair['RepairID'] ?>
+                        </div>
+                        <div class="mb-1">
+                            <strong>訂單號碼：</strong> ORD-<?= $order['OrderID'] ?>
+                        </div>
+                        <div class="mb-1">
+                            <strong>產品名稱：</strong> <?= htmlspecialchars($repair['ProductName']) ?>
+                        </div>
+                        <div class="mb-1 text-muted small">
+                            保固到期日：<?= date('Y-m-d', strtotime($repair['WarrantyDate'])) ?>
+                        </div>
+                        <?php if ($repair['Price'] !== null): ?>
+                            <div class="mb-1 text-danger fw-bold">
+                                維修金額 $<?= number_format($repair['Price']) ?>
+                            </div>
+                        <?php endif; ?>
+                        <?php if ($repair['RepairCommit']): ?>
+                            <div class="mb-1">
+                                <strong>維修說明：</strong> <?= htmlspecialchars($repair['RepairCommit']) ?>
+                            </div>
+                        <?php endif; ?>
+                        <div class="text-muted small">
+                            <?= date('Y-m-d H:i', strtotime($repair['RepairDate'])) ?>
+                        </div>
                     </div>
-                    <small class="text-muted"><?= date('Y-m-d H:i', strtotime($repair['RepairDate'])) ?></small>
-                </div>
-
-                <div class="mt-3">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <h6 class="mb-2"><?= htmlspecialchars($repair['ProductName']) ?></h6>
-                            <?php if ($repair['RepairCommit']): ?>
-                                <p class="mb-2">維修說明: <?= htmlspecialchars($repair['RepairCommit']) ?></p>
-                            <?php endif; ?>
-                            <p class="mb-0">保固到期日: <?= date('Y-m-d', strtotime($repair['WarrantyDate'])) ?></p>
-                            <?php if ($repair['Price'] !== null): ?>
-                                <p class="mb-0">維修金額: $<?= number_format($repair['Price']) ?></p>
-                            <?php endif; ?>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <span class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?>">
-                                <?= getRepairStatusText($repair['RepairStatus']) ?>
-                            </span>
-                        </div>
+                    <div class="col-md-4 text-end">
+                        <span class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?> fs-4 fw-bold py-2 px-4 rounded-pill shadow-sm" style="letter-spacing:2px;">
+                            <?php
+                            $icon = [
+                                'pending' => '<i class="bi bi-hourglass-split me-1"></i>',
+                                'repairing' => '<i class="bi bi-tools me-1"></i>',
+                                'completed' => '<i class="bi bi-check-circle me-1"></i>',
+                                'abnormal' => '<i class="bi bi-exclamation-triangle me-1"></i>',
+                            ][$repair['RepairStatus']] ?? '';
+                            echo $icon . getRepairStatusText($repair['RepairStatus']);
+                            ?>
+                        </span>
                     </div>
                 </div>
             </div>
