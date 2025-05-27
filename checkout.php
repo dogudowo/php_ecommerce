@@ -102,7 +102,7 @@ include __DIR__ . "/header.php";
             cartHTML += `
                 <div class="row mb-3">
                     <div class="col-3">
-                        <img src="imgs/products/${item.ProductID}/main.jpg" class="img-fluid" alt="商品圖片">
+                        <img src="imgs/products/${item.ProductID}/main.jpg?t=<?php echo time(); ?>" class="img-fluid" alt="商品圖片">
                     </div>
                     <div class="col-6">
                         <h6>${item.ProductName}</h6>
@@ -220,7 +220,7 @@ include __DIR__ . "/header.php";
                                 <li class="list-group-item">
                                     <div class="row">
                                         <div class="col-3">
-                                            <img src="imgs/products/${item.ProductID}/main.jpg" class="img-fluid" alt="商品圖片">
+                                            <img src="imgs/products/${item.ProductID}/main.jpg?t=<?php echo time(); ?>" class="img-fluid" alt="商品圖片">
                                         </div>
                                         <div class="col-6">
                                             <h6>${item.ProductName}</h6>

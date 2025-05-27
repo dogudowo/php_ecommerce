@@ -21,7 +21,7 @@ require_once __DIR__ . '/api/error_handler.php';
     <!-- <link rel="preconnect" href="https://fonts.googleapis.com"> -->
     <!-- <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin> -->
     <!-- <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@100..900&display=swap" rel="stylesheet"> -->
-    <link rel="icon" href="imgs/webimg.ico" type="image/x-icon">
+    <link rel="icon" href="imgs/webimg.ico?t=<?php echo time(); ?>" type="image/x-icon">
     <title><?= getPageTitle() ?></title>
     <style>
         html,
@@ -84,7 +84,7 @@ require_once __DIR__ . '/api/error_handler.php';
             <!-- 電腦版導航 (xl以上) -->
             <div class="d-none d-xl-flex flex-wrap align-items-center justify-content-between py-2 m-0">
                 <a href="index.php" class="d-flex align-items-center mb-0 text-dark text-decoration-none">
-                    <img src="imgs/title.png" style="max-height: 100px;" alt="" height="49">
+                    <img src="imgs/title.png?t=<?php echo time(); ?>" style="max-height: 100px;" alt="" height="49">
                 </a>
 
                 <ul class="nav justify-content-center mb-xl-0 gap-2">
@@ -110,7 +110,7 @@ require_once __DIR__ . '/api/error_handler.php';
                 </button>
 
                 <a href="index.php" class="d-flex align-items-center mb-0 text-dark text-decoration-none">
-                    <img src="imgs/title.png" style="max-height: 100px;" alt="" height="49">
+                    <img src="imgs/title.png?t=<?php echo time(); ?>" style="max-height: 100px;" alt="" height="49">
                 </a>
 
                 <div class="text-center gap-2">

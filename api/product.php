@@ -214,7 +214,7 @@ function renderProductCard(array $product)
         <div class="card" style="width:100%; max-width:320px; border-radius:20px; transition:transform .2s;"
             onmouseover="this.style.transform='scale(1.02)'" onmouseout="this.style.transform='scale(1)'">
             <a href="productDetail.php?product_id=<?= $prodId ?>" class="text-decoration-none text-black">
-                <img src="<?= htmlspecialchars($img, ENT_QUOTES) ?>" class="card-img-top"
+                <img src="<?= htmlspecialchars($img, ENT_QUOTES) ?>?t=<?php echo time(); ?>" class="card-img-top"
                     style="border-radius:20px 20px 0 0; object-fit:cover;" alt="<?= $prodName ?>">
                 <div class="card-body pb-0 mb-2">
                     <h5 class="card-title mb-1"><?= $prodName ?></h5>

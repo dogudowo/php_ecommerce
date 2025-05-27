@@ -18,7 +18,8 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
         <div class="card">
             <div class="card-header">網站標題 Logo (title.png)</div>
             <div class="card-body text-center">
-                <img src="imgs/title.png" id="titleLogoImg" class="img-fluid mb-3" style="max-height:100px;">
+                <img src="imgs/title.png?t=<?php echo time(); ?>" id="titleLogoImg" class="img-fluid mb-3"
+                    style="max-height:100px;">
                 <form id="titleLogoForm" enctype="multipart/form-data">
                     <input type="file" name="logoFile" class="form-control mb-3" accept=".png" required>
                     <input type="hidden" name="logoType" value="title">

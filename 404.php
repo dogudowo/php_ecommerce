@@ -2,7 +2,7 @@
 
 <div class="container">
     <div class="container text-center border-bottom border-black my-3">
-        <img src="imgs/title.png" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
+        <img src="imgs/title.png?t=<?php echo time(); ?>" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
         <h1 class="h1">404 not found</h1>
     </div>
     <div class="mt-5">
