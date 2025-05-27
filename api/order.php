@@ -906,19 +906,21 @@ if ($method === 'POST' && $action === 'createRepair') {
 function getRepairStatusClass(string $status): string
 {
     return [
-        '待處理' => 'bg-secondary',
-        '處理中' => 'bg-info',
-        '維修中' => 'bg-primary',
-        '已完成' => 'bg-success',
-        '已送達' => 'bg-primary',
-        '已取消' => 'bg-warning',
-        '異常' => 'bg-danger'
+        'pending' => 'bg-secondary',
+        'repairing' => 'bg-primary',
+        'completed' => 'bg-success',
+        'abnormal' => 'bg-danger'
     ][$status] ?? 'bg-secondary';
 }
 
 function getRepairStatusText(string $status): string
 {
-    return $status; // 直接返回中文狀態
+    return [
+        'pending' => '待處理',
+        'repairing' => '維修中',
+        'completed' => '已完成',
+        'abnormal' => '異常'
+    ][$status] ?? $status;
 }
 ?>
 <script>
