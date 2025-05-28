@@ -184,8 +184,8 @@ $orders = getMemberOrders($memberId);
                             type="password" class="form-control" required minlength="8"></div>
                 </div>
                 <div class="modal-footer">
-                    <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button class="btn btn-primary">儲存</button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                    <button type="submit" class="btn btn-primary">儲存</button>
                 </div>
             </form>
         </div>
@@ -204,79 +204,114 @@ $orders = getMemberOrders($memberId);
 <!-- ---------- 功能腳本 ---------- -->
 <script>
     (() => {
-        const msgModal = new bootstrap.Modal('#messageModal');
-        const resetPwdModal = new bootstrap.Modal('#resetPasswordModal');
+        // 所有 Modal 的 id 列表
+        const modalIds = ['messageModal', 'editMemberModal', 'resetPasswordModal'];
+        const msgModal = new bootstrap.Modal(document.getElementById('messageModal'));
+        const resetPwdModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
         let currentOrderId = null;
 
-        /* === 核心：若有任何 modal 要顯示，先把其他已開的 modal 關掉 === */
+        /* === 當任何一個 modal 要顯示時，先把其他還開著的 modal 全部隱藏 === */
         document.addEventListener('show.bs.modal', e => {
-            document.querySelectorAll('.modal.show').forEach(el => {
-                if (el !== e.target) bootstrap.Modal.getInstance(el)?.hide();
+            modalIds.forEach(id => {
+                // 跳過正在開啟的那個
+                if (id === e.target.id) return;
+                const el = document.getElementById(id);
+                bootstrap.Modal.getInstance(el)?.hide();
             });
         });
 
-        const showMsg = t => { document.getElementById('modalMessage').textContent = t; msgModal.show(); };
+        const showMsg = t => {
+            document.getElementById('modalMessage').textContent = t;
+            msgModal.show();
+        };
 
         /* -------- 再買一次 -------- */
         document.addEventListener('click', async ev => {
-            const el = ev.target.closest('[data-action]');
-            if (!el) return;
-            if (el.dataset.action === 'reorder') return reorder(el.dataset.orderId);
+            const btn = ev.target.closest('[data-action="reorder"]');
+            if (btn) return reorder(btn.dataset.orderId);
         });
-
         async function reorder(orderId) {
             try {
                 const r = await fetch('api/order.php?action=reorder', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ memberId: CONFIG.memberId, orderId })
                 });
                 const d = await r.json();
-                d.success ? location.href = 'cart.php' : showMsg('再買一次失敗：' + d.message);
-            } catch (e) { console.error(e); showMsg('發生錯誤，請稍後再試'); }
+                if (d.success) {
+                    location.href = 'cart.php';
+                } else {
+                    showMsg('再買一次失敗：' + d.message);
+                }
+            } catch {
+                showMsg('發生錯誤，請稍後再試');
+            }
         }
 
         /* -------- 會員資料更新 -------- */
         document.getElementById('memberEditForm').addEventListener('submit', async ev => {
             ev.preventDefault();
             const payload = Object.fromEntries(new FormData(ev.target).entries());
-            if (!payload.name || !payload.phone || !payload.email) { showMsg('請填寫所有必填欄位'); return; }
-            payload.memberId = CONFIG.memberId; payload.isAdmin = CONFIG.isAdmin ? 1 : 0;
+            if (!payload.name || !payload.phone || !payload.email) {
+                showMsg('請填寫所有必填欄位');
+                return;
+            }
+            payload.memberId = CONFIG.memberId;
+            payload.isAdmin = CONFIG.isAdmin ? 1 : 0;
             try {
                 const r = await fetch('api/order.php?action=updateMember', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
                 });
                 const d = await r.json();
-                bootstrap.Modal.getInstance('#editMemberModal').hide();
+                bootstrap.Modal.getInstance(document.getElementById('editMemberModal')).hide();
                 if (d.success) {
                     showMsg('會員資料更新成功！');
                     document.getElementById('messageModal').addEventListener('hidden.bs.modal', () => location.reload(), { once: true });
                 } else {
-                    showMsg('更新失敗：' + (d.message ?? '未知錯誤'));
+                    showMsg('更新失敗：' + (d.message || '未知錯誤'));
                 }
-            } catch (e) { console.error(e); showMsg('發生錯誤，請稍後再試'); }
+            } catch {
+                showMsg('發生錯誤，請稍後再試');
+            }
         });
 
         /* -------- 開啟重設密碼 -------- */
-        document.getElementById('openResetPwdModal').addEventListener('click', () => resetPwdModal.show());
+        document.getElementById('openResetPwdModal').addEventListener('click', () => {
+            resetPwdModal.show();
+            document.getElementById('passwordResetForm').reset();
+        });
 
         /* -------- 密碼重設 -------- */
         document.getElementById('passwordResetForm').addEventListener('submit', async ev => {
             ev.preventDefault();
             const fd = Object.fromEntries(new FormData(ev.target).entries());
-            if (fd.newPassword !== fd.confirmPassword) { showMsg('新密碼與確認密碼不一致'); return; }
+            if (fd.newPassword !== fd.confirmPassword) {
+                showMsg('新密碼與確認密碼不一致');
+                return;
+            }
             try {
                 const res = await fetch('api/order.php?action=resetPassword', {
-                    method: 'POST', headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ memberId: CONFIG.memberId, oldPassword: fd.oldPassword, newPassword: fd.newPassword })
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        memberId: CONFIG.memberId,
+                        oldPassword: fd.oldPassword,
+                        newPassword: fd.newPassword
+                    })
                 });
-                let data;
-                try { data = await res.json(); } catch { showMsg('伺服器回傳非 JSON：\n' + await res.text()); return; }
+                const data = await res.json();
                 if (data.success) {
-                    resetPwdModal.hide();
+                    bootstrap.Modal.getInstance(document.getElementById('resetPasswordModal')).hide();
                     showMsg('密碼已更新，請使用新密碼重新登入');
                     document.getElementById('messageModal').addEventListener('hidden.bs.modal', () => location.href = 'logout.php', { once: true });
-                } else showMsg('密碼更新失敗：' + data.message);
-            } catch (e) { console.error(e); showMsg('網路或伺服器錯誤，請稍後再試'); }
+                } else {
+                    showMsg('密碼更新失敗：' + data.message);
+                }
+            } catch {
+                showMsg('網路或伺服器錯誤，請稍後再試');
+            }
         });
     })();
 </script>
