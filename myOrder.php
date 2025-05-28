@@ -119,11 +119,42 @@ $orders = getMemberOrders($memberId);
                         'address' => ['地址', 'Address']
                     ];
                     foreach ($map as $name => [$label, $col]): ?>
-                        <div class="mb-3">
-                            <label class="form-label"><?= $label ?></label>
-                            <input class="form-control" name="<?= $name ?>" value="<?= h($currentMember[$col]) ?>"
-                                <?= $name === 'email' ? 'type=email' : '' ?>>
-                        </div>
+                        <?php if ($name === 'city'): ?>
+                            <div class="mb-3">
+                                <label class="form-label"><?= $label ?></label>
+                                <select class="form-select" id="city" name="city" required>
+                                    <option value="" selected disabled>城市</option>
+                                    <option value="基隆市" <?= $currentMember[$col] === '基隆市' ? 'selected' : '' ?>>基隆市</option>
+                                    <option value="新北市" <?= $currentMember[$col] === '新北市' ? 'selected' : '' ?>>新北市</option>
+                                    <option value="台北市" <?= $currentMember[$col] === '台北市' ? 'selected' : '' ?>>台北市</option>
+                                    <option value="桃園市" <?= $currentMember[$col] === '桃園市' ? 'selected' : '' ?>>桃園市</option>
+                                    <option value="新竹縣" <?= $currentMember[$col] === '新竹縣' ? 'selected' : '' ?>>新竹縣</option>
+                                    <option value="新竹市" <?= $currentMember[$col] === '新竹市' ? 'selected' : '' ?>>新竹市</option>
+                                    <option value="苗栗縣" <?= $currentMember[$col] === '苗栗縣' ? 'selected' : '' ?>>苗栗縣</option>
+                                    <option value="台中市" <?= $currentMember[$col] === '台中市' ? 'selected' : '' ?>>台中市</option>
+                                    <option value="彰化縣" <?= $currentMember[$col] === '彰化縣' ? 'selected' : '' ?>>彰化縣</option>
+                                    <option value="南投縣" <?= $currentMember[$col] === '南投縣' ? 'selected' : '' ?>>南投縣</option>
+                                    <option value="雲林縣" <?= $currentMember[$col] === '雲林縣' ? 'selected' : '' ?>>雲林縣</option>
+                                    <option value="嘉義縣" <?= $currentMember[$col] === '嘉義縣' ? 'selected' : '' ?>>嘉義縣</option>
+                                    <option value="嘉義市" <?= $currentMember[$col] === '嘉義市' ? 'selected' : '' ?>>嘉義市</option>
+                                    <option value="台南市" <?= $currentMember[$col] === '台南市' ? 'selected' : '' ?>>台南市</option>
+                                    <option value="高雄市" <?= $currentMember[$col] === '高雄市' ? 'selected' : '' ?>>高雄市</option>
+                                    <option value="屏東縣" <?= $currentMember[$col] === '屏東縣' ? 'selected' : '' ?>>屏東縣</option>
+                                    <option value="宜蘭縣" <?= $currentMember[$col] === '宜蘭縣' ? 'selected' : '' ?>>宜蘭縣</option>
+                                    <option value="花蓮縣" <?= $currentMember[$col] === '花蓮縣' ? 'selected' : '' ?>>花蓮縣</option>
+                                    <option value="台東縣" <?= $currentMember[$col] === '台東縣' ? 'selected' : '' ?>>台東縣</option>
+                                    <option value="金門縣" <?= $currentMember[$col] === '金門縣' ? 'selected' : '' ?>>金門縣</option>
+                                    <option value="連江縣" <?= $currentMember[$col] === '連江縣' ? 'selected' : '' ?>>連江縣</option>
+                                    <option value="澎湖縣" <?= $currentMember[$col] === '澎湖縣' ? 'selected' : '' ?>>澎湖縣</option>
+                                </select>
+                            </div>
+                        <?php else: ?>
+                            <div class="mb-3">
+                                <label class="form-label"><?= $label ?></label>
+                                <input class="form-control" name="<?= $name ?>" value="<?= h($currentMember[$col]) ?>"
+                                    <?= $name === 'email' ? 'type=email' : '' ?>>
+                            </div>
+                        <?php endif; ?>
                     <?php endforeach; ?>
                 </div>
                 <div class="modal-footer">
