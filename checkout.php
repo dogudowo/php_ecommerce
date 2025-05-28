@@ -172,7 +172,7 @@ include __DIR__ . "/header.php";
                             <span>$0</span>
                         </div>
                         <hr>
-                        <div class="d-flex justify-content-between fw-bold">
+                        <div class="d-flex justify-content-between fw-bold fs-5">
                             <span>總金額</span>
                             <span>$${numberFormat(total)}</span>
                         </div>
