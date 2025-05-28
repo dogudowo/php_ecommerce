@@ -73,7 +73,7 @@ include __DIR__ . "/header.php";
                         desktopView += `
                             <tr data-option-id="${item.OptionID}" data-price="${item.Price}">
                                 <td style="vertical-align: middle;">
-                                    <div style="width: 50px; height: 50px; overflow: hidden;">
+                                    <div style="width: 100px; height: 100px; overflow: hidden;">
                                         <img src="imgs/products/${item.ProductID}/main.jpg?t=<?php echo time(); ?>" alt="商品圖片"
                                             style="width: 100%; height: 100%; object-fit: cover; object-position: center;">
                                     </div>
