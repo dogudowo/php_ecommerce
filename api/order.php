@@ -922,7 +922,8 @@ function getRepairStatusClass(string $status): string
         'pending' => 'bg-secondary',
         'repairing' => 'bg-primary',
         'completed' => 'bg-success',
-        'abnormal' => 'bg-danger'
+        'abnormal' => 'bg-danger',
+        'pending_payment' => 'bg-warning'
     ][$status] ?? 'bg-secondary';
 }
 
@@ -932,7 +933,8 @@ function getRepairStatusText(string $status): string
         'pending' => '待處理',
         'repairing' => '維修中',
         'completed' => '已完成',
-        'abnormal' => '異常'
+        'abnormal' => '異常',
+        'pending_payment' => '待付款'
     ][$status] ?? $status;
 }
 ?>
