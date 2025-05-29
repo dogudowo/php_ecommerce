@@ -110,6 +110,32 @@ function updateRepairStatus(int $repairId, string $newStatus, ?int $price = null
 if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'])) {
     header('Content-Type: application/json; charset=utf-8');
 
+    // 處理獲取維修訂單價格的請求
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'get_repair_price') {
+        $repairId = isset($_GET['repair_id']) ? (int) $_GET['repair_id'] : null;
+        
+        if (!$repairId) {
+            echo json_encode(['success' => false, 'message' => '缺少參數']);
+            exit;
+        }
+
+        try {
+            $pdo = getDBConnection();
+            $stmt = $pdo->prepare('SELECT Price FROM Repairs WHERE RepairID = :id');
+            $stmt->execute(['id' => $repairId]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            echo json_encode([
+                'success' => true,
+                'price' => $result ? $result['Price'] : null
+            ]);
+        } catch (PDOException $e) {
+            error_log('[getRepairPrice] ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => '資料庫查詢失敗']);
+        }
+        exit;
+    }
+
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         echo json_encode(['success' => false, 'message' => 'Invalid request method']);
         exit;

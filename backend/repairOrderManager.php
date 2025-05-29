@@ -201,6 +201,15 @@ $statusList = getRepairStatusList();
             if (newStatusSelect.value === 'pending_payment') {
                 priceInputGroup.style.display = 'block';
                 priceInput.required = true;
+                // 如果是待付款狀態，從資料庫中讀取價格
+                fetch(`api/backendRepairAPI.php?action=get_repair_price&repair_id=${btn.dataset.id}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success && data.price !== null) {
+                            priceInput.value = data.price;
+                        }
+                    })
+                    .catch(err => console.error('讀取價格失敗:', err));
             } else {
                 priceInputGroup.style.display = 'none';
                 priceInput.required = false;
