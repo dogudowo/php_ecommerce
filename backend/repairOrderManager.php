@@ -192,19 +192,35 @@ $statusList = getRepairStatusList();
                 '異常': 'abnormal'
             };
             const currentStatus = btn.dataset.status;
-            document.getElementById('modalNewStatus').value = statusMap[currentStatus] || currentStatus;
+            const newStatusSelect = document.getElementById('modalNewStatus');
+            newStatusSelect.value = statusMap[currentStatus] || currentStatus;
+            
+            // 初始化價格輸入框的狀態
+            const priceInputGroup = document.getElementById('priceInputGroup');
+            const priceInput = document.getElementById('modalRepairPrice');
+            if (newStatusSelect.value === 'pending_payment') {
+                priceInputGroup.style.display = 'block';
+                priceInput.required = true;
+            } else {
+                priceInputGroup.style.display = 'none';
+                priceInput.required = false;
+                priceInput.value = '0';
+            }
         });
     });
 
     // 監聽狀態選擇的變化
     document.getElementById('modalNewStatus').addEventListener('change', function() {
         const priceInputGroup = document.getElementById('priceInputGroup');
+        const priceInput = document.getElementById('modalRepairPrice');
+        
         if (this.value === 'pending_payment') {
             priceInputGroup.style.display = 'block';
-            document.getElementById('modalRepairPrice').required = true;
+            priceInput.required = true;
         } else {
             priceInputGroup.style.display = 'none';
-            document.getElementById('modalRepairPrice').required = false;
+            priceInput.required = false;
+            priceInput.value = '0';
         }
     });
 
@@ -212,7 +228,8 @@ $statusList = getRepairStatusList();
         e.preventDefault();
         const id = document.getElementById('modalRepairId').value;
         const status = document.getElementById('modalNewStatus').value;
-        const price = document.getElementById('modalRepairPrice').value;
+        const price = status === 'pending_payment' ? 
+            document.getElementById('modalRepairPrice').value : '0';
 
         try {
             const res = await fetch('api/backendRepairAPI.php', {

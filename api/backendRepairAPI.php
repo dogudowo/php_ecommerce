@@ -90,6 +90,9 @@ function updateRepairStatus(int $repairId, string $newStatus, ?int $price = null
     if ($newStatus === 'pending_payment' && $price !== null) {
         $sql .= ', Price = :price';
         $params['price'] = $price;
+    } else {
+        // 如果不是待付款狀態，將價格設為 0
+        $sql .= ', Price = 0';
     }
 
     $sql .= ' WHERE RepairID = :id';
