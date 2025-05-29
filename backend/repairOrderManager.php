@@ -157,6 +157,11 @@ $statusList = getRepairStatusList();
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <div class="mb-3" id="priceInputGroup" style="display: none;">
+                        <label for="modalRepairPrice" class="form-label">維修金額</label>
+                        <input type="number" class="form-control" id="modalRepairPrice" name="repair_price" 
+                               placeholder="請填入維修金額" min="0" step="1">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
@@ -191,16 +196,29 @@ $statusList = getRepairStatusList();
         });
     });
 
+    // 監聽狀態選擇的變化
+    document.getElementById('modalNewStatus').addEventListener('change', function() {
+        const priceInputGroup = document.getElementById('priceInputGroup');
+        if (this.value === 'pending_payment') {
+            priceInputGroup.style.display = 'block';
+            document.getElementById('modalRepairPrice').required = true;
+        } else {
+            priceInputGroup.style.display = 'none';
+            document.getElementById('modalRepairPrice').required = false;
+        }
+    });
+
     document.getElementById('updateRepairStatusForm').addEventListener('submit', async e => {
         e.preventDefault();
         const id = document.getElementById('modalRepairId').value;
         const status = document.getElementById('modalNewStatus').value;
+        const price = document.getElementById('modalRepairPrice').value;
 
         try {
             const res = await fetch('api/backendRepairAPI.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `repair_id=${encodeURIComponent(id)}&new_status=${encodeURIComponent(status)}`
+                body: `repair_id=${encodeURIComponent(id)}&new_status=${encodeURIComponent(status)}&repair_price=${encodeURIComponent(price)}`
             });
             const json = await res.json();
             if (!json.success) throw new Error(json.message || '更新失敗');

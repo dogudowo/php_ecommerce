@@ -80,14 +80,23 @@ function fetchRepairOrders(?string $status = null, ?string $memberId = null): ar
     }
 }
 
-function updateRepairStatus(int $repairId, string $newStatus): bool
+function updateRepairStatus(int $repairId, string $newStatus, ?int $price = null): bool
 {
     $pdo = getDBConnection();
-    $sql = 'UPDATE Repairs SET RepairStatus = :status WHERE RepairID = :id';
+    $sql = 'UPDATE Repairs SET RepairStatus = :status';
+    $params = ['status' => $newStatus, 'id' => $repairId];
+
+    // 如果是待付款狀態且有提供價格，則更新價格
+    if ($newStatus === 'pending_payment' && $price !== null) {
+        $sql .= ', Price = :price';
+        $params['price'] = $price;
+    }
+
+    $sql .= ' WHERE RepairID = :id';
 
     try {
         $stmt = $pdo->prepare($sql);
-        return $stmt->execute(['status' => $newStatus, 'id' => $repairId]);
+        return $stmt->execute($params);
     } catch (PDOException $e) {
         error_log('[updateRepairStatus] ' . $e->getMessage());
         return false;
@@ -105,13 +114,14 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'])) {
 
     $repairId = isset($_POST['repair_id']) ? (int) $_POST['repair_id'] : null;
     $newStatus = $_POST['new_status'] ?? null;
+    $price = isset($_POST['repair_price']) && $_POST['repair_price'] !== '' ? (int) $_POST['repair_price'] : null;
 
     if (!$repairId || !$newStatus) {
         echo json_encode(['success' => false, 'message' => '缺少參數']);
         exit;
     }
 
-    if (updateRepairStatus($repairId, $newStatus)) {
+    if (updateRepairStatus($repairId, $newStatus, $price)) {
         $statusList = getRepairStatusList();
         echo json_encode([
             'success' => true,
