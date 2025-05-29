@@ -289,48 +289,31 @@ function renderRepairTab(array $orders, string $title, ?PDO $pdo = null): void
             $repair = $item['repair'];
             $order = $item['order'];
             ?>
-            <div class="list-group-item mb-4 border rounded py-3">
-                <div class="row align-items-center">
-                    <div class="col-md-8">
-                        <div class="mb-1 h4">
-                            <strong>維修單號：</strong> REP-<?= $repair['RepairID'] ?>
-                        </div>
-                        <div class="mb-1">
-                            <strong>訂單號碼：</strong> ORD-<?= $order['OrderID'] ?>
-                        </div>
-                        <div class="mb-1">
-                            <strong>產品名稱：</strong> <?= htmlspecialchars($repair['ProductName']) ?>
-                        </div>
-                        <div class="mb-1 text-muted small">
-                            保固到期日：<?= date('Y-m-d', strtotime($repair['WarrantyDate'])) ?>
-                        </div>
-                        <?php if ($repair['Price'] !== null): ?>
-                            <div class="mb-1 text-danger fw-bold">
-                                維修金額 $<?= number_format($repair['Price']) ?>
-                            </div>
-                        <?php endif; ?>
+            <div class="list-group-item mb-4 border rounded">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">維修單號: REP-<?= $repair['RepairID'] ?></h5>
+                    <small><?= $repair['RepairDate'] ?></small>
+                </div>
+                <div class="d-flex align-items-center mb-2 border-top mt-2 pt-2">
+                    <div>
+                        <p class="mb-1 h5"><?= htmlspecialchars($repair['ProductName']) ?></p>
+                        <p class="mb-0">保固編號:
+                            <span>
+                                <?= $repair['WarrantyID'] ?>
+                            </span>
+                        </p>
                         <?php if ($repair['RepairCommit']): ?>
-                            <div class="mb-1">
-                                <strong>維修說明：</strong> <?= htmlspecialchars($repair['RepairCommit']) ?>
-                            </div>
+                            <p class="mb-0">維修說明: <?= htmlspecialchars($repair['RepairCommit']) ?></p>
                         <?php endif; ?>
-                        <div class="text-muted small">
-                            <?= date('Y-m-d H:i', strtotime($repair['RepairDate'])) ?>
-                        </div>
                     </div>
-                    <div class="col-md-4 text-end">
-                        <span class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?> fs-4 fw-bold py-2 px-4 rounded-pill shadow-sm" style="letter-spacing:2px;">
-                            <?php
-                            $icon = [
-                                'pending' => '<i class="bi bi-hourglass-split me-1"></i>',
-                                'repairing' => '<i class="bi bi-tools me-1"></i>',
-                                'completed' => '<i class="bi bi-check-circle me-1"></i>',
-                                'abnormal' => '<i class="bi bi-exclamation-triangle me-1"></i>',
-                            ][$repair['RepairStatus']] ?? '';
-                            echo $icon . getRepairStatusText($repair['RepairStatus']);
-                            ?>
-                        </span>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                    <div class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?>">
+                        <?= getRepairStatusText($repair['RepairStatus']) ?>
                     </div>
+                    <?php if ($repair['Price'] !== null): ?>
+                        <div class="text-center fw-bold fs-5 text-danger">維修金額 $<?= number_format($repair['Price']) ?></div>
+                    <?php endif; ?>
                 </div>
             </div>
             <?php
