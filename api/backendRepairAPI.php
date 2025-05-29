@@ -12,6 +12,7 @@ function getRepairStatusList(): array
     return [
         'pending' => '待處理',
         'repairing' => '維修中',
+        'pending_payment' => '待付款',
         'completed' => '已完成',
         'abnormal' => '異常'
     ];
@@ -24,8 +25,20 @@ function getRepairStatusClass(string $status): string
         'pending' => 'bg-info text-dark',
         'repairing' => 'bg-primary',
         'abnormal' => 'bg-danger',
+        'pending_payment' => 'bg-warning',
         default => 'bg-secondary',
     };
+}
+
+function getRepairStatusText(string $status): string
+{
+    return [
+        'pending' => '待處理',
+        'repairing' => '維修中',
+        'completed' => '已完成',
+        'abnormal' => '異常',
+        'pending_payment' => '待付款'
+    ][$status] ?? $status;
 }
 
 function fetchRepairOrders(?string $status = null, ?string $memberId = null): array

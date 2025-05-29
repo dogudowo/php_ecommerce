@@ -182,6 +182,7 @@ $statusList = getRepairStatusList();
             const statusMap = {
                 '待處理': 'pending',
                 '維修中': 'repairing',
+                '待付款': 'pending_payment',
                 '已完成': 'completed',
                 '異常': 'abnormal'
             };
