@@ -75,16 +75,16 @@ $icons = [
                     <?php
                     switch ($current_page) {
                         case 'orderManager':
-                            include 'models/backend/orderManager.php';
+                            include 'backend/orderManager.php';
                             break;
                         case 'repairManager':
-                            include 'models/backend/repairOrderManager.php';
+                            include 'backend/repairOrderManager.php';
                             break;
                         case 'memberManager':
-                            include 'models/memberManager.php';
+                            include 'backend/memberManager.php';
                             break;
                         default:
-                            include 'models/backend/orderManager.php';
+                            include 'backend/orderManager.php';
                             break;
                     }
                     ?>
