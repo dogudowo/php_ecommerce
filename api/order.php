@@ -397,9 +397,56 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                             <?php if ($repair['Price'] !== null): ?>
                                 <div class="text-center fw-bold fs-5 text-danger">維修金額 $<?= number_format($repair['Price']) ?></div>
                             <?php endif; ?>
-
+                            <?php if ($repair['RepairStatus'] === 'pending_payment'): ?>
+                                <button class="btn btn-primary btn-sm" data-bs-toggle="modal" data-bs-target="#paymentModal<?= $repair['RepairID'] ?>">
+                                    <i class="bi bi-credit-card"></i> 付款
+                                </button>
+                            <?php endif; ?>
                         </div>
                     </div>
+
+                    <?php if ($repair['RepairStatus'] === 'pending_payment'): ?>
+                    <!-- 付款 Modal -->
+                    <div class="modal fade" id="paymentModal<?= $repair['RepairID'] ?>" tabindex="-1">
+                        <div class="modal-dialog">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title">付款 - 維修單號 REP-<?= $repair['RepairID'] ?></h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <form id="paymentForm<?= $repair['RepairID'] ?>">
+                                        <div class="mb-3">
+                                            <label class="form-label">選擇付款方式：</label>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="paymentMethod" value="信用卡" id="creditCard<?= $repair['RepairID'] ?>" checked>
+                                                <label class="form-check-label" for="creditCard<?= $repair['RepairID'] ?>">
+                                                    信用卡
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="paymentMethod" value="ATM轉帳" id="atm<?= $repair['RepairID'] ?>">
+                                                <label class="form-check-label" for="atm<?= $repair['RepairID'] ?>">
+                                                    ATM轉帳
+                                                </label>
+                                            </div>
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="radio" name="paymentMethod" value="LinePAY" id="linepay<?= $repair['RepairID'] ?>">
+                                                <label class="form-check-label" for="linepay<?= $repair['RepairID'] ?>">
+                                                    LinePAY
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                                    <button type="button" class="btn btn-primary submit-payment" data-repair-id="<?= $repair['RepairID'] ?>">確認付款</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                     <?php
                 }
             }
@@ -915,6 +962,28 @@ if ($method === 'POST' && $action === 'createRepair') {
     exit;
 }
 
+// 添加處理付款的 API 端點
+if ($method === 'POST' && $action === 'updateRepairStatus') {
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    if (empty($input['repairId'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => '缺少必要參數']);
+        exit;
+    }
+
+    try {
+        $pdo = db_connect();
+        $stmt = $pdo->prepare("UPDATE Repairs SET RepairStatus = 'completed' WHERE RepairID = :repairId");
+        $stmt->execute(['repairId' => $input['repairId']]);
+        
+        echo json_encode(['success' => true, 'message' => '付款狀態已更新']);
+    } catch (Throwable $e) {
+        error_log('更新維修狀態失敗：' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => '操作失敗：' . $e->getMessage()]);
+    }
+    exit;
+}
+
 // 添加維修狀態相關的輔助函數
 function getRepairStatusClass(string $status): string
 {
@@ -973,6 +1042,39 @@ function getRepairStatusText(string $status): string
                             location.reload();
                         } else {
                             alert(data.message || '送出失敗，請稍後再試');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('發生錯誤，請稍後再試');
+                    });
+            });
+        });
+
+        // 處理付款按鈕點擊事件
+        document.querySelectorAll('.submit-payment').forEach(button => {
+            button.addEventListener('click', function () {
+                const repairId = this.dataset.repairId;
+                const form = document.getElementById(`paymentForm${repairId}`);
+                const paymentMethod = form.querySelector('input[name="paymentMethod"]:checked').value;
+
+                // 發送付款狀態更新請求
+                fetch('api/order.php?action=updateRepairStatus', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        repairId: repairId
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('付款成功！');
+                            location.reload();
+                        } else {
+                            alert(data.message || '付款失敗，請稍後再試');
                         }
                     })
                     .catch(error => {
