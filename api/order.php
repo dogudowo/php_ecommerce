@@ -290,32 +290,30 @@ function renderRepairTab(array $orders, string $title, ?PDO $pdo = null): void
             $order = $item['order'];
             ?>
             <div class="list-group-item mb-4 border rounded">
-                <div class="d-flex w-100 justify-content-between align-items-center">
-                    <div>
-                        <h5 class="mb-1">維修單號: REP-<?= $repair['RepairID'] ?></h5>
-                        <p class="mb-0 text-muted">訂單號碼: ORD-<?= $order['OrderID'] ?></p>
-                    </div>
-                    <small class="text-muted"><?= date('Y-m-d H:i', strtotime($repair['RepairDate'])) ?></small>
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1">維修單號: REP-<?= $repair['RepairID'] ?></h5>
+                    <small><?= $repair['RepairDate'] ?></small>
                 </div>
-
-                <div class="mt-3">
-                    <div class="row">
-                        <div class="col-md-8">
-                            <h6 class="mb-2"><?= htmlspecialchars($repair['ProductName']) ?></h6>
-                            <?php if ($repair['RepairCommit']): ?>
-                                <p class="mb-2">維修說明: <?= htmlspecialchars($repair['RepairCommit']) ?></p>
-                            <?php endif; ?>
-                            <p class="mb-0">保固到期日: <?= date('Y-m-d', strtotime($repair['WarrantyDate'])) ?></p>
-                            <?php if ($repair['Price'] !== null): ?>
-                                <p class="mb-0">維修金額: $<?= number_format($repair['Price']) ?></p>
-                            <?php endif; ?>
-                        </div>
-                        <div class="col-md-4 text-end">
-                            <span class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?> fs-6">
-                                <?= htmlspecialchars($repair['RepairStatus']) ?>
+                <div class="d-flex align-items-center mb-2 border-top mt-2 pt-2">
+                    <div>
+                        <p class="mb-1 h5"><?= htmlspecialchars($repair['ProductName']) ?></p>
+                        <p class="mb-0">保固編號:
+                            <span>
+                                <?= $repair['WarrantyID'] ?>
                             </span>
-                        </div>
+                        </p>
+                        <?php if ($repair['RepairCommit']): ?>
+                            <p class="mb-0">維修說明: <?= htmlspecialchars($repair['RepairCommit']) ?></p>
+                        <?php endif; ?>
                     </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-2 border-top">
+                    <div class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?>">
+                        <?= getRepairStatusText($repair['RepairStatus']) ?>
+                    </div>
+                    <?php if ($repair['Price'] !== null): ?>
+                        <div class="text-center fw-bold fs-5 text-danger">維修金額 $<?= number_format($repair['Price']) ?></div>
+                    <?php endif; ?>
                 </div>
             </div>
             <?php
@@ -342,7 +340,7 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
             foreach ($warranties as $warranty) {
                 if (
                     isset($warranty['RepairStatus']) &&
-                    in_array($warranty['RepairStatus'], ['待處理', '維修中', '已送達'], true)
+                    in_array($warranty['RepairStatus'], ['pending', 'repairing', 'pending_payment'], true)
                 ) {
                     $hasActiveRepair = true;
                     break;
@@ -367,7 +365,7 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
             $warranties = getOrderWarranties((int) $order['OrderID'], $pdo);
             $activeRepairs = array_filter($warranties, function ($w) {
                 return isset($w['RepairStatus']) &&
-                    in_array($w['RepairStatus'], ['待處理', '維修中', '已送達'], true);
+                    in_array($w['RepairStatus'], ['pending', 'repairing', 'pending_payment'], true);
             });
 
             // 如果是進行中頁面且有維修項目，先顯示維修項目
@@ -382,9 +380,9 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                         <div class="d-flex align-items-center mb-2 border-top mt-2 pt-2">
                             <div>
                                 <p class="mb-1 h5"><?= $repair['ProductName'] ?></p>
-                                <p class="mb-0">維修狀態:
-                                    <span class="badge <?= getRepairStatusClass($repair['RepairStatus']) ?>">
-                                        <?= getRepairStatusText($repair['RepairStatus']) ?>
+                                <p class="mb-0">保固編號:
+                                    <span>
+                                        <?= $repair['WarrantyID'] ?>
                                     </span>
                                 </p>
                                 <?php if ($repair['RepairCommit']): ?>
@@ -399,7 +397,13 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                             <?php if ($repair['Price'] !== null): ?>
                                 <div class="text-center fw-bold fs-5 text-danger">維修金額 $<?= number_format($repair['Price']) ?></div>
                             <?php endif; ?>
-
+                            <div class="d-flex align-items-center">
+                                <?php if ($repair['RepairStatus'] === '已送達'): ?>
+                                    <button class="btn btn-success btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>" <?php if (isset($repair['RepairID'])): ?>data-repair-id="<?= $repair['RepairID'] ?>" <?php endif; ?>>
+                                        <?= ($repair['RepairStatus'] === '已送達' && (int) ($repair['Price']) === 0) ? '確認' : '付款' ?>
+                                    </button>
+                                <?php endif; ?>
+                            </div>
                         </div>
                     </div>
                     <?php
@@ -887,7 +891,7 @@ function createRepairRequest(array $warrantyIds, ?PDO $pdo = null, string $repai
             $createRepair->execute([
                 'repairId' => $repairId,
                 'warrantyId' => $warrantyId,
-                'status' => '待處理',
+                'status' => 'pending',
                 'repairCommit' => $repairCommit,
                 'price' => $isWarrantyValid ? 0 : null // 保固內免費，保固外待定
             ]);
@@ -917,23 +921,49 @@ if ($method === 'POST' && $action === 'createRepair') {
     exit;
 }
 
+// 添加處理付款的 API 端點
+if ($method === 'POST' && $action === 'updateRepairStatus') {
+    $input = json_decode(file_get_contents('php://input'), true) ?? [];
+    if (empty($input['repairId'])) {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => '缺少必要參數']);
+        exit;
+    }
+
+    try {
+        $pdo = db_connect();
+        $stmt = $pdo->prepare("UPDATE Repairs SET RepairStatus = 'completed' WHERE RepairID = :repairId");
+        $stmt->execute(['repairId' => $input['repairId']]);
+        
+        echo json_encode(['success' => true, 'message' => '付款狀態已更新']);
+    } catch (Throwable $e) {
+        error_log('更新維修狀態失敗：' . $e->getMessage());
+        echo json_encode(['success' => false, 'message' => '操作失敗：' . $e->getMessage()]);
+    }
+    exit;
+}
+
 // 添加維修狀態相關的輔助函數
 function getRepairStatusClass(string $status): string
 {
     return [
-        '待處理' => 'bg-secondary',
-        '處理中' => 'bg-info',
-        '維修中' => 'bg-primary',
-        '已完成' => 'bg-success',
-        '已送達' => 'bg-primary',
-        '已取消' => 'bg-warning',
-        '異常' => 'bg-danger'
+        'pending' => 'bg-secondary',
+        'repairing' => 'bg-primary',
+        'completed' => 'bg-success',
+        'abnormal' => 'bg-danger',
+        'pending_payment' => 'bg-warning'
     ][$status] ?? 'bg-secondary';
 }
 
 function getRepairStatusText(string $status): string
 {
-    return $status; // 直接返回中文狀態
+    return [
+        'pending' => '待處理',
+        'repairing' => '維修中',
+        'completed' => '已完成',
+        'abnormal' => '異常',
+        'pending_payment' => '待付款'
+    ][$status] ?? $status;
 }
 ?>
 <script>
@@ -971,6 +1001,39 @@ function getRepairStatusText(string $status): string
                             location.reload();
                         } else {
                             alert(data.message || '送出失敗，請稍後再試');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('發生錯誤，請稍後再試');
+                    });
+            });
+        });
+
+        // 處理付款按鈕點擊事件
+        document.querySelectorAll('.submit-payment').forEach(button => {
+            button.addEventListener('click', function () {
+                const repairId = this.dataset.repairId;
+                const form = document.getElementById(`paymentForm${repairId}`);
+                const paymentMethod = form.querySelector('input[name="paymentMethod"]:checked').value;
+
+                // 發送付款狀態更新請求
+                fetch('api/order.php?action=updateRepairStatus', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        repairId: repairId
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert('付款成功！');
+                            location.reload();
+                        } else {
+                            alert(data.message || '付款失敗，請稍後再試');
                         }
                     })
                     .catch(error => {

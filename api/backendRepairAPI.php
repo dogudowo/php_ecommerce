@@ -10,24 +10,35 @@ require_once __DIR__ . '/db.php';
 function getRepairStatusList(): array
 {
     return [
-        '已完成' => '已完成',
-        '處理中' => '處理中',
-        '維修中' => '維修中',
-        '已取消' => '已取消',
-        '異常' => '異常',
+        'pending' => '待處理',
+        'repairing' => '維修中',
+        'pending_payment' => '待付款',
+        'completed' => '已完成',
+        'abnormal' => '異常'
     ];
 }
 
 function getRepairStatusClass(string $status): string
 {
     return match ($status) {
-        '已完成' => 'bg-success',
-        '處理中' => 'bg-info text-dark',
-        '維修中' => 'bg-primary',
-        '已取消' => 'bg-warning',
-        '異常' => 'bg-danger',
+        'completed' => 'bg-success',
+        'pending' => 'bg-info text-dark',
+        'repairing' => 'bg-primary',
+        'abnormal' => 'bg-danger',
+        'pending_payment' => 'bg-warning',
         default => 'bg-secondary',
     };
+}
+
+function getRepairStatusText(string $status): string
+{
+    return [
+        'pending' => '待處理',
+        'repairing' => '維修中',
+        'completed' => '已完成',
+        'abnormal' => '異常',
+        'pending_payment' => '待付款'
+    ][$status] ?? $status;
 }
 
 function fetchRepairOrders(?string $status = null, ?string $memberId = null): array
@@ -69,14 +80,26 @@ function fetchRepairOrders(?string $status = null, ?string $memberId = null): ar
     }
 }
 
-function updateRepairStatus(int $repairId, string $newStatus): bool
+function updateRepairStatus(int $repairId, string $newStatus, ?int $price = null): bool
 {
     $pdo = getDBConnection();
-    $sql = 'UPDATE Repairs SET RepairStatus = :status WHERE RepairID = :id';
+    $sql = 'UPDATE Repairs SET RepairStatus = :status';
+    $params = ['status' => $newStatus, 'id' => $repairId];
+
+    // 如果是待付款狀態且有提供價格，則更新價格
+    if ($newStatus === 'pending_payment' && $price !== null) {
+        $sql .= ', Price = :price';
+        $params['price'] = $price;
+    } else {
+        // 如果不是待付款狀態，將價格設為 0
+        $sql .= ', Price = 0';
+    }
+
+    $sql .= ' WHERE RepairID = :id';
 
     try {
         $stmt = $pdo->prepare($sql);
-        return $stmt->execute(['status' => $newStatus, 'id' => $repairId]);
+        return $stmt->execute($params);
     } catch (PDOException $e) {
         error_log('[updateRepairStatus] ' . $e->getMessage());
         return false;
@@ -87,6 +110,32 @@ function updateRepairStatus(int $repairId, string $newStatus): bool
 if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'])) {
     header('Content-Type: application/json; charset=utf-8');
 
+    // 處理獲取維修訂單價格的請求
+    if ($_SERVER['REQUEST_METHOD'] === 'GET' && isset($_GET['action']) && $_GET['action'] === 'get_repair_price') {
+        $repairId = isset($_GET['repair_id']) ? (int) $_GET['repair_id'] : null;
+        
+        if (!$repairId) {
+            echo json_encode(['success' => false, 'message' => '缺少參數']);
+            exit;
+        }
+
+        try {
+            $pdo = getDBConnection();
+            $stmt = $pdo->prepare('SELECT Price FROM Repairs WHERE RepairID = :id');
+            $stmt->execute(['id' => $repairId]);
+            $result = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            echo json_encode([
+                'success' => true,
+                'price' => $result ? $result['Price'] : null
+            ]);
+        } catch (PDOException $e) {
+            error_log('[getRepairPrice] ' . $e->getMessage());
+            echo json_encode(['success' => false, 'message' => '資料庫查詢失敗']);
+        }
+        exit;
+    }
+
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         echo json_encode(['success' => false, 'message' => 'Invalid request method']);
         exit;
@@ -94,16 +143,18 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'])) {
 
     $repairId = isset($_POST['repair_id']) ? (int) $_POST['repair_id'] : null;
     $newStatus = $_POST['new_status'] ?? null;
+    $price = isset($_POST['repair_price']) && $_POST['repair_price'] !== '' ? (int) $_POST['repair_price'] : null;
 
     if (!$repairId || !$newStatus) {
         echo json_encode(['success' => false, 'message' => '缺少參數']);
         exit;
     }
 
-    if (updateRepairStatus($repairId, $newStatus)) {
+    if (updateRepairStatus($repairId, $newStatus, $price)) {
+        $statusList = getRepairStatusList();
         echo json_encode([
             'success' => true,
-            'statusText' => $newStatus,
+            'statusText' => $statusList[$newStatus] ?? $newStatus,
             'statusClass' => getRepairStatusClass($newStatus),
         ]);
     } else {

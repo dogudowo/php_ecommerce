@@ -157,6 +157,11 @@ $statusList = getRepairStatusList();
                             <?php endforeach; ?>
                         </select>
                     </div>
+                    <div class="mb-3" id="priceInputGroup" style="display: none;">
+                        <label for="modalRepairPrice" class="form-label">維修金額</label>
+                        <input type="number" class="form-control" id="modalRepairPrice" name="repair_price" 
+                               placeholder="請填入維修金額" min="0" step="1">
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
@@ -178,20 +183,68 @@ $statusList = getRepairStatusList();
     document.querySelectorAll('.update-repair-status').forEach(btn => {
         btn.addEventListener('click', () => {
             document.getElementById('modalRepairId').value = btn.dataset.id;
-            document.getElementById('modalNewStatus').value = btn.dataset.status;
+            // 將中文狀態轉換為英文
+            const statusMap = {
+                '待處理': 'pending',
+                '維修中': 'repairing',
+                '待付款': 'pending_payment',
+                '已完成': 'completed',
+                '異常': 'abnormal'
+            };
+            const currentStatus = btn.dataset.status;
+            const newStatusSelect = document.getElementById('modalNewStatus');
+            newStatusSelect.value = statusMap[currentStatus] || currentStatus;
+            
+            // 初始化價格輸入框的狀態
+            const priceInputGroup = document.getElementById('priceInputGroup');
+            const priceInput = document.getElementById('modalRepairPrice');
+            if (newStatusSelect.value === 'pending_payment') {
+                priceInputGroup.style.display = 'block';
+                priceInput.required = true;
+                // 如果是待付款狀態，從資料庫中讀取價格
+                fetch(`api/backendRepairAPI.php?action=get_repair_price&repair_id=${btn.dataset.id}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success && data.price !== null) {
+                            priceInput.value = data.price;
+                        }
+                    })
+                    .catch(err => console.error('讀取價格失敗:', err));
+            } else {
+                priceInputGroup.style.display = 'none';
+                priceInput.required = false;
+                priceInput.value = '0';
+            }
         });
+    });
+
+    // 監聽狀態選擇的變化
+    document.getElementById('modalNewStatus').addEventListener('change', function() {
+        const priceInputGroup = document.getElementById('priceInputGroup');
+        const priceInput = document.getElementById('modalRepairPrice');
+        
+        if (this.value === 'pending_payment') {
+            priceInputGroup.style.display = 'block';
+            priceInput.required = true;
+        } else {
+            priceInputGroup.style.display = 'none';
+            priceInput.required = false;
+            priceInput.value = '0';
+        }
     });
 
     document.getElementById('updateRepairStatusForm').addEventListener('submit', async e => {
         e.preventDefault();
         const id = document.getElementById('modalRepairId').value;
         const status = document.getElementById('modalNewStatus').value;
+        const price = status === 'pending_payment' ? 
+            document.getElementById('modalRepairPrice').value : '0';
 
         try {
             const res = await fetch('api/backendRepairAPI.php', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `repair_id=${encodeURIComponent(id)}&new_status=${encodeURIComponent(status)}`
+                body: `repair_id=${encodeURIComponent(id)}&new_status=${encodeURIComponent(status)}&repair_price=${encodeURIComponent(price)}`
             });
             const json = await res.json();
             if (!json.success) throw new Error(json.message || '更新失敗');
