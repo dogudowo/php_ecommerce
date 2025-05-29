@@ -10,22 +10,20 @@ require_once __DIR__ . '/db.php';
 function getRepairStatusList(): array
 {
     return [
-        '已完成' => '已完成',
-        '處理中' => '處理中',
-        '維修中' => '維修中',
-        '已取消' => '已取消',
-        '異常' => '異常',
+        'pending' => '待處理',
+        'repairing' => '維修中',
+        'completed' => '已完成',
+        'abnormal' => '異常'
     ];
 }
 
 function getRepairStatusClass(string $status): string
 {
     return match ($status) {
-        '已完成' => 'bg-success',
-        '處理中' => 'bg-info text-dark',
-        '維修中' => 'bg-primary',
-        '已取消' => 'bg-warning',
-        '異常' => 'bg-danger',
+        'completed' => 'bg-success',
+        'pending' => 'bg-info text-dark',
+        'repairing' => 'bg-primary',
+        'abnormal' => 'bg-danger',
         default => 'bg-secondary',
     };
 }
@@ -101,9 +99,10 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'])) {
     }
 
     if (updateRepairStatus($repairId, $newStatus)) {
+        $statusList = getRepairStatusList();
         echo json_encode([
             'success' => true,
-            'statusText' => $newStatus,
+            'statusText' => $statusList[$newStatus] ?? $newStatus,
             'statusClass' => getRepairStatusClass($newStatus),
         ]);
     } else {

@@ -178,7 +178,15 @@ $statusList = getRepairStatusList();
     document.querySelectorAll('.update-repair-status').forEach(btn => {
         btn.addEventListener('click', () => {
             document.getElementById('modalRepairId').value = btn.dataset.id;
-            document.getElementById('modalNewStatus').value = btn.dataset.status;
+            // 將中文狀態轉換為英文
+            const statusMap = {
+                '待處理': 'pending',
+                '維修中': 'repairing',
+                '已完成': 'completed',
+                '異常': 'abnormal'
+            };
+            const currentStatus = btn.dataset.status;
+            document.getElementById('modalNewStatus').value = statusMap[currentStatus] || currentStatus;
         });
     });
 
