@@ -340,7 +340,7 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
             foreach ($warranties as $warranty) {
                 if (
                     isset($warranty['RepairStatus']) &&
-                    in_array($warranty['RepairStatus'], ['pending', 'repairing'], true)
+                    in_array($warranty['RepairStatus'], ['pending', 'repairing', 'pending_payment'], true)
                 ) {
                     $hasActiveRepair = true;
                     break;
@@ -365,7 +365,7 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
             $warranties = getOrderWarranties((int) $order['OrderID'], $pdo);
             $activeRepairs = array_filter($warranties, function ($w) {
                 return isset($w['RepairStatus']) &&
-                    in_array($w['RepairStatus'], ['pending', 'repairing'], true);
+                    in_array($w['RepairStatus'], ['pending', 'repairing', 'pending_payment'], true);
             });
 
             // 如果是進行中頁面且有維修項目，先顯示維修項目
