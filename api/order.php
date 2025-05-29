@@ -902,7 +902,7 @@ function createRepairRequest(array $warrantyIds, ?PDO $pdo = null, string $repai
             $createRepair->execute([
                 'repairId' => $repairId,
                 'warrantyId' => $warrantyId,
-                'status' => '待處理',
+                'status' => 'pending',
                 'repairCommit' => $repairCommit,
                 'price' => $isWarrantyValid ? 0 : null // 保固內免費，保固外待定
             ]);
