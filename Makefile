@@ -19,6 +19,7 @@ update:
 config:
 	@if [ ! -f config.php ]; then \
 		cp config.template.php config.php; \
+		chmod 666 config.php; \
 		echo "config.php created from template"; \
 	else \
 		echo "config.php already exists, skipping"; \
