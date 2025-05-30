@@ -92,7 +92,7 @@ $statusList = getRepairStatusList();
                                     <td>
                                         <div class="btn-group">
                                             <!-- 詳情 -->
-                                            <button class="btn btn-sm btn-outline-primary view-repair"
+                                            <button class="btn btn-sm btn-outline-success view-repair"
                                                 data-id="<?= $r['RepairID'] ?>"
                                                 data-commit="<?= htmlspecialchars($r['RepairCommit'] ?? '') ?>"
                                                 data-warranty-date="<?= htmlspecialchars($r['WarrantyDate'] ?? '') ?>"
@@ -100,11 +100,11 @@ $statusList = getRepairStatusList();
                                                 <i class="bi bi-eye"></i>
                                             </button>
                                             <!-- 變更狀態 -->
-                                            <button class="btn btn-sm btn-outline-success update-repair-status"
+                                            <button class="btn btn-sm btn-outline-primary update-repair-status"
                                                 data-id="<?= $r['RepairID'] ?>"
                                                 data-status="<?= htmlspecialchars($r['RepairStatus']) ?>" data-bs-toggle="modal"
                                                 data-bs-target="#updateRepairStatusModal">
-                                                <i class="bi bi-arrow-repeat"></i>
+                                                <i class="bi bi-pencil"></i>
                                             </button>
                                         </div>
                                     </td>
@@ -159,8 +159,8 @@ $statusList = getRepairStatusList();
                     </div>
                     <div class="mb-3" id="priceInputGroup" style="display: none;">
                         <label for="modalRepairPrice" class="form-label">維修金額</label>
-                        <input type="number" class="form-control" id="modalRepairPrice" name="repair_price" 
-                               placeholder="請填入維修金額" min="0" step="1">
+                        <input type="number" class="form-control" id="modalRepairPrice" name="repair_price"
+                            placeholder="請填入維修金額" min="0" step="1">
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -194,7 +194,7 @@ $statusList = getRepairStatusList();
             const currentStatus = btn.dataset.status;
             const newStatusSelect = document.getElementById('modalNewStatus');
             newStatusSelect.value = statusMap[currentStatus] || currentStatus;
-            
+
             // 初始化價格輸入框的狀態
             const priceInputGroup = document.getElementById('priceInputGroup');
             const priceInput = document.getElementById('modalRepairPrice');
@@ -219,10 +219,10 @@ $statusList = getRepairStatusList();
     });
 
     // 監聽狀態選擇的變化
-    document.getElementById('modalNewStatus').addEventListener('change', function() {
+    document.getElementById('modalNewStatus').addEventListener('change', function () {
         const priceInputGroup = document.getElementById('priceInputGroup');
         const priceInput = document.getElementById('modalRepairPrice');
-        
+
         if (this.value === 'pending_payment') {
             priceInputGroup.style.display = 'block';
             priceInput.required = true;
@@ -237,7 +237,7 @@ $statusList = getRepairStatusList();
         e.preventDefault();
         const id = document.getElementById('modalRepairId').value;
         const status = document.getElementById('modalNewStatus').value;
-        const price = status === 'pending_payment' ? 
+        const price = status === 'pending_payment' ?
             document.getElementById('modalRepairPrice').value : '0';
 
         try {

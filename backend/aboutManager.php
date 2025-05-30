@@ -140,7 +140,7 @@ $adLink = $adLinkObj->adLink ?? '';
         const renderRow = (entity, row) => {
             const opTd = `<td>
                             <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-primary js-edit" data-entity="${entity}" data-id="${row.tax_id}"><i class="bi bi-pencil-square"></i></button>
+                                <button class="btn btn-sm btn-outline-primary js-edit" data-entity="${entity}" data-id="${row.tax_id}"><i class="bi bi-pencil"></i></button>
                                 <button class="btn btn-sm btn-outline-danger  js-del"  data-entity="${entity}" data-id="${row.tax_id}"><i class="bi bi-trash"></i></button>
                             </div>
                           </td>`;

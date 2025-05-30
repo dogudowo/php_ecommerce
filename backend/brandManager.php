@@ -310,7 +310,7 @@
                         <td>${brand.content.substring(0, 100)}...</td>
                         <td>
                             <div class="btn-group">
-                                <button class="btn btn-sm btn-outline-primary edit-brand-btn" data-id="${brandId}"><i class="bi bi-pencil-square"></i></button>
+                                <button class="btn btn-sm btn-outline-primary edit-brand-btn" data-id="${brandId}"><i class="bi bi-pencil"></i></button>
                                 <button class="btn btn-sm btn-outline-danger delete-brand-btn" data-id="${brandId}" data-name="${brand.name}"><i class="bi bi-trash"></i></button>
                             </div>
                         </td>

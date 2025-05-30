@@ -174,7 +174,7 @@ require_once __DIR__ . '/../api/instruction.php';
                                 data-id="${item.QA_id}"
                                 data-question="${item.question}"
                                 data-answer="${item.answer}">
-                                <i class="bi bi-pencil-square"></i>
+                                <i class="bi bi-pencil"></i>
                             </button>
                             <button class="btn btn-sm btn-outline-danger delete-btn" data-id="${item.QA_id}"><i class="bi bi-trash"></i></button>
                         </div>

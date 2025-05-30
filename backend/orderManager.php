@@ -210,7 +210,7 @@ $statusClasses = [
                                 <button type="button" class="btn btn-sm btn-outline-primary update-status"
                                     data-id="${order.OrderID}"
                                     data-status="${order.Status}">
-                                    <i class="bi bi-pencil-square"></i>
+                                    <i class="bi bi-pencil"></i>
                                 </button>
                             </div>
                         </td>
