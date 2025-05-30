@@ -128,19 +128,13 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                 <div class="modal-body">
                     <form id="editMemberForm">
                         <input type="hidden" id="editMemberId">
-                        <div class="mb-3 text-center d-flex flex-column">
-                            <label class="form-label">會員類型</label>
-                            <div class="btn-group" role="group" aria-label="會員類型">
-                                <input type="radio" class="btn-check" name="editMemberType" id="editMemberType0"
-                                    value="0" autocomplete="off">
-                                <label class="btn btn-outline-primary" for="editMemberType0">會員</label>
-                                <input type="radio" class="btn-check" name="editMemberType" id="editMemberType1"
-                                    value="1" autocomplete="off">
-                                <label class="btn btn-outline-primary" for="editMemberType1">員工</label>
-                                <input type="radio" class="btn-check" name="editMemberType" id="editMemberType2"
-                                    value="2" autocomplete="off">
-                                <label class="btn btn-outline-primary" for="editMemberType2">管理員</label>
-                            </div>
+                        <div class="mb-3 d-flex flex-column">
+                            <label class="form-label" for="editMemberTypeSelect">會員類型</label>
+                            <select class="form-select" id="editMemberTypeSelect" name="editMemberTypeSelect">
+                                <option value="0">會員</option>
+                                <option value="1">員工</option>
+                                <option value="2">管理員</option>
+                            </select>
                         </div>
                     </form>
                 </div>
@@ -183,67 +177,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
     const MEMBER_API = 'api/MemberBackend.php';
     const currentUserRole = <?php echo json_encode($currentRole, JSON_NUMERIC_CHECK); ?>;
 
-    /* ====== 篩選（保留 stub） ====== */
-    document.getElementById('filterCity').addEventListener('change', filterMembers);
-    document.getElementById('filterAdmin').addEventListener('change', filterMembers);
-    document.getElementById('searchMember').addEventListener('input', filterMembers);
-
-    async function filterMembers() {
-        const city = document.getElementById('filterCity').value;
-        const memberType = document.getElementById('filterAdmin').value;
-        const searchTerm = document.getElementById('searchMember').value;
-
-        const tbody = document.getElementById('memberTableBody');
-        tbody.innerHTML = spinnerRow();
-
-        try {
-            const params = new URLSearchParams();
-            if (city) params.append('city', city);
-            if (memberType) params.append('type', memberType);
-            if (searchTerm) params.append('search', searchTerm);
-
-            const res = await fetch(`${MEMBER_API}?action=list&${params.toString()}`);
-            if (!res.ok) throw new Error(res.status);
-            const json = await res.json();
-
-            if (json.success && json.members?.length) {
-                tbody.innerHTML = '';
-                json.members.forEach(m => tbody.appendChild(buildRow(m)));
-                rebindEventListeners();
-            } else {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center">沒有符合條件的會員資料</td></tr>`;
-            }
-        } catch (err) {
-            console.error('篩選會員失敗：', err);
-            tbody.innerHTML = `<tr><td colspan="8" class="text-danger text-center">篩選會員失敗</td></tr>`;
-        }
-    }
-
-    /* ====================
-       會員列表載入／刷新
-       ==================== */
-    async function loadMembers() {
-        const tbody = document.getElementById('memberTableBody');
-        tbody.innerHTML = spinnerRow();
-
-        try {
-            const res = await fetch(`${MEMBER_API}?action=list`);
-            if (!res.ok) throw new Error(res.status);
-            const json = await res.json();
-
-            if (json.success && json.members?.length) {
-                tbody.innerHTML = '';
-                json.members.forEach(m => tbody.appendChild(buildRow(m)));
-                rebindEventListeners();   // 為新列重新掛事件
-            } else {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center">目前沒有會員資料</td></tr>`;
-            }
-        } catch (err) {
-            console.error('載入會員列表失敗：', err);
-            tbody.innerHTML = `<tr><td colspan="8" class="text-danger text-center">無法載入會員資料</td></tr>`;
-        }
-    }
-
+    /* ====== Helper Functions ====== */
     function spinnerRow() {
         return `
             <tr>
@@ -304,7 +238,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                     ${row('會員類型', badgeByRole(member.IsAdmin))}
                   </div>
                 </div>`;
-            new bootstrap.Modal('#memberDetailModal').show();
+            new bootstrap.Modal(document.getElementById('memberDetailModal')).show();
         } catch (err) {
             console.error(err);
             showToast('獲取會員資料失敗！', 'danger');
@@ -323,13 +257,8 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
             const { member } = await res.json();
 
             document.getElementById('editMemberId').value = id;
-            // 設定按鈕群組的選取狀態
-            document.querySelectorAll('input[name="editMemberType"]').forEach(radio => {
-                if (radio.value == member.IsAdmin) {
-                    radio.checked = true;
-                }
-            });
-            new bootstrap.Modal('#editMemberModal').show();
+            document.getElementById('editMemberTypeSelect').value = member.IsAdmin;
+            new bootstrap.Modal(document.getElementById('editMemberModal')).show();
         } catch (err) {
             console.error(err);
             showToast('獲取會員資料失敗！', 'danger');
@@ -339,13 +268,77 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
     async function deleteMemberHandler() {
         const id = this.dataset.id;
         document.getElementById('deleteMemberId').value = id;
-        new bootstrap.Modal('#deleteMemberModal').show();
+        new bootstrap.Modal(document.getElementById('deleteMemberModal')).show();
+    }
+
+    /* 重新綁定（每次重繪 table 後呼叫） */
+    function rebindEventListeners() {
+        document.querySelectorAll('.view-member').forEach(btn => btn.onclick = viewMemberHandler);
+        document.querySelectorAll('.edit-member').forEach(btn => btn.onclick = editMemberHandler);
+        document.querySelectorAll('.delete-member').forEach(btn => btn.onclick = deleteMemberHandler);
+    }
+
+    /* ====== 篩選 ====== */
+    async function filterMembers() {
+        const city = document.getElementById('filterCity').value;
+        const memberType = document.getElementById('filterAdmin').value;
+        const searchTerm = document.getElementById('searchMember').value;
+
+        const tbody = document.getElementById('memberTableBody');
+        tbody.innerHTML = spinnerRow();
+
+        try {
+            const params = new URLSearchParams();
+            if (city) params.append('city', city);
+            if (memberType) params.append('type', memberType);
+            if (searchTerm) params.append('search', searchTerm);
+
+            const res = await fetch(`${MEMBER_API}?action=list&${params.toString()}`);
+            if (!res.ok) throw new Error(res.status);
+            const json = await res.json();
+
+            if (json.success && json.members?.length) {
+                tbody.innerHTML = '';
+                json.members.forEach(m => tbody.appendChild(buildRow(m)));
+                rebindEventListeners();
+            } else {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center">沒有符合條件的會員資料</td></tr>`;
+            }
+        } catch (err) {
+            console.error('篩選會員失敗：', err);
+            tbody.innerHTML = `<tr><td colspan="8" class="text-danger text-center">篩選會員失敗</td></tr>`;
+        }
+    }
+
+    /* ====================
+       會員列表載入／刷新
+       ==================== */
+    async function loadMembers() {
+        const tbody = document.getElementById('memberTableBody');
+        tbody.innerHTML = spinnerRow();
+
+        try {
+            const res = await fetch(`${MEMBER_API}?action=list`);
+            if (!res.ok) throw new Error(res.status);
+            const json = await res.json();
+
+            if (json.success && json.members?.length) {
+                tbody.innerHTML = '';
+                json.members.forEach(m => tbody.appendChild(buildRow(m)));
+                rebindEventListeners();   // 為新列重新掛事件
+            } else {
+                tbody.innerHTML = `<tr><td colspan="8" class="text-center">目前沒有會員資料</td></tr>`;
+            }
+        } catch (err) {
+            console.error('載入會員列表失敗：', err);
+            tbody.innerHTML = `<tr><td colspan="8" class="text-danger text-center">無法載入會員資料</td></tr>`;
+        }
     }
 
     /* 存檔 */
     document.getElementById('saveMember').onclick = async () => {
         const memberId = document.getElementById('editMemberId').value;
-        const isAdmin = document.querySelector('input[name="editMemberType"]:checked').value;
+        const isAdmin = document.getElementById('editMemberTypeSelect').value;
 
         try {
             const res = await fetch(`${MEMBER_API}?action=update`, {
@@ -354,10 +347,9 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                 body: JSON.stringify({ memberId, isAdmin })
             });
             const json = await res.json();
-            bootstrap.Modal.getInstance('#editMemberModal').hide();
+            bootstrap.Modal.getInstance(document.getElementById('editMemberModal')).hide();
 
             if (json.success) {
-                // 更新表格
                 const row = document.querySelector(`tr[data-member-id="${memberId}"] td:nth-child(7)`);
                 if (row) row.innerHTML = badgeByRole(+isAdmin);
                 showToast('會員資料已成功更新！');
@@ -380,7 +372,7 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                 body: JSON.stringify({ memberId })
             });
             const json = await res.json();
-            bootstrap.Modal.getInstance('#deleteMemberModal').hide();
+            bootstrap.Modal.getInstance(document.getElementById('deleteMemberModal')).hide();
 
             if (json.success) {
                 document.querySelector(`tr[data-member-id="${memberId}"]`)?.remove();
@@ -394,12 +386,11 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
         }
     };
 
-    /* 重新綁定（每次重繪 table 後呼叫） */
-    function rebindEventListeners() {
-        document.querySelectorAll('.view-member').forEach(btn => btn.onclick = viewMemberHandler);
-        document.querySelectorAll('.edit-member').forEach(btn => btn.onclick = editMemberHandler);
-        document.querySelectorAll('.delete-member').forEach(btn => btn.onclick = deleteMemberHandler);
-    }
+    /* ====== Event Listeners Init ====== */
+    document.getElementById('filterCity').addEventListener('change', filterMembers);
+    document.getElementById('filterAdmin').addEventListener('change', filterMembers);
+    document.getElementById('searchMember').addEventListener('input', filterMembers);
+
     /* 頁面 init */
     document.addEventListener('DOMContentLoaded', loadMembers);
 </script>

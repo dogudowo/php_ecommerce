@@ -125,20 +125,14 @@ $statusClasses = [
                     <form id="updateStatusForm">
                         <input type="hidden" id="updateOrderId">
                         <div class="mb-3 d-flex flex-column">
-                            <label class="form-label">訂單狀態</label>
-                            <div class="btn-group" role="group" aria-label="訂單狀態">
+                            <label class="form-label" for="updateOrderStatusSelect">訂單狀態</label>
+                            <select class="form-select" id="updateOrderStatusSelect" name="orderStatusSelect">
                                 <?php foreach ($statusList as $key => $value): ?>
-                                    <input type="radio" class="btn-check" name="orderStatusRadio"
-                                        id="status_<?php echo htmlspecialchars($key); ?>"
-                                        value="<?php echo htmlspecialchars($key); ?>" autocomplete="off">
-                                    <label
-                                        class="btn btn-outline-<?php echo htmlspecialchars($statusClasses[$key] ?? 'primary'); ?>"
-                                        for="status_<?php echo htmlspecialchars($key); ?>">
+                                    <option value="<?php echo htmlspecialchars($key); ?>">
                                         <?php echo htmlspecialchars($value); ?>
-                                    </label>
+                                    </option>
                                 <?php endforeach; ?>
-                            </div>
-                            <input type="hidden" id="orderStatus"> <!-- Hidden input to store selected status -->
+                            </select>
                         </div>
                         <!-- 移除備註輸入框 -->
                     </form>
@@ -410,8 +404,8 @@ $statusClasses = [
         // 設置當前訂單ID
         document.getElementById('updateOrderId').value = orderId;
 
-        // 根據當前狀態設定對應的 radio button 為選中狀態
-        $(`#updateStatusModal input[name="orderStatusRadio"][value="${currentStatus}"]`).prop('checked', true);
+        // 根據當前狀態設定對應的 select option 為選中狀態
+        $('#updateOrderStatusSelect').val(currentStatus);
 
         // 顯示模態框
         const modal = new bootstrap.Modal(document.getElementById('updateStatusModal'));
@@ -421,8 +415,8 @@ $statusClasses = [
     // 保存訂單狀態更新
     document.getElementById('saveStatus').addEventListener('click', async function () {
         const orderId = document.getElementById('updateOrderId').value;
-        // 從選中的 radio button 獲取選定的狀態值
-        const status = document.querySelector('#updateStatusModal input[name="orderStatusRadio"]:checked').value;
+        // 從 select 元素獲取選定的狀態值
+        const status = document.getElementById('updateOrderStatusSelect').value;
 
         // console.log('保存訂單狀態更新：', orderId, status);
 
