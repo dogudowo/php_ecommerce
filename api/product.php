@@ -415,6 +415,7 @@ function handleImageUpload($fileInputName, $productId, $imageType = 'main', $gal
 
         $destination = $uploadDir . $fileName;
         if (move_uploaded_file($_FILES[$fileInputName]['tmp_name'], $destination)) {
+            chmod($destination, 0777);
             return ['success' => true, 'filePath' => "imgs/products/{$productId}/{$fileName}"];
         } else {
             return ['success' => false, 'message' => '圖片上傳失敗。'];
