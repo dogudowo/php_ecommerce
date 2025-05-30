@@ -252,7 +252,7 @@
                         col.className = 'col-6 col-md-4 col-lg-3 mb-2';
                         col.innerHTML = `
                             <div class="card h-100 image-preview-card">
-                                <img src="${imgPath}" class="card-img-top" style="height:200px;object-fit:cover;">
+                                <img src="${imgPath}" class="card-img-top" style="height:200px;">
                                 <div class="card-body p-1 text-center">
                                     <button ...> 刪除 </button>
                                 </div>
@@ -272,7 +272,7 @@
                     col.className = 'col-4 col-lg-4 mb-2';
                     col.innerHTML = `
                     <div class="card h-100 image-preview-card">
-                        <img src="${imgPath}" class="card-img-top" alt="${type}">
+                        <img src="${imgPath}" class="card-img-top" alt="${type}" style="height:200px;">
                         <div class="card-body p-1 text-center">
                             <button type="button" class="btn btn-sm btn-outline-danger remove-image-btn" data-src="${url}">
                                 <i class="bi bi-trash"></i> 刪除

@@ -35,7 +35,7 @@ require_once __DIR__ . '/header.php';
             <?php
             $buyContextImages = glob('imgs/instruction/buyContext.*');
             if (!empty($buyContextImages)) {
-                echo '<img src="' . $buyContextImages[0] . '" class="img-fluid" />';
+                echo '<img src="' . $buyContextImages[0] . '?t=' . time() . '" class="img-fluid" />';
             }
             ?>
         </div>
@@ -69,7 +69,7 @@ require_once __DIR__ . '/header.php';
             <?php
             $orderImages = glob('imgs/instruction/order.*');
             if (!empty($orderImages)) {
-                echo '<img src="' . $orderImages[0] . '" alt="" class="img-fulid w-100" />';
+                echo '<img src="' . $orderImages[0] . '?t=' . time() . '" alt="" class="img-fluid w-100" />';
             }
             ?>
         </div>
