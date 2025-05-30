@@ -173,13 +173,21 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
 <script src="api/toast.js"></script>
 
 <script>
-    /* ====== 共用設定 ====== */
-    const MEMBER_API = 'api/MemberBackend.php';
-    const currentUserRole = <?php echo json_encode($currentRole, JSON_NUMERIC_CHECK); ?>;
+    (function () {
+        const MEMBER_API = 'api/MemberBackend.php';
+        const currentUserRole = <?php echo json_encode($currentRole, JSON_NUMERIC_CHECK); ?>;
 
-    /* ====== Helper Functions ====== */
-    function spinnerRow() {
-        return `
+        // Cached DOM elements
+        const filterCity = document.getElementById('filterCity');
+        const filterAdmin = document.getElementById('filterAdmin');
+        const searchMember = document.getElementById('searchMember');
+        const memberTableBody = document.getElementById('memberTableBody');
+        const saveMemberBtn = document.getElementById('saveMember');
+        const confirmDeleteBtn = document.getElementById('confirmDeleteMember');
+
+        // Utility functions
+        function spinnerRow() {
+            return `
             <tr>
                 <td colspan="8" class="text-center">
                     <div class="spinner-border text-primary" role="status">
@@ -187,18 +195,18 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
                     </div>
                 </td>
             </tr>`;
-    }
+        }
 
-    function badgeByRole(isAdmin) {
-        return isAdmin == 2 ? '<span class="badge bg-primary">管理員</span>' :
-            isAdmin == 1 ? '<span class="badge bg-success">員工</span>' :
-                '<span class="badge bg-secondary">會員</span>';
-    }
+        function badgeByRole(isAdmin) {
+            return isAdmin == 2 ? '<span class="badge bg-primary">管理員</span>' :
+                isAdmin == 1 ? '<span class="badge bg-success">員工</span>' :
+                    '<span class="badge bg-secondary">會員</span>';
+        }
 
-    function buildRow(m) {
-        const tr = document.createElement('tr');
-        tr.dataset.memberId = m.MemberID;
-        tr.innerHTML = `
+        function buildRow(m) {
+            const tr = document.createElement('tr');
+            tr.dataset.memberId = m.MemberID;
+            tr.innerHTML = `
             <td>${m.MemberID}</td>
             <td>${m.Name}</td>
             <td>${m.Email}</td>
@@ -208,189 +216,151 @@ if (!defined('INCLUDED_FROM_ADMIN') && !isset($_SESSION['logged_in'])) {
             <td>${badgeByRole(m.IsAdmin)}</td>
             <td>
                 <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-success view-member"   data-id="${m.MemberID}" title="查看詳情"><i class="bi bi-eye"></i></button>
+                    <button class="btn btn-sm btn-outline-success view-member" data-id="${m.MemberID}" title="查看詳情"><i class="bi bi-eye"></i></button>
                     ${currentUserRole === 2 ? `
-                        <button class="btn btn-sm btn-outline-primary edit-member"   data-id="${m.MemberID}" title="編輯"><i class="bi bi-pencil"></i></button>
-                        <button class="btn btn-sm btn-outline-danger  delete-member" data-id="${m.MemberID}" title="刪除"><i class="bi bi-trash"></i></button>
-                    ` : ''}
+                        <button class="btn btn-sm btn-outline-primary edit-member" data-id="${m.MemberID}" title="編輯"><i class="bi bi-pencil"></i></button>
+                        <button class="btn btn-sm btn-outline-danger delete-member" data-id="${m.MemberID}" title="刪除"><i class="bi bi-trash"></i></button>` : ''}
                 </div>
             </td>`;
-        return tr;
-    }
+            return tr;
+        }
 
-    /* ====================
-       詳情、編輯、刪除：事件處理
-       ==================== */
-    async function viewMemberHandler() {
-        const id = this.dataset.id;
-        try {
-            const res = await fetch(`${MEMBER_API}?action=get&id=${id}`);
-            if (!res.ok) throw new Error(res.status);
-            const { success, member, message } = await res.json();
-            if (!success) throw new Error(message);
+        // Debounce helper
+        function debounce(fn, delay = 300) {
+            let timer;
+            return (...args) => {
+                clearTimeout(timer);
+                timer = setTimeout(() => fn(...args), delay);
+            };
+        }
 
-            document.getElementById('memberDetailContent').innerHTML = `
+        // Fetch and render members
+        async function fetchMembers(filters = {}) {
+            memberTableBody.innerHTML = spinnerRow();
+            try {
+                const params = new URLSearchParams();
+                if (filters.city) params.append('city', filters.city);
+                if (filters.type) params.append('type', filters.type);
+                if (filters.search) params.append('search', filters.search);
+
+                const res = await fetch(`${MEMBER_API}?action=list&${params}`);
+                if (!res.ok) throw new Error(res.statusText);
+                const { success, members } = await res.json();
+
+                memberTableBody.innerHTML = '';
+                if (success && members.length) {
+                    members.forEach(m => memberTableBody.appendChild(buildRow(m)));
+                } else {
+                    memberTableBody.innerHTML = '<tr><td colspan="8" class="text-center">沒有符合條件的會員資料</td></tr>';
+                }
+            } catch (err) {
+                console.error('載入會員失敗：', err);
+                memberTableBody.innerHTML = '<tr><td colspan="8" class="text-danger text-center">無法載入會員資料</td></tr>';
+            }
+        }
+
+        // Fetch single member details
+        async function viewMemberHandler(id) {
+            try {
+                const res = await fetch(`${MEMBER_API}?action=get&id=${id}`);
+                if (!res.ok) throw new Error(res.statusText);
+                const { success, member } = await res.json();
+                if (!success) throw new Error();
+                document.getElementById('memberDetailContent').innerHTML = `
                 <div class="card mb-3">
                   <div class="card-body">
                     <h5 class="card-title">基本資料</h5>
-                    ${['MemberID', 'Name', 'Email', 'Phone'].map(f => row(f, member[f])).join('')}
-                    ${row('地址', `${member.City}${member.Address}`)}
-                    ${row('會員類型', badgeByRole(member.IsAdmin))}
+                    ${['MemberID', 'Name', 'Email', 'Phone'].map(f => `<div class="row mb-2"><div class="col-md-4"><strong>${f}：</strong></div><div class="col-md-8">${member[f]}</div></div>`).join('')}
+                    <div class="row mb-2"><div class="col-md-4"><strong>地址：</strong></div><div class="col-md-8">${member.City}${member.Address}</div></div>
+                    <div class="row mb-2"><div class="col-md-4"><strong>會員類型：</strong></div><div class="col-md-8">${badgeByRole(member.IsAdmin)}</div></div>
                   </div>
                 </div>`;
-            new bootstrap.Modal(document.getElementById('memberDetailModal')).show();
-        } catch (err) {
-            console.error(err);
-            showToast('獲取會員資料失敗！', 'danger');
-        }
-
-        function row(label, val) {
-            return `<div class="row mb-2"><div class="col-md-4"><strong>${label}：</strong></div><div class="col-md-8">${val}</div></div>`;
-        }
-    }
-
-    async function editMemberHandler() {
-        const id = this.dataset.id;
-        try {
-            const res = await fetch(`${MEMBER_API}?action=get&id=${id}`);
-            if (!res.ok) throw new Error(res.status);
-            const { member } = await res.json();
-
-            document.getElementById('editMemberId').value = id;
-            document.getElementById('editMemberTypeSelect').value = member.IsAdmin;
-            new bootstrap.Modal(document.getElementById('editMemberModal')).show();
-        } catch (err) {
-            console.error(err);
-            showToast('獲取會員資料失敗！', 'danger');
-        }
-    }
-
-    async function deleteMemberHandler() {
-        const id = this.dataset.id;
-        document.getElementById('deleteMemberId').value = id;
-        new bootstrap.Modal(document.getElementById('deleteMemberModal')).show();
-    }
-
-    /* 重新綁定（每次重繪 table 後呼叫） */
-    function rebindEventListeners() {
-        document.querySelectorAll('.view-member').forEach(btn => btn.onclick = viewMemberHandler);
-        document.querySelectorAll('.edit-member').forEach(btn => btn.onclick = editMemberHandler);
-        document.querySelectorAll('.delete-member').forEach(btn => btn.onclick = deleteMemberHandler);
-    }
-
-    /* ====== 篩選 ====== */
-    async function filterMembers() {
-        const city = document.getElementById('filterCity').value;
-        const memberType = document.getElementById('filterAdmin').value;
-        const searchTerm = document.getElementById('searchMember').value;
-
-        const tbody = document.getElementById('memberTableBody');
-        tbody.innerHTML = spinnerRow();
-
-        try {
-            const params = new URLSearchParams();
-            if (city) params.append('city', city);
-            if (memberType) params.append('type', memberType);
-            if (searchTerm) params.append('search', searchTerm);
-
-            const res = await fetch(`${MEMBER_API}?action=list&${params.toString()}`);
-            if (!res.ok) throw new Error(res.status);
-            const json = await res.json();
-
-            if (json.success && json.members?.length) {
-                tbody.innerHTML = '';
-                json.members.forEach(m => tbody.appendChild(buildRow(m)));
-                rebindEventListeners();
-            } else {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center">沒有符合條件的會員資料</td></tr>`;
+                new bootstrap.Modal('#memberDetailModal').show();
+            } catch {
+                showToast('獲取會員資料失敗！', 'danger');
             }
-        } catch (err) {
-            console.error('篩選會員失敗：', err);
-            tbody.innerHTML = `<tr><td colspan="8" class="text-danger text-center">篩選會員失敗</td></tr>`;
         }
-    }
 
-    /* ====================
-       會員列表載入／刷新
-       ==================== */
-    async function loadMembers() {
-        const tbody = document.getElementById('memberTableBody');
-        tbody.innerHTML = spinnerRow();
-
-        try {
-            const res = await fetch(`${MEMBER_API}?action=list`);
-            if (!res.ok) throw new Error(res.status);
-            const json = await res.json();
-
-            if (json.success && json.members?.length) {
-                tbody.innerHTML = '';
-                json.members.forEach(m => tbody.appendChild(buildRow(m)));
-                rebindEventListeners();   // 為新列重新掛事件
-            } else {
-                tbody.innerHTML = `<tr><td colspan="8" class="text-center">目前沒有會員資料</td></tr>`;
+        // Populate form for edit
+        async function editMemberHandler(id) {
+            try {
+                const res = await fetch(`${MEMBER_API}?action=get&id=${id}`);
+                const { member } = await res.json();
+                document.getElementById('editMemberId').value = id;
+                document.getElementById('editMemberTypeSelect').value = member.IsAdmin;
+                new bootstrap.Modal('#editMemberModal').show();
+            } catch {
+                showToast('獲取會員資料失敗！', 'danger');
             }
-        } catch (err) {
-            console.error('載入會員列表失敗：', err);
-            tbody.innerHTML = `<tr><td colspan="8" class="text-danger text-center">無法載入會員資料</td></tr>`;
         }
-    }
 
-    /* 存檔 */
-    document.getElementById('saveMember').onclick = async () => {
-        const memberId = document.getElementById('editMemberId').value;
-        const isAdmin = document.getElementById('editMemberTypeSelect').value;
+        // Show delete confirmation
+        function deleteMemberHandler(id) {
+            document.getElementById('deleteMemberId').value = id;
+            new bootstrap.Modal('#deleteMemberModal').show();
+        }
 
-        try {
-            const res = await fetch(`${MEMBER_API}?action=update`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ memberId, isAdmin })
-            });
-            const json = await res.json();
-            bootstrap.Modal.getInstance(document.getElementById('editMemberModal')).hide();
-
-            if (json.success) {
-                const row = document.querySelector(`tr[data-member-id="${memberId}"] td:nth-child(7)`);
-                if (row) row.innerHTML = badgeByRole(+isAdmin);
-                showToast('會員資料已成功更新！');
-            } else {
-                showToast(json.message || '更新失敗', 'danger');
+        // Save edited member
+        async function saveMemberHandler() {
+            const memberId = document.getElementById('editMemberId').value;
+            const isAdmin = document.getElementById('editMemberTypeSelect').value;
+            try {
+                const res = await fetch(`${MEMBER_API}?action=update`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ memberId, isAdmin })
+                });
+                const { success, message } = await res.json();
+                bootstrap.Modal.getInstance(document.querySelector('#editMemberModal')).hide();
+                if (success) {
+                    const roleCell = document.querySelector(`tr[data-member-id="${memberId}"] td:nth-child(7)`);
+                    roleCell && (roleCell.innerHTML = badgeByRole(+isAdmin));
+                    showToast('會員資料已成功更新！');
+                } else {
+                    showToast(message || '更新失敗', 'danger');
+                }
+            } catch {
+                showToast('系統錯誤，請稍後再試', 'danger');
             }
-        } catch (err) {
-            console.error(err);
-            showToast('系統錯誤，請稍後再試', 'danger');
         }
-    };
 
-    /* 刪除確認 */
-    document.getElementById('confirmDeleteMember').onclick = async () => {
-        const memberId = document.getElementById('deleteMemberId').value;
-        try {
-            const res = await fetch(`${MEMBER_API}?action=delete`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ memberId })
-            });
-            const json = await res.json();
-            bootstrap.Modal.getInstance(document.getElementById('deleteMemberModal')).hide();
-
-            if (json.success) {
-                document.querySelector(`tr[data-member-id="${memberId}"]`)?.remove();
-                showToast('會員已成功刪除！');
-            } else {
-                showToast(json.message || '刪除失敗', 'danger');
+        // Confirm deletion
+        async function confirmDeleteHandler() {
+            const memberId = document.getElementById('deleteMemberId').value;
+            try {
+                const res = await fetch(`${MEMBER_API}?action=delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ memberId })
+                });
+                const { success, message } = await res.json();
+                bootstrap.Modal.getInstance(document.querySelector('#deleteMemberModal')).hide();
+                if (success) {
+                    document.querySelector(`tr[data-member-id="${memberId}"]`)?.remove();
+                    showToast('會員已成功刪除！');
+                } else {
+                    showToast(message || '刪除失敗', 'danger');
+                }
+            } catch {
+                showToast('系統錯誤，請稍後再試', 'danger');
             }
-        } catch (err) {
-            console.error(err);
-            showToast('系統錯誤，請稍後再試', 'danger');
         }
-    };
 
-    /* ====== Event Listeners Init ====== */
-    document.getElementById('filterCity').addEventListener('change', filterMembers);
-    document.getElementById('filterAdmin').addEventListener('change', filterMembers);
-    document.getElementById('searchMember').addEventListener('input', filterMembers);
+        // Delegate events
+        memberTableBody.addEventListener('click', e => {
+            if (e.target.closest('.view-member')) viewMemberHandler(e.target.closest('.view-member').dataset.id);
+            else if (e.target.closest('.edit-member')) editMemberHandler(e.target.closest('.edit-member').dataset.id);
+            else if (e.target.closest('.delete-member')) deleteMemberHandler(e.target.closest('.delete-member').dataset.id);
+        });
 
-    /* 頁面 init */
-    document.addEventListener('DOMContentLoaded', loadMembers);
+        // Initialize filters and actions
+        filterCity.addEventListener('change', () => fetchMembers({ city: filterCity.value, type: filterAdmin.value, search: searchMember.value }));
+        filterAdmin.addEventListener('change', () => fetchMembers({ city: filterCity.value, type: filterAdmin.value, search: searchMember.value }));
+        searchMember.addEventListener('input', debounce(() => fetchMembers({ city: filterCity.value, type: filterAdmin.value, search: searchMember.value })));
+        saveMemberBtn.addEventListener('click', saveMemberHandler);
+        confirmDeleteBtn.addEventListener('click', confirmDeleteHandler);
+
+        // Load initial member list
+        document.addEventListener('DOMContentLoaded', () => fetchMembers());
+    })();
 </script>
