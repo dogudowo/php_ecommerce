@@ -27,5 +27,7 @@ config:
 set_permissions:
 	@find . -type f -exec chmod 777 {} \;
 	@find . -type d -exec chmod 777 {} \;
+	@mkdir -p .logs
+	@if [ ! -f .logs/error_log ]; then touch .logs/error_log; fi
 	@chmod 666 .logs/error_log
 	@echo "所有檔案權限已設置為777，error_log設置為666"
