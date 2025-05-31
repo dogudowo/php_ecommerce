@@ -477,19 +477,32 @@ function renderOrderItem($order, $detail)
                                 <label class="form-label">選擇要維修的商品：</label>
                                 <?php
                                 $warranties = getOrderWarranties((int) $order['OrderID']);
-                                foreach ($warranties as $warranty):
-                                    if (!isset($warranty['RepairID'])): // 只顯示尚未維修的商品
-                                        // 檢查保固是否真的有效（檢查到期日）
-                                        $warrantyDate = strtotime($warranty['WarrantyDate']);
-                                        $isWarrantyValid = $warranty['WarrantyStatus'] && $warrantyDate > time();
-                                        $warrantyStatus = $isWarrantyValid ? '有效' : '已過期';
-                                        $warrantyClass = $isWarrantyValid ? 'text-success' : 'text-danger';
+                                $uniqueWarranties = [];
+                                foreach ($warranties as $warranty) {
+                                    if (!isset($uniqueWarranties[$warranty['WarrantyID']])) {
+                                        $uniqueWarranties[$warranty['WarrantyID']] = $warranty;
+                                    }
+                                }
+                                foreach ($uniqueWarranties as $warranty):
+                                    // 檢查保固是否真的有效（檢查到期日）
+                                    $warrantyDate = strtotime($warranty['WarrantyDate']);
+                                    $isWarrantyValid = $warranty['WarrantyStatus'] && $warrantyDate > time();
+                                    $warrantyStatus = $isWarrantyValid ? '有效' : '已過期';
+                                    $warrantyClass = $isWarrantyValid ? 'text-success' : 'text-danger';
+                                    
+                                    // 檢查是否有進行中的維修
+                                    $hasActiveRepair = isset($warranty['RepairStatus']) && 
+                                        in_array($warranty['RepairStatus'], ['pending', 'repairing', 'pending_payment'], true);
+                                    
+                                    // 如果沒有進行中的維修，則顯示該商品
+                                    if (!$hasActiveRepair):
                                         ?>
                                         <div class="form-check mb-2">
                                             <input class="form-check-input" type="checkbox" name="warranty_ids[]"
                                                 value="<?= $warranty['WarrantyID'] ?>" id="warranty<?= $warranty['WarrantyID'] ?>">
                                             <label class="form-check-label" for="warranty<?= $warranty['WarrantyID'] ?>">
                                                 <?= htmlspecialchars($warranty['ProductName']) ?>
+                                                <span class="ms-2 text-muted">(保固編號: <?= $warranty['WarrantyID'] ?>)</span>
                                                 <br>
                                                 <small class="ms-4">
                                                     <span class="<?= $warrantyClass ?>">
