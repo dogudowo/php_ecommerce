@@ -906,7 +906,7 @@ function createRepairRequest(array $warrantyIds, ?PDO $pdo = null, string $repai
                 'warrantyId' => $warrantyId,
                 'status' => 'pending',
                 'repairCommit' => $repairCommit,
-                'price' => $isWarrantyValid ? 0 : null // 保固內免費，保固外待定
+                'price' => 0 // 不論保固狀態，預設都為 0
             ]);
             $repairId++;
         }
