@@ -24,6 +24,10 @@ usort($repairOrders, function($a, $b) {
     return $dateA - $dateB;
 });
 $statusList = getRepairStatusList();
+
+// 取得目前登入者的管理權限
+session_start();
+$currentUserRole = isset($_SESSION['user_role']) ? (int)$_SESSION['user_role'] : 0;
 ?>
 
 <div class="container-fluid p-0">
@@ -109,13 +113,15 @@ $statusList = getRepairStatusList();
                                                 data-bs-toggle="modal" data-bs-target="#repairDetailModal" title="查看詳情">
                                                 <i class="bi bi-eye"></i>
                                             </button>
-                                            <!-- 變更狀態 -->
+                                            <!-- 變更狀態：只有管理員能操作 completed -->
+                                            <?php if ($r['RepairStatus'] !== 'completed' || $currentUserRole == 2): ?>
                                             <button class="btn btn-sm btn-outline-primary update-repair-status"
                                                 data-id="<?= $r['RepairID'] ?>"
                                                 data-status="<?= htmlspecialchars($r['RepairStatus']) ?>" data-bs-toggle="modal"
                                                 data-bs-target="#updateRepairStatusModal">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
+                                            <?php endif; ?>
                                         </div>
                                     </td>
                                 </tr>
