@@ -1009,9 +1009,14 @@ function getRepairStatusText(string $status): string
                     .then(response => response.json())
                     .then(data => {
                         if (data.success) {
-                            alert('維修申請已成功送出');
-                            // 可以選擇重新載入頁面或更新UI
-                            location.reload();
+                            // 先關閉申請維修的 modal
+                            const openRepairModal = document.querySelector('.modal.show[id^="repairModal"]');
+                            if (openRepairModal) {
+                                bootstrap.Modal.getInstance(openRepairModal).hide();
+                            }
+                            const repairSuccessModal = new bootstrap.Modal(document.getElementById('repairSuccessModal'));
+                            repairSuccessModal.show();
+                            setTimeout(() => { location.reload(); }, 2000);
                         } else {
                             alert(data.message || '送出失敗，請稍後再試');
                         }
@@ -1106,6 +1111,22 @@ function getRepairStatusText(string $status): string
       <div class="modal-body text-center">
         <i class="bi bi-check-circle-fill fs-1 text-success mb-3"></i>
         <p>您的付款已完成！</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 維修申請成功 Modal -->
+<div class="modal fade" id="repairSuccessModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">維修申請成功</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        <i class="bi bi-check-circle-fill fs-1 text-success mb-3"></i>
+        <p>您的維修申請已成功送出！</p>
       </div>
     </div>
   </div>
