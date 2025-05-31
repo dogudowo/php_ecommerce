@@ -1043,7 +1043,8 @@ function getRepairStatusText(string $status): string
             .then(response => response.json())
             .then(data => {
                 if (data.success) {
-                    alert('付款成功！');
+                    bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+                    localStorage.setItem('showPaymentSuccess', '1');
                     location.reload();
                 } else {
                     alert(data.message || '付款失敗，請稍後再試');
@@ -1054,6 +1055,12 @@ function getRepairStatusText(string $status): string
                 alert('發生錯誤，請稍後再試');
             });
         });
+
+        if (localStorage.getItem('showPaymentSuccess') === '1') {
+            localStorage.removeItem('showPaymentSuccess');
+            const successModal = new bootstrap.Modal(document.getElementById('paymentSuccessModal'));
+            successModal.show();
+        }
     });
 </script>
 
@@ -1083,6 +1090,22 @@ function getRepairStatusText(string $status): string
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
         <button type="button" class="btn btn-primary" id="confirmPaymentBtn">確認付款</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 付款成功 Modal -->
+<div class="modal fade" id="paymentSuccessModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-success text-white">
+        <h5 class="modal-title">付款成功</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        <i class="bi bi-check-circle-fill fs-1 text-success mb-3"></i>
+        <p>您的付款已完成！</p>
       </div>
     </div>
   </div>
