@@ -1065,6 +1065,9 @@ function getRepairStatusText(string $status): string
             localStorage.removeItem('showPaymentSuccess');
             const successModal = new bootstrap.Modal(document.getElementById('paymentSuccessModal'));
             successModal.show();
+            setTimeout(() => {
+                successModal.hide();
+            }, 2000);
         }
     });
 </script>
