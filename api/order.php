@@ -483,50 +483,43 @@ function renderOrderItem($order, $detail)
                                         $uniqueWarranties[$warranty['WarrantyID']] = $warranty;
                                     }
                                 }
-                                foreach ($uniqueWarranties as $warranty):
+                                ?>
+                                <div id="warrantyCardGroup<?= $order['OrderID'] ?>">
+                                <?php foreach ($uniqueWarranties as $warranty):
                                     // 檢查保固是否真的有效（檢查到期日）
                                     $warrantyDate = strtotime($warranty['WarrantyDate']);
                                     $isWarrantyValid = $warranty['WarrantyStatus'] && $warrantyDate > time();
                                     $warrantyStatus = $isWarrantyValid ? '有效' : '已過期';
                                     $warrantyClass = $isWarrantyValid ? 'text-success' : 'text-danger';
-                                    
                                     // 檢查是否有進行中的維修
                                     $hasActiveRepair = isset($warranty['RepairStatus']) && 
                                         in_array($warranty['RepairStatus'], ['pending', 'repairing', 'pending_payment'], true);
-                                    
                                     // 如果沒有進行中的維修，則顯示該商品
-                                    if (!$hasActiveRepair):
-                                        ?>
-                                        <div class="form-check mb-2">
-                                            <input class="form-check-input" type="checkbox" name="warranty_ids[]"
-                                                value="<?= $warranty['WarrantyID'] ?>" id="warranty<?= $warranty['WarrantyID'] ?>">
-                                            <label class="form-check-label" for="warranty<?= $warranty['WarrantyID'] ?>">
-                                                <?= htmlspecialchars($warranty['ProductName']) ?>
-                                                <span class="ms-2 text-muted">(保固編號: <?= $warranty['WarrantyID'] ?>)</span>
+                                    if (!$hasActiveRepair): ?>
+                                    <div class="warranty-card mb-2" data-warranty-id="<?= $warranty['WarrantyID'] ?>" style="background: #f8f9fa; border-radius: 6px; padding: 10px; border: 2px solid #dee2e6; cursor: pointer; transition: background 0.2s, border-color 0.2s;">
+                                        <span class="fw-bold"><?= htmlspecialchars($warranty['ProductName']) ?></span>
+                                        <span class="ms-2 text-muted">(保固編號: <?= $warranty['WarrantyID'] ?>)</span>
+                                        <br>
+                                        <small class="ms-4">
+                                            <span class="<?= $warrantyClass ?>">
+                                                <i class="bi <?= $isWarrantyValid ? 'bi-shield-check' : 'bi-shield-x' ?>"></i>
+                                                保固狀態：<?= $warrantyStatus ?>
+                                            </span>
+                                            <br>
+                                            <span class="text-muted ms-4">
+                                                到期日：<?= date('Y-m-d', strtotime($warranty['WarrantyDate'])) ?>
+                                            </span>
+                                            <?php if (!$isWarrantyValid): ?>
                                                 <br>
-                                                <small class="ms-4">
-                                                    <span class="<?= $warrantyClass ?>">
-                                                        <i class="bi <?= $isWarrantyValid ? 'bi-shield-check' : 'bi-shield-x' ?>"></i>
-                                                        保固狀態：<?= $warrantyStatus ?>
-                                                    </span>
-                                                    <br>
-                                                    <span class="text-muted ms-4">
-                                                        到期日：<?= date('Y-m-d', strtotime($warranty['WarrantyDate'])) ?>
-                                                    </span>
-                                                    <?php if (!$isWarrantyValid): ?>
-                                                        <br>
-                                                        <span class="text-warning ms-4">
-                                                            <i class="bi bi-exclamation-triangle"></i>
-                                                            注意：此商品已過保，維修將收取額外費用
-                                                        </span>
-                                                    <?php endif; ?>
-                                                </small>
-                                            </label>
-                                        </div>
-                                        <?php
-                                    endif;
-                                endforeach;
-                                ?>
+                                                <span class="text-warning ms-4">
+                                                    <i class="bi bi-exclamation-triangle"></i>
+                                                    注意：此商品已過保，維修將收取額外費用
+                                                </span>
+                                            <?php endif; ?>
+                                        </small>
+                                    </div>
+                                <?php endif; endforeach; ?>
+                                </div>
                             </div>
                             <div class="mb-3">
                                 <label class="form-label">維修說明：</label>
@@ -981,51 +974,91 @@ function getRepairStatusText(string $status): string
 ?>
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        // 處理維修申請提交
-        document.querySelectorAll('.submit-repair').forEach(button => {
-            button.addEventListener('click', function () {
-                const orderId = this.dataset.orderId;
-                const form = document.getElementById(`repairForm${orderId}`);
-                const selectedWarranties = Array.from(form.querySelectorAll('input[name="warranty_ids[]"]:checked'))
-                    .map(checkbox => checkbox.value);
-
-                if (selectedWarranties.length === 0) {
-                    alert('請選擇要維修的商品');
-                    return;
-                }
-
-                // 發送維修申請
-                const repairCommit = document.getElementById(`repairCommit${orderId}`).value;
-                fetch('api/order.php?action=createRepair', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        warrantyIds: selectedWarranties,
-                        repairCommit: repairCommit
-                    })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // 先關閉申請維修的 modal
-                            const openRepairModal = document.querySelector('.modal.show[id^="repairModal"]');
-                            if (openRepairModal) {
-                                bootstrap.Modal.getInstance(openRepairModal).hide();
-                            }
-                            const repairSuccessModal = new bootstrap.Modal(document.getElementById('repairSuccessModal'));
-                            repairSuccessModal.show();
-                            setTimeout(() => { location.reload(); }, 2000);
-                        } else {
-                            alert(data.message || '送出失敗，請稍後再試');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('發生錯誤，請稍後再試');
-                    });
+        // 移除原本的 submit-repair click 綁定，只保留卡片選取區塊的送出邏輯
+        document.querySelectorAll('[id^="warrantyCardGroup"]').forEach(group => {
+            group.querySelectorAll('.warranty-card').forEach(card => {
+                card.addEventListener('click', function () {
+                    const id = this.dataset.warrantyId;
+                    if (this.classList.contains('selected')) {
+                        this.classList.remove('selected');
+                        this.style.background = '#f8f9fa';
+                        this.style.borderColor = '#dee2e6';
+                    } else {
+                        this.classList.add('selected');
+                        this.style.background = '#e3f7e3';
+                        this.style.borderColor = '#198754';
+                    }
+                });
             });
+            // 只保留這裡的送出邏輯
+            const orderId = group.id.replace('warrantyCardGroup', '');
+            const submitBtn = document.querySelector('.submit-repair[data-order-id="' + orderId + '"]');
+            if (submitBtn) {
+                submitBtn.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const selected = Array.from(group.querySelectorAll('.warranty-card.selected')).map(card => card.dataset.warrantyId);
+                    if (selected.length === 0) {
+                        // 顯示自訂的提示 modal
+                        const tipModal = document.getElementById('repairTipModal');
+                        if (tipModal) {
+                            tipModal.querySelector('.modal-body').textContent = '請選擇要維修的商品';
+                            // 先顯示 modal
+                            const modalInstance = new bootstrap.Modal(tipModal);
+                            modalInstance.show();
+
+                            // 調整 z-index，確保在最上層
+                            tipModal.style.zIndex = 1061; // 比預設的 1055/1050 高
+                            // 調整 backdrop
+                            const backdrops = document.querySelectorAll('.modal-backdrop');
+                            backdrops.forEach(bd => {
+                                bd.style.zIndex = 1060;
+                            });
+
+                            // 當 modal 關閉時還原 z-index
+                            tipModal.addEventListener('hidden.bs.modal', function handler() {
+                                tipModal.style.zIndex = '';
+                                backdrops.forEach(bd => {
+                                    bd.style.zIndex = '';
+                                });
+                                tipModal.removeEventListener('hidden.bs.modal', handler);
+                            });
+                        }
+                        return;
+                    }
+                    // 發送維修申請
+                    const repairCommit = document.getElementById(`repairCommit${orderId}`).value;
+                    fetch('api/order.php?action=createRepair', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            warrantyIds: selected,
+                            repairCommit: repairCommit
+                        })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // 先關閉申請維修的 modal
+                                const repairModal = document.getElementById(`repairModal${orderId}`);
+                                const repairModalInstance = bootstrap.Modal.getInstance(repairModal);
+                                repairModalInstance.hide();
+                                
+                                // 然後顯示成功訊息
+                                const repairSuccessModal = new bootstrap.Modal(document.getElementById('repairSuccessModal'));
+                                repairSuccessModal.show();
+                                setTimeout(() => { location.reload(); }, 2000);
+                            } else {
+                                alert(data.message || '送出失敗，請稍後再試');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Error:', error);
+                            alert('發生錯誤，請稍後再試');
+                        });
+                });
+            }
         });
 
         let currentRepairId = null;
@@ -1130,6 +1163,21 @@ function getRepairStatusText(string $status): string
       <div class="modal-body text-center">
         <i class="bi bi-check-circle-fill fs-1 text-success mb-3"></i>
         <p>您的維修申請已成功送出！</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 維修申請提示 Modal -->
+<div class="modal fade" id="repairTipModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content">
+      <div class="modal-header bg-warning text-dark">
+        <h5 class="modal-title">提醒</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center">
+        <!-- 這裡會由 JS 動態填入提示內容 -->
       </div>
     </div>
   </div>
