@@ -110,6 +110,7 @@ $currentUserRole = isset($_SESSION['user_role']) ? (int)$_SESSION['user_role'] :
                                                 data-id="<?= $r['RepairID'] ?>"
                                                 data-commit="<?= htmlspecialchars($r['RepairCommit'] ?? '') ?>"
                                                 data-warranty-date="<?= htmlspecialchars($r['WarrantyDate'] ?? '') ?>"
+                                                data-price="<?= is_numeric($r['Price']) ? $r['Price'] : '' ?>"
                                                 data-bs-toggle="modal" data-bs-target="#repairDetailModal" title="查看詳情">
                                                 <i class="bi bi-eye"></i>
                                             </button>
@@ -125,6 +126,7 @@ $currentUserRole = isset($_SESSION['user_role']) ? (int)$_SESSION['user_role'] :
                                         </div>
                                     </td>
                                 </tr>
+                                <?php error_log('RepairID: ' . $r['RepairID'] . ' Price: ' . var_export($r['Price'], true)); ?>
                             <?php endforeach; endif; ?>
                     </tbody>
                 </table>
@@ -148,6 +150,11 @@ $currentUserRole = isset($_SESSION['user_role']) ? (int)$_SESSION['user_role'] :
                     <div class="mb-3">
                         <label class="form-label">保固到期日：</label>
                         <div id="modalWarrantyDate" class="form-control"></div>
+                        <div id="modalWarrantyStatus" class="form-text"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">維修金額：</label>
+                        <div id="modalRepairPrice" class="form-control"></div>
                     </div>
                 </div>
                 <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">關閉</button></div>
@@ -192,7 +199,29 @@ $currentUserRole = isset($_SESSION['user_role']) ? (int)$_SESSION['user_role'] :
     document.querySelectorAll('.view-repair').forEach(btn => {
         btn.addEventListener('click', () => {
             document.getElementById('modalRepairCommit').textContent = btn.dataset.commit || '無';
-            document.getElementById('modalWarrantyDate').textContent = btn.dataset['warrantyDate'] || '無';
+            const warrantyDateStr = btn.dataset['warrantyDate'] || '';
+            document.getElementById('modalWarrantyDate').textContent = warrantyDateStr || '無';
+            // 保固狀態判斷
+            let statusText = '無';
+            let statusColor = '';
+            if (warrantyDateStr) {
+                const now = new Date();
+                const warrantyDate = new Date(warrantyDateStr);
+                if (warrantyDate > now) {
+                    statusText = '保固中';
+                    statusColor = 'text-success';
+                } else {
+                    statusText = '非保固中';
+                    statusColor = 'text-danger';
+                }
+            }
+            const warrantyStatusElem = document.getElementById('modalWarrantyStatus');
+            warrantyStatusElem.textContent = statusText;
+            warrantyStatusElem.className = statusColor + ' form-text';
+            document.getElementById('modalRepairPrice').textContent =
+                (btn.dataset['price'] !== undefined && btn.dataset['price'] !== '' && btn.dataset['price'] !== null)
+                    ? ('NT$' + btn.dataset['price'])
+                    : '無';
         });
     });
 

@@ -45,7 +45,7 @@ function fetchRepairOrders(?string $status = null, ?string $memberId = null): ar
 {
     $pdo = getDBConnection();
     $sql = <<<SQL
-        SELECT r.RepairID, r.RepairDate, r.RepairStatus, r.RepairCommit,
+        SELECT r.RepairID, r.RepairDate, r.RepairStatus, r.RepairCommit, r.Price,
                w.WarrantyID, w.WarrantyDate,
                m.Name  AS MemberName,
                o.ProductName
