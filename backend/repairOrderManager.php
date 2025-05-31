@@ -13,6 +13,16 @@ $status = $_GET['status'] ?? '';
 $memberId = $_GET['member_id'] ?? '';
 
 $repairOrders = fetchRepairOrders($status, $memberId);
+// 依送出先後順序排列，較早送出的排在上面
+usort($repairOrders, function($a, $b) {
+    $dateA = strtotime($a['RepairDate']);
+    $dateB = strtotime($b['RepairDate']);
+    if ($dateA === $dateB) {
+        // 日期一樣時，RepairID 較大的排在上面
+        return $b['RepairID'] - $a['RepairID'];
+    }
+    return $dateA - $dateB;
+});
 $statusList = getRepairStatusList();
 ?>
 
