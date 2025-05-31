@@ -398,9 +398,9 @@ function renderOrderTab(array $orders, string $status, string $title, ?PDO $pdo 
                                 <div class="text-center fw-bold fs-5 text-danger">維修金額 $<?= number_format($repair['Price']) ?></div>
                             <?php endif; ?>
                             <div class="d-flex align-items-center">
-                                <?php if ($repair['RepairStatus'] === '已送達'): ?>
-                                    <button class="btn btn-success btn-sm" data-action="pay" data-order-id="<?= $order['OrderID'] ?>" <?php if (isset($repair['RepairID'])): ?>data-repair-id="<?= $repair['RepairID'] ?>" <?php endif; ?>>
-                                        <?= ($repair['RepairStatus'] === '已送達' && (int) ($repair['Price']) === 0) ? '確認' : '付款' ?>
+                                <?php if ($repair['RepairStatus'] === 'pending_payment'): ?>
+                                    <button class="btn btn-success btn-sm submit-payment" data-repair-id="<?= $repair['RepairID'] ?>">
+                                        付款
                                     </button>
                                 <?php endif; ?>
                             </div>
@@ -1023,37 +1023,67 @@ function getRepairStatusText(string $status): string
             });
         });
 
-        // 處理付款按鈕點擊事件
+        let currentRepairId = null;
         document.querySelectorAll('.submit-payment').forEach(button => {
             button.addEventListener('click', function () {
-                const repairId = this.dataset.repairId;
-                const form = document.getElementById(`paymentForm${repairId}`);
-                const paymentMethod = form.querySelector('input[name="paymentMethod"]:checked').value;
+                currentRepairId = this.dataset.repairId;
+                const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+                paymentModal.show();
+            });
+        });
 
-                // 發送付款狀態更新請求
-                fetch('api/order.php?action=updateRepairStatus', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        repairId: repairId
-                    })
-                })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert('付款成功！');
-                            location.reload();
-                        } else {
-                            alert(data.message || '付款失敗，請稍後再試');
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('發生錯誤，請稍後再試');
-                    });
+        document.getElementById('confirmPaymentBtn').addEventListener('click', function () {
+            if (!currentRepairId) return;
+            const paymentMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+            fetch('api/order.php?action=updateRepairStatus', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ repairId: currentRepairId, paymentMethod: paymentMethod })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert('付款成功！');
+                    location.reload();
+                } else {
+                    alert(data.message || '付款失敗，請稍後再試');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('發生錯誤，請稍後再試');
             });
         });
     });
 </script>
+
+<!-- 付款 Modal -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">確認付款</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>請選擇付款方式：</p>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" name="paymentMethod" id="payCreditCard" value="信用卡" checked>
+          <label class="form-check-label" for="payCreditCard">信用卡</label>
+        </div>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" name="paymentMethod" id="payATM" value="ATM轉帳">
+          <label class="form-check-label" for="payATM">ATM轉帳</label>
+        </div>
+        <div class="form-check mb-2">
+          <input class="form-check-input" type="radio" name="paymentMethod" id="payLinePay" value="LinePay">
+          <label class="form-check-label" for="payLinePay">LinePAY</label>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+        <button type="button" class="btn btn-primary" id="confirmPaymentBtn">確認付款</button>
+      </div>
+    </div>
+  </div>
+</div>
