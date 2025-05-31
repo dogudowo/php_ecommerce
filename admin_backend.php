@@ -13,11 +13,11 @@ require_once 'header.php';
 $sections = [
     'frontend' => [
         'tab_id' => 'frontend-tab',
-        'pages' => ['carouselManager', 'brandManager', 'instructionManager', 'repairManager', 'aboutManager'],
+        'pages' => ['carouselManager', 'brandManager', 'instructionManager', 'repairManager', 'aboutManager', 'linkManager', 'logoManager'],
     ],
     'backend' => [
         'tab_id' => 'backend-tab',
-        'pages' => ['productManager', 'orderManager', 'repairOrderManager', 'memberManager', 'linkManager', 'logoManager'],
+        'pages' => ['productManager', 'orderManager', 'repairOrderManager', 'memberManager'],
     ],
 ];
 // 標籤名稱與圖示對應

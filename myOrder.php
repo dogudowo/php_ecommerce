@@ -195,11 +195,13 @@ $orders = getMemberOrders($memberId);
 <?php include __DIR__ . '/footer.php'; ?>
 
 <!-- ---------- 將 PHP 變數輸出到 JS ---------- -->
-<script>const CONFIG = <?= json_encode([
-    'memberId' => $memberId,
-    'isAdmin' => ($_SESSION['user_role'] ?? '') === 'admin',
-    'orderAmountMap' => array_column($orders, 'TotalAmount', 'OrderID')
-], JSON_UNESCAPED_UNICODE); ?>;</script>
+<script>
+    const CONFIG = <?= json_encode([
+        'memberId' => $memberId,
+        'isAdmin' => ($_SESSION['user_role'] ?? '') === 'admin',
+        'orderAmountMap' => array_column($orders, 'TotalAmount', 'OrderID')
+    ], JSON_UNESCAPED_UNICODE); ?>;
+</script>
 
 <!-- ---------- 功能腳本 ---------- -->
 <script>
