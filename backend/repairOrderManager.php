@@ -2,6 +2,9 @@
 require_once __DIR__ . '/../api/error_handler.php';
 require_once __DIR__ . '/../api/backendRepairAPI.php';   //  ← 只引入，一切函式已在此
 
+// 取得目前登入者權限
+$currentUserRole = isset($_SESSION['user_role']) ? (int)$_SESSION['user_role'] : 0;
+
 // 防止直接訪問
 if (!defined('INCLUDED_FROM_ADMIN') && !(isset($_SESSION['logged_in']) && $_SESSION['logged_in'])) {
     header('Location: ../login.php');
@@ -121,6 +124,7 @@ $statusList = getRepairStatusList();
                                                 <i class="bi bi-eye"></i>
                                             </button>
                                             <!-- 變更狀態 -->
+                                            <?php if ($r['RepairStatus'] !== 'completed' || $currentUserRole === 2): ?>
                                             <button class="btn btn-sm btn-outline-primary update-repair-status"
                                                 data-id="<?= $r['RepairID'] ?>"
                                                 data-status="<?= htmlspecialchars($r['RepairStatus']) ?>"
@@ -129,6 +133,7 @@ $statusList = getRepairStatusList();
                                                 data-bs-target="#updateRepairStatusModal">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
+                                            <?php endif; ?>
                                         </div>
                                     </td>
                                 </tr>
