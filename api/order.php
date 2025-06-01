@@ -208,7 +208,7 @@ function filterOrders(?string $status = null, ?string $dateFrom = null, ?string 
         $params['search'] = "%$search%";
     }
 
-    $sql .= " GROUP BY o.OrderID";
+    $sql .= " GROUP BY o.OrderID ORDER BY o.OrderID DESC";
 
     $stmt = $pdo->prepare($sql);
     $stmt->execute($params);
@@ -281,7 +281,7 @@ function renderRepairTab(array $orders, string $title, ?PDO $pdo = null): void
     } else {
         // 按 RepairID 由大到小排序（最新的在前）
         usort($allRepairs, function ($a, $b) {
-            return (int)$b['repair']['RepairID'] - (int)$a['repair']['RepairID'];
+            return (int) $b['repair']['RepairID'] - (int) $a['repair']['RepairID'];
         });
 
         echo '<div class="list-group">';
@@ -489,11 +489,11 @@ function renderOrderItem($order, $detail)
                                     $isWarrantyValid = $warranty['WarrantyStatus'] && $warrantyDate > time();
                                     $warrantyStatus = $isWarrantyValid ? '有效' : '已過期';
                                     $warrantyClass = $isWarrantyValid ? 'text-success' : 'text-danger';
-                                    
+
                                     // 檢查是否有進行中的維修
-                                    $hasActiveRepair = isset($warranty['RepairStatus']) && 
+                                    $hasActiveRepair = isset($warranty['RepairStatus']) &&
                                         in_array($warranty['RepairStatus'], ['pending', 'repairing', 'pending_payment'], true);
-                                    
+
                                     // 如果沒有進行中的維修，則顯示該商品
                                     if (!$hasActiveRepair):
                                         ?>
@@ -947,7 +947,7 @@ if ($method === 'POST' && $action === 'updateRepairStatus') {
         $pdo = db_connect();
         $stmt = $pdo->prepare("UPDATE Repairs SET RepairStatus = 'completed' WHERE RepairID = :repairId");
         $stmt->execute(['repairId' => $input['repairId']]);
-        
+
         echo json_encode(['success' => true, 'message' => '付款狀態已更新']);
     } catch (Throwable $e) {
         error_log('更新維修狀態失敗：' . $e->getMessage());
