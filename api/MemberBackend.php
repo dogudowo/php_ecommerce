@@ -217,6 +217,10 @@ function deleteMember(array $data): void
 
             /* 9. 刪訂單項目 */
             $pdo->prepare("DELETE FROM OrderItem WHERE OrderID IN ($orderIn)")->execute($orders);
+
+            /* 9.5 刪除 OrderRecord (如果存在) */
+            $pdo->prepare("DELETE FROM OrderRecord WHERE OrderID IN ($orderIn)")->execute($orders);
+
             /* 10. 刪訂單 */
             $pdo->prepare("DELETE FROM Orders WHERE OrderID IN ($orderIn)")->execute($orders);
         }
