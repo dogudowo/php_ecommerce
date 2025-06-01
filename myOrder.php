@@ -160,7 +160,7 @@ $orders = getMemberOrders($memberId);
                 <div class="modal-footer">
                     <button type="button" class="btn btn-warning me-auto" id="openResetPwdModal">重設密碼</button>
                     <button class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
-                    <button class="btn btn-primary" id="saveMemberChanges">儲存變更</button>
+                    <button type="button" class="btn btn-primary" id="saveMemberChanges">儲存變更</button>
                 </div>
             </form>
         </div>
@@ -206,7 +206,8 @@ $orders = getMemberOrders($memberId);
                     <div class="mb-3">
                         <label class="form-label">請選擇付款方式：</label>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="paymentMethod" id="payCredit" value="信用卡" checked>
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="payCredit" value="信用卡"
+                                checked>
                             <label class="form-check-label" for="payCredit">信用卡</label>
                         </div>
                         <div class="form-check">
@@ -214,7 +215,8 @@ $orders = getMemberOrders($memberId);
                             <label class="form-check-label" for="payATM">ATM轉帳</label>
                         </div>
                         <div class="form-check">
-                            <input class="form-check-input" type="radio" name="paymentMethod" id="payLinePay" value="LinePAY">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="payLinePay"
+                                value="LinePAY">
                             <label class="form-check-label" for="payLinePay">LinePay</label>
                         </div>
                     </div>
@@ -308,9 +310,9 @@ $orders = getMemberOrders($memberId);
         }
 
         /* -------- 會員資料更新 -------- */
-        document.getElementById('memberEditForm').addEventListener('submit', async ev => {
-            ev.preventDefault();
-            const payload = Object.fromEntries(new FormData(ev.target).entries());
+        document.getElementById('saveMemberChanges').addEventListener('click', async () => {
+            const form = document.getElementById('memberEditForm');
+            const payload = Object.fromEntries(new FormData(form).entries());
             if (!payload.name || !payload.phone || !payload.email) {
                 showMsg('請填寫所有必填欄位');
                 return;
@@ -335,7 +337,6 @@ $orders = getMemberOrders($memberId);
                 showMsg('發生錯誤，請稍後再試');
             }
         });
-
         /* -------- 開啟重設密碼 -------- */
         document.getElementById('openResetPwdModal').addEventListener('click', () => {
             resetPwdModal.show();
