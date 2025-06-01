@@ -154,6 +154,10 @@ $statusList = getRepairStatusList();
                         <label class="form-label">保固到期日：</label>
                         <div id="modalWarrantyDate" class="form-control"></div>
                     </div>
+                    <div class="mb-3">
+                        <label class="form-label">維修金額：</label>
+                        <div id="modalRepairPrice" class="form-control"></div>
+                    </div>                    
                 </div>
                 <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">關閉</button></div>
             </div>
@@ -198,6 +202,20 @@ $statusList = getRepairStatusList();
         btn.addEventListener('click', () => {
             document.getElementById('modalRepairCommit').textContent = btn.dataset.commit || '無';
             document.getElementById('modalWarrantyDate').textContent = btn.dataset['warrantyDate'] || '無';
+            // 從資料庫中讀取維修金額
+            fetch(`api/backendRepairAPI.php?action=get_repair_price&repair_id=${btn.dataset.id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.price !== null) {
+                        document.getElementById('modalRepairPrice').textContent = `NT$ ${data.price.toLocaleString()}`;
+                    } else {
+                        document.getElementById('modalRepairPrice').textContent = '無';
+                    }
+                })
+                .catch(err => {
+                    console.error('讀取維修金額失敗:', err);
+                    document.getElementById('modalRepairPrice').textContent = '無';
+                });
         });
     });
 
