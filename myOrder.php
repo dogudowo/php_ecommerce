@@ -29,7 +29,7 @@ $orders = getMemberOrders($memberId);
 <!-- ========= Main ========= -->
 <div class="container text-center border-bottom border-black">
     <img src="imgs/title.png?t=<?php echo time(); ?>" style="max-height: 100px;" alt="歐印精品" class="img-fluid">
-    <h1 class="h1">我的訂單</h1>
+    <h1 class="h1">會員資料</h1>
 </div>
 
 <div class="container mt-3">
