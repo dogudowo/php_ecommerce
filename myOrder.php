@@ -408,6 +408,7 @@ $orders = getMemberOrders($memberId);
                             }
                             // 顯示成功提示
                             showMsg('維修申請已送出！');
+                            document.getElementById('messageModal').addEventListener('hidden.bs.modal', () => location.reload(), { once: true });
                         } else {
                             showMsg(data.message || '送出失敗，請稍後再試');
                         }

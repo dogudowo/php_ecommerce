@@ -479,52 +479,53 @@ function renderOrderItem($order, $detail)
                                 $warranties = getOrderWarranties((int) $order['OrderID']);
                                 $uniqueWarranties = [];
                                 foreach ($warranties as $warranty) {
-                                    if (!isset($uniqueWarranties[$warranty['WarrantyID']])) {
-                                        $uniqueWarranties[$warranty['WarrantyID']] = $warranty;
+                                    $wid = $warranty['WarrantyID'];
+                                    // 只要有一筆進行中維修就排除
+                                    if (
+                                        isset($warranty['RepairStatus']) &&
+                                        in_array($warranty['RepairStatus'], ['pending', 'repairing', 'pending_payment'], true)
+                                    ) {
+                                        $uniqueWarranties[$wid] = null; // 標記為不可申請
+                                    } elseif (!isset($uniqueWarranties[$wid])) {
+                                        $uniqueWarranties[$wid] = $warranty;
                                     }
                                 }
+                                // 只保留可申請的
+                                $uniqueWarranties = array_filter($uniqueWarranties);
                                 foreach ($uniqueWarranties as $warranty):
                                     // 檢查保固是否真的有效（檢查到期日）
                                     $warrantyDate = strtotime($warranty['WarrantyDate']);
                                     $isWarrantyValid = $warranty['WarrantyStatus'] && $warrantyDate > time();
                                     $warrantyStatus = $isWarrantyValid ? '有效' : '已過期';
                                     $warrantyClass = $isWarrantyValid ? 'text-success' : 'text-danger';
-                                    
-                                    // 檢查是否有進行中的維修
-                                    $hasActiveRepair = isset($warranty['RepairStatus']) && 
-                                        in_array($warranty['RepairStatus'], ['pending', 'repairing', 'pending_payment'], true);
-                                    
-                                    // 如果沒有進行中的維修，則顯示該商品
-                                    if (!$hasActiveRepair):
-                                        ?>
-                                        <div class="form-check mb-2">
-                                            <input class="form-check-input" type="checkbox" name="warranty_ids[]"
-                                                value="<?= $warranty['WarrantyID'] ?>" id="warranty<?= $warranty['WarrantyID'] ?>">
-                                            <label class="form-check-label" for="warranty<?= $warranty['WarrantyID'] ?>">
-                                                <?= htmlspecialchars($warranty['ProductName']) ?>
-                                                <span class="ms-2 text-muted">(保固編號: <?= $warranty['WarrantyID'] ?>)</span>
+                                    ?>
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input" type="checkbox" name="warranty_ids[]"
+                                            value="<?= $warranty['WarrantyID'] ?>" id="warranty<?= $warranty['WarrantyID'] ?>">
+                                        <label class="form-check-label" for="warranty<?= $warranty['WarrantyID'] ?>">
+                                            <?= htmlspecialchars($warranty['ProductName']) ?>
+                                            <span class="ms-2 text-muted">(保固編號: <?= $warranty['WarrantyID'] ?>)</span>
+                                            <br>
+                                            <small class="ms-4">
+                                                <span class="<?= $warrantyClass ?>">
+                                                    <i class="bi <?= $isWarrantyValid ? 'bi-shield-check' : 'bi-shield-x' ?>"></i>
+                                                    保固狀態：<?= $warrantyStatus ?>
+                                                </span>
                                                 <br>
-                                                <small class="ms-4">
-                                                    <span class="<?= $warrantyClass ?>">
-                                                        <i class="bi <?= $isWarrantyValid ? 'bi-shield-check' : 'bi-shield-x' ?>"></i>
-                                                        保固狀態：<?= $warrantyStatus ?>
-                                                    </span>
+                                                <span class="text-muted ms-4">
+                                                    到期日：<?= date('Y-m-d', strtotime($warranty['WarrantyDate'])) ?>
+                                                </span>
+                                                <?php if (!$isWarrantyValid): ?>
                                                     <br>
-                                                    <span class="text-muted ms-4">
-                                                        到期日：<?= date('Y-m-d', strtotime($warranty['WarrantyDate'])) ?>
+                                                    <span class="text-warning ms-4">
+                                                        <i class="bi bi-exclamation-triangle"></i>
+                                                        注意：此商品已過保，維修將收取額外費用
                                                     </span>
-                                                    <?php if (!$isWarrantyValid): ?>
-                                                        <br>
-                                                        <span class="text-warning ms-4">
-                                                            <i class="bi bi-exclamation-triangle"></i>
-                                                            注意：此商品已過保，維修將收取額外費用
-                                                        </span>
-                                                    <?php endif; ?>
-                                                </small>
-                                            </label>
-                                        </div>
-                                        <?php
-                                    endif;
+                                                <?php endif; ?>
+                                            </small>
+                                        </label>
+                                    </div>
+                                    <?php
                                 endforeach;
                                 ?>
                             </div>
