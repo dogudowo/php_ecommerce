@@ -367,8 +367,5 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
         });
     });
-
-    // 付款 modal 互動（如有需要可補上）
-    // ... 若有付款 modal 互動請在這裡補上 ...
 });
 </script>
