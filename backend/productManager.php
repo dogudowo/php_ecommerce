@@ -640,8 +640,8 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
                 reader.onload = (e) => {
                     const html = `
                     <div class="col-md-4 mb-2">
-                        <div class="card new-gallery-card">
-                            <img src="${e.target.result}" class="card-img-top">
+                        <div class="card new-gallery-card ">
+                            <img src="${e.target.result}" class="rounded mx-auto d-block" style="width: 200px; height: 200px;">
                             <div class="card-body p-2">
                                 <button type="button" class="btn btn-sm btn-danger w-100 remove-new-gallery-image">
                                     <i class="bi bi-trash"></i> 刪除
