@@ -11,8 +11,10 @@ if (!defined('INCLUDED_FROM_ADMIN') && !(isset($_SESSION['logged_in']) && $_SESS
 /* ===== 取得查詢條件 ===== */
 $status = $_GET['status'] ?? '';
 $memberId = $_GET['member_id'] ?? '';
+$dateFrom = $_GET['date_from'] ?? '';
+$dateTo = $_GET['date_to'] ?? '';
 
-$repairOrders = fetchRepairOrders($status, $memberId);
+$repairOrders = fetchRepairOrders($status, $memberId, $dateFrom, $dateTo);
 // 依送出先後順序排列，較早送出的排在上面
 usort($repairOrders, function($a, $b) {
     $dateA = strtotime($a['RepairDate']);
@@ -36,30 +38,39 @@ $statusList = getRepairStatusList();
     <!-- 篩選區 -->
     <div class="card mb-4">
         <div class="card-body">
-            <form method="get" action="backend.php" class="row g-3 align-items-end">
-                <input type="hidden" name="tab" value="repair">
-                <!-- 狀態 -->
-                <div class="col-md-3">
-                    <label for="filterRepairStatus" class="form-label">維修狀態</label>
-                    <select class="form-select" id="filterRepairStatus" name="status">
-                        <option value="">全部狀態</option>
-                        <?php foreach ($statusList as $key => $value): ?>
-                            <option value="<?= htmlspecialchars($key) ?>" <?= $status === $key ? 'selected' : '' ?>>
-                                <?= htmlspecialchars($value) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
+            <form method="get" action="backend.php">
+                <input type="hidden" name="page" value="repairOrderManager">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label for="filterRepairStatus" class="form-label">維修狀態</label>
+                        <select class="form-select" id="filterRepairStatus" name="status">
+                            <option value="">全部狀態</option>
+                            <option value="pending" <?= $status === 'pending' ? 'selected' : '' ?>>待處理</option>
+                            <option value="repairing" <?= $status === 'repairing' ? 'selected' : '' ?>>維修中</option>
+                            <option value="pending_payment" <?= $status === 'pending_payment' ? 'selected' : '' ?>>待付款</option>
+                            <option value="completed" <?= $status === 'completed' ? 'selected' : '' ?>>已完成</option>
+                            <option value="abnormal" <?= $status === 'abnormal' ? 'selected' : '' ?>>異常</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filterMemberId" class="form-label">會員ID</label>
+                        <input type="text" class="form-control" id="filterMemberId" name="member_id"
+                            value="<?= htmlspecialchars($memberId) ?>" placeholder="請輸入會員ID">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filterDateFrom" class="form-label">維修日期（起）</label>
+                        <input type="date" class="form-control" id="filterDateFrom" name="date_from" value="<?= isset($_GET['date_from']) ? htmlspecialchars($_GET['date_from']) : '' ?>">
+                    </div>
+                    <div class="col-md-3">
+                        <label for="filterDateTo" class="form-label">維修日期（迄）</label>
+                        <input type="date" class="form-control" id="filterDateTo" name="date_to" value="<?= isset($_GET['date_to']) ? htmlspecialchars($_GET['date_to']) : '' ?>">
+                    </div>
                 </div>
-                <!-- 會員 ID -->
-                <div class="col-md-3">
-                    <label for="filterMemberId" class="form-label">會員ID</label>
-                    <input type="text" class="form-control" id="filterMemberId" name="member_id"
-                        value="<?= htmlspecialchars($memberId) ?>" placeholder="請輸入會員ID">
-                </div>
-                <!-- 按鈕 -->
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary">查詢</button>
-                    <a href="?" class="btn btn-secondary ms-2">重設</a>
+                <div class="row mt-3">
+                    <div class="col-md-12 d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary me-2">查詢</button>
+                        <a href="backend.php?page=repairOrderManager" class="btn btn-secondary">重設</a>
+                    </div>
                 </div>
             </form>
         </div>

@@ -211,6 +211,7 @@ $orders = getMemberOrders($memberId);
         const msgModal = new bootstrap.Modal(document.getElementById('messageModal'));
         const resetPwdModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
         let currentOrderId = null;
+        let lastClosedModalId = null; // 用來記錄剛剛被關掉的 modal id
 
         /* === 當任何一個 modal 要顯示時，先把其他還開著的 modal 全部隱藏 === */
         document.addEventListener('show.bs.modal', e => {
@@ -223,9 +224,29 @@ $orders = getMemberOrders($memberId);
         });
 
         const showMsg = t => {
+            // 找到目前開啟的 modal
+            const openedModal = document.querySelector('.modal.show:not(#messageModal)');
+            if (openedModal) {
+                lastClosedModalId = openedModal.id;
+                bootstrap.Modal.getInstance(openedModal)?.hide();
+            } else {
+                lastClosedModalId = null;
+            }
             document.getElementById('modalMessage').textContent = t;
             msgModal.show();
         };
+
+        // 監聽 messageModal 關閉事件
+        document.getElementById('messageModal').addEventListener('hidden.bs.modal', () => {
+            if (lastClosedModalId) {
+                const modalEl = document.getElementById(lastClosedModalId);
+                if (modalEl) {
+                    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modalInstance.show();
+                }
+                lastClosedModalId = null;
+            }
+        });
 
         /* -------- 再買一次 -------- */
         document.addEventListener('click', async ev => {
@@ -314,6 +335,53 @@ $orders = getMemberOrders($memberId);
             } catch {
                 showMsg('網路或伺服器錯誤，請稍後再試');
             }
+        });
+
+        // ========== 維修申請與付款 Modal 互動腳本 ==========
+        document.querySelectorAll('.submit-repair').forEach(button => {
+            button.addEventListener('click', function () {
+                const orderId = this.dataset.orderId;
+                const form = document.getElementById(`repairForm${orderId}`);
+                const selectedWarranties = Array.from(form.querySelectorAll('input[name="warranty_ids[]"]:checked'))
+                    .map(checkbox => checkbox.value);
+
+                if (selectedWarranties.length === 0) {
+                    showMsg('請選擇要維修的商品');
+                    return;
+                }
+
+                // 發送維修申請
+                const repairCommit = document.getElementById(`repairCommit${orderId}`).value;
+                fetch('api/order.php?action=createRepair', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        warrantyIds: selectedWarranties,
+                        repairCommit: repairCommit
+                    })
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // 先關閉申請維修的 modal
+                            const openRepairModal = document.querySelector('.modal.show[id^="repairModal"]');
+                            if (openRepairModal) {
+                                bootstrap.Modal.getInstance(openRepairModal).hide();
+                            }
+                            // 顯示成功提示
+                            showMsg('維修申請已送出！');
+                            setTimeout(() => { location.reload(); }, 1000);
+                        } else {
+                            showMsg(data.message || '送出失敗，請稍後再試');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        showMsg('發生錯誤，請稍後再試');
+                    });
+            });
         });
     })();
 </script>
