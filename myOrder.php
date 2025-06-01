@@ -317,3 +317,58 @@ $orders = getMemberOrders($memberId);
         });
     })();
 </script>
+
+<!-- ========== 維修申請與付款 Modal 互動腳本 ========== -->
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // 處理維修申請提交
+    document.querySelectorAll('.submit-repair').forEach(button => {
+        button.addEventListener('click', function () {
+            const orderId = this.dataset.orderId;
+            const form = document.getElementById(`repairForm${orderId}`);
+            const selectedWarranties = Array.from(form.querySelectorAll('input[name="warranty_ids[]"]:checked'))
+                .map(checkbox => checkbox.value);
+
+            if (selectedWarranties.length === 0) {
+                alert('請選擇要維修的商品');
+                return;
+            }
+
+            // 發送維修申請
+            const repairCommit = document.getElementById(`repairCommit${orderId}`).value;
+            fetch('api/order.php?action=createRepair', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    warrantyIds: selectedWarranties,
+                    repairCommit: repairCommit
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // 先關閉申請維修的 modal
+                        const openRepairModal = document.querySelector('.modal.show[id^="repairModal"]');
+                        if (openRepairModal) {
+                            bootstrap.Modal.getInstance(openRepairModal).hide();
+                        }
+                        // 顯示成功提示
+                        alert('維修申請已送出！');
+                        setTimeout(() => { location.reload(); }, 1000);
+                    } else {
+                        alert(data.message || '送出失敗，請稍後再試');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('發生錯誤，請稍後再試');
+                });
+        });
+    });
+
+    // 付款 modal 互動（如有需要可補上）
+    // ... 若有付款 modal 互動請在這裡補上 ...
+});
+</script>
