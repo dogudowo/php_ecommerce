@@ -123,7 +123,9 @@ $statusList = getRepairStatusList();
                                             <!-- 變更狀態 -->
                                             <button class="btn btn-sm btn-outline-primary update-repair-status"
                                                 data-id="<?= $r['RepairID'] ?>"
-                                                data-status="<?= htmlspecialchars($r['RepairStatus']) ?>" data-bs-toggle="modal"
+                                                data-status="<?= htmlspecialchars($r['RepairStatus']) ?>"
+                                                data-warranty-date="<?= htmlspecialchars($r['WarrantyDate'] ?? '') ?>"
+                                                data-bs-toggle="modal"
                                                 data-bs-target="#updateRepairStatusModal">
                                                 <i class="bi bi-pencil"></i>
                                             </button>
@@ -153,6 +155,10 @@ $statusList = getRepairStatusList();
                     <div class="mb-3">
                         <label class="form-label">保固到期日：</label>
                         <div id="modalWarrantyDate" class="form-control"></div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">保固狀態：</label>
+                        <div id="modalWarrantyStatus" class="form-control"></div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">維修金額：</label>
@@ -186,6 +192,10 @@ $statusList = getRepairStatusList();
                         <label for="modalRepairPrice" class="form-label">維修金額</label>
                         <input type="number" class="form-control" id="modalRepairPrice" name="repair_price"
                             placeholder="請填入維修金額" min="0" step="1">
+                        <div class="mt-2">
+                            <label class="form-label">保固狀態：</label>
+                            <div id="modalIsWarranty" class="form-control"></div>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -202,6 +212,21 @@ $statusList = getRepairStatusList();
         btn.addEventListener('click', () => {
             document.getElementById('modalRepairCommit').textContent = btn.dataset.commit || '無';
             document.getElementById('modalWarrantyDate').textContent = btn.dataset['warrantyDate'] || '無';
+            // 判斷保固狀態
+            const warrantyDate = btn.dataset['warrantyDate'];
+            let warrantyStatus = '無資料';
+            if (warrantyDate) {
+                const today = new Date();
+                const warranty = new Date(warrantyDate);
+                // 將時間設為當天結束，避免時區誤差
+                warranty.setHours(23,59,59,999);
+                if (warranty >= today) {
+                    warrantyStatus = '保固內';
+                } else {
+                    warrantyStatus = '保固已過期';
+                }
+            }
+            document.getElementById('modalWarrantyStatus').textContent = warrantyStatus;
             // 從資料庫中讀取維修金額
             fetch(`api/backendRepairAPI.php?action=get_repair_price&repair_id=${btn.dataset.id}`)
                 .then(res => res.json())
@@ -233,6 +258,21 @@ $statusList = getRepairStatusList();
             const currentStatus = btn.dataset.status;
             const newStatusSelect = document.getElementById('modalNewStatus');
             newStatusSelect.value = statusMap[currentStatus] || currentStatus;
+
+            // 顯示保固狀態
+            const warrantyDate = btn.dataset['warrantyDate'];
+            let warrantyStatus = '無資料';
+            if (warrantyDate) {
+                const today = new Date();
+                const warranty = new Date(warrantyDate);
+                warranty.setHours(23,59,59,999);
+                if (warranty >= today) {
+                    warrantyStatus = '保固內';
+                } else {
+                    warrantyStatus = '保固已過期';
+                }
+            }
+            document.querySelector('#updateRepairStatusModal #modalIsWarranty').textContent = warrantyStatus;
 
             // 初始化價格輸入框的狀態
             const priceInputGroup = document.getElementById('priceInputGroup');
