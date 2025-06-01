@@ -41,11 +41,11 @@ function getRepairStatusText(string $status): string
     ][$status] ?? $status;
 }
 
-function fetchRepairOrders(?string $status = null, ?string $memberId = null): array
+function fetchRepairOrders(?string $status = null, ?string $memberId = null, ?string $dateFrom = null, ?string $dateTo = null): array
 {
     $pdo = getDBConnection();
     $sql = <<<SQL
-        SELECT r.RepairID, r.RepairDate, r.RepairStatus, r.RepairCommit,
+        SELECT r.RepairID, r.RepairDate, r.RepairStatus, r.RepairCommit, r.Price,
                w.WarrantyID, w.WarrantyDate,
                m.Name  AS MemberName,
                o.ProductName
@@ -66,6 +66,14 @@ function fetchRepairOrders(?string $status = null, ?string $memberId = null): ar
     if ($memberId !== null && $memberId !== '') {
         $sql .= ' AND m.MemberID = :memberId';
         $params['memberId'] = $memberId;
+    }
+    if ($dateFrom !== null && $dateFrom !== '') {
+        $sql .= ' AND r.RepairDate >= :dateFrom';
+        $params['dateFrom'] = $dateFrom;
+    }
+    if ($dateTo !== null && $dateTo !== '') {
+        $sql .= ' AND r.RepairDate <= :dateTo';
+        $params['dateTo'] = $dateTo;
     }
 
     $sql .= ' ORDER BY r.RepairDate DESC';
