@@ -279,9 +279,9 @@ function renderRepairTab(array $orders, string $title, ?PDO $pdo = null): void
     if (empty($allRepairs)) {
         echo '<div class="no-products-alert alert alert-info text-center mt-4">⚠️ 目前沒有維修記錄</div>';
     } else {
-        // 按日期排序（最新的在前）
+        // 按 RepairID 由大到小排序（最新的在前）
         usort($allRepairs, function ($a, $b) {
-            return strtotime($b['repair']['RepairDate']) - strtotime($a['repair']['RepairDate']);
+            return (int)$b['repair']['RepairID'] - (int)$a['repair']['RepairID'];
         });
 
         echo '<div class="list-group">';
