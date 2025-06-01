@@ -566,7 +566,7 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
             const editMainImagePreview = editMainImageModalEl.querySelector("#editMainImagePreview");
             const newMainImageInput = editMainImageModalEl.querySelector("#newMainImageInput");
 
-            editMainImagePreview.src = mainImagePreview.src && mainImagePreview.style.display !== "none" ? mainImagePreview.src : "";
+            editMainImagePreview.src = mainImagePreview.src && mainImagePreview.style.display !== "none" ? mainImagePreview.src + '?' + new Date().getTime() : "";
             editMainImagePreview.style.display = editMainImagePreview.src ? "block" : "none";
             if (newMainImageInput) newMainImageInput.value = "";
         }
@@ -607,14 +607,19 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
             const galleryImagesPreview = addProductModalEl.querySelector("#galleryImagesPreview");
             Array.from(galleryImagesPreview.querySelectorAll("img")).forEach(img => {
+                // 取得「不含 ?timestamp」的原始路徑
+                const fullSrc = img.src;
+                const originalSrc = fullSrc.split("?")[0];
                 const imgDiv = document.createElement("div");
                 imgDiv.className = "col-md-4 mb-2";
-                const isNewBlob = img.src.startsWith("blob:");
+                const isNewBlob = originalSrc.startsWith("blob:");
                 imgDiv.innerHTML = `
                 <div class="card ${isNewBlob ? "new-gallery-card" : ""}">
-                    <img src="${img.src}" class="rounded mx-auto d-block" style="width: 200px; height: 200px;">
+                    <img src="${originalSrc + "?" + Date.now()}" class="rounded mx-auto d-block" style="width: 200px; height: 200px;">
                     <div class="card-body p-2">
-                        <button type="button" class="btn btn-sm btn-danger w-100 ${isNewBlob ? "remove-new-gallery-image" : "delete-gallery-image"}" data-src="${img.src}">
+                        <button type="button" class="btn btn-sm btn-danger w-100 
+                            ${isNewBlob ? "remove-new-gallery-image" : "delete-gallery-image"}" 
+                            data-src="${originalSrc}">
                             <i class="bi bi-trash"></i> 刪除
                         </button>
                     </div>
@@ -623,7 +628,6 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
             });
 
             enableDragAndDrop(gallerySortable);
-
             const newGalleryImageInput = manageGalleryModalEl.querySelector("#newGalleryImageInput");
             if (newGalleryImageInput) newGalleryImageInput.value = "";
         }
@@ -920,7 +924,7 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
             const mainImg = addProductModalEl.querySelector("#mainImagePreview");
             if (mainImg) {
-                mainImg.src = p.mainImage || "";
+                mainImg.src = p.mainImage + "?" + Date.now();
                 mainImg.style.display = p.mainImage ? "block" : "none";
             }
 
@@ -929,7 +933,7 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
             if (p.galleryImage?.length) {
                 p.galleryImage.forEach(src => {
                     const im = document.createElement("img");
-                    im.src = src;
+                    im.src = src + "?" + Date.now();
                     im.className = "img-thumbnail";
                     im.style.cssText = "width:100px;height:100px;margin:4px";
                     galleryImagesPreview.appendChild(im);
@@ -1030,7 +1034,10 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
 
             const currentGalleryImages = Array.from(
                 addProductModalEl.querySelectorAll("#galleryImagesPreview img")
-            ).map(img => img.src);
+            ).map(img => {
+                const full = img.src;
+                return full.split("?")[0];  // 只保留「?」前面的原始路徑
+            });
             data.gallery.remainingSrcs = currentGalleryImages.filter(src => !src.startsWith("blob:"));
             data.gallery.deletedSrcs = deletedGallerySrcs;
             data.gallery.newFiles = newGalleryFiles;
