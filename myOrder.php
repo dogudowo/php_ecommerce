@@ -211,6 +211,7 @@ $orders = getMemberOrders($memberId);
         const msgModal = new bootstrap.Modal(document.getElementById('messageModal'));
         const resetPwdModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
         let currentOrderId = null;
+        let lastClosedModalId = null; // 用來記錄剛剛被關掉的 modal id
 
         /* === 當任何一個 modal 要顯示時，先把其他還開著的 modal 全部隱藏 === */
         document.addEventListener('show.bs.modal', e => {
@@ -223,9 +224,29 @@ $orders = getMemberOrders($memberId);
         });
 
         const showMsg = t => {
+            // 找到目前開啟的 modal
+            const openedModal = document.querySelector('.modal.show:not(#messageModal)');
+            if (openedModal) {
+                lastClosedModalId = openedModal.id;
+                bootstrap.Modal.getInstance(openedModal)?.hide();
+            } else {
+                lastClosedModalId = null;
+            }
             document.getElementById('modalMessage').textContent = t;
             msgModal.show();
         };
+
+        // 監聽 messageModal 關閉事件
+        document.getElementById('messageModal').addEventListener('hidden.bs.modal', () => {
+            if (lastClosedModalId) {
+                const modalEl = document.getElementById(lastClosedModalId);
+                if (modalEl) {
+                    const modalInstance = bootstrap.Modal.getOrCreateInstance(modalEl);
+                    modalInstance.show();
+                }
+                lastClosedModalId = null;
+            }
+        });
 
         /* -------- 再買一次 -------- */
         document.addEventListener('click', async ev => {
