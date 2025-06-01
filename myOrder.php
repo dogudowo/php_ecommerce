@@ -192,6 +192,42 @@ $orders = getMemberOrders($memberId);
     </div>
 </div>
 
+<!-- ---------- 付款 Modal ---------- -->
+<div class="modal fade" id="paymentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">付款方式</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="paymentForm">
+                    <input type="hidden" id="paymentRepairId">
+                    <div class="mb-3">
+                        <label class="form-label">請選擇付款方式：</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="payCredit" value="信用卡" checked>
+                            <label class="form-check-label" for="payCredit">信用卡</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="payATM" value="ATM轉帳">
+                            <label class="form-check-label" for="payATM">ATM轉帳</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="radio" name="paymentMethod" id="payLinePay" value="LinePAY">
+                            <label class="form-check-label" for="payLinePay">LinePay</label>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">取消</button>
+                <button type="button" class="btn btn-primary" id="confirmPaymentBtn">確認付款</button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <?php include __DIR__ . '/footer.php'; ?>
 
 <!-- ---------- 將 PHP 變數輸出到 JS ---------- -->
@@ -207,7 +243,7 @@ $orders = getMemberOrders($memberId);
 <script>
     (() => {
         // 所有 Modal 的 id 列表
-        const modalIds = ['messageModal', 'editMemberModal', 'resetPasswordModal'];
+        const modalIds = ['messageModal', 'editMemberModal', 'resetPasswordModal', 'paymentModal'];
         const msgModal = new bootstrap.Modal(document.getElementById('messageModal'));
         const resetPwdModal = new bootstrap.Modal(document.getElementById('resetPasswordModal'));
         let currentOrderId = null;
@@ -382,6 +418,38 @@ $orders = getMemberOrders($memberId);
                         showMsg('發生錯誤，請稍後再試');
                     });
             });
+        });
+
+        // 付款按鈕事件監聽
+        document.querySelectorAll('.submit-payment').forEach(button => {
+            button.addEventListener('click', function () {
+                document.getElementById('paymentRepairId').value = this.dataset.repairId;
+                const paymentModal = new bootstrap.Modal(document.getElementById('paymentModal'));
+                paymentModal.show();
+            });
+        });
+
+        // 確認付款按鈕事件
+        document.getElementById('confirmPaymentBtn').addEventListener('click', async function () {
+            const repairId = document.getElementById('paymentRepairId').value;
+            // 呼叫後端 API 更新狀態
+            try {
+                const res = await fetch('api/order.php?action=updateRepairStatus', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ repairId: repairId })
+                });
+                const data = await res.json();
+                bootstrap.Modal.getInstance(document.getElementById('paymentModal')).hide();
+                if (data.success) {
+                    showMsg('付款成功！');
+                    document.getElementById('messageModal').addEventListener('hidden.bs.modal', () => location.reload(), { once: true });
+                } else {
+                    showMsg('付款失敗：' + (data.message || '未知錯誤'));
+                }
+            } catch {
+                showMsg('網路或伺服器錯誤，請稍後再試');
+            }
         });
     })();
 </script>
