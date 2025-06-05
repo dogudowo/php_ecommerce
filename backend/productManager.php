@@ -1043,7 +1043,10 @@ $productTypes = $stmt->fetchAll(PDO::FETCH_COLUMN);
             data.gallery.newFiles = newGalleryFiles;
 
             document.querySelectorAll(".size-price-block").forEach(block => {
-                const size = block.querySelector(".size-input").value;
+                // 把這裡改成：若尺寸沒有填入，就改成 -1
+                let size = block.querySelector(".size-input").value;
+                size = size === "" ? "-1" : size;
+
                 const desc = block.querySelector(".size-desc-input").value;
                 const price = block.querySelector(".price-input").value;
                 block.querySelectorAll(".color-row").forEach(row => {
