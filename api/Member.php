@@ -35,10 +35,10 @@ function getMemberOrders(int $memberId, ?PDO $pdo = null): array
     $stmt = $pdo->prepare($sql);
     $stmt->execute(['memberId' => $memberId]);
     $orders = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
+
     // 調試信息
-    error_log('Member Orders: ' . json_encode($orders, JSON_UNESCAPED_UNICODE));
-    
+    // error_log('Member Orders: ' . json_encode($orders, JSON_UNESCAPED_UNICODE));
+
     return $orders;
 }
 ?>
