@@ -494,8 +494,11 @@ function renderOrderItem($order, $detail)
                                     $hasActiveRepair = isset($warranty['RepairStatus']) &&
                                         in_array($warranty['RepairStatus'], ['pending', 'repairing', 'pending_payment'], true);
 
-                                    // 如果沒有進行中的維修，則顯示該商品
-                                    if (!$hasActiveRepair):
+                                    // 檢查商品類型是否為鋁合金或拉鍊
+                                    $isRepairableType = in_array($warranty['ProductType'], ['aluminum', 'zipper']);
+
+                                    // 如果沒有進行中的維修且商品類型符合要求，則顯示該商品
+                                    if (!$hasActiveRepair && $isRepairableType):
                                         ?>
                                         <div class="form-check mb-2">
                                             <input class="form-check-input" type="checkbox" name="warranty_ids[]"
@@ -852,6 +855,7 @@ function getOrderWarranties(int $orderId, ?PDO $pdo = null): array
                 w.WarrantyDate,
                 w.WarrantyStatus,
                 orec.ProductName,
+                orec.ProductType,
                 r.RepairID,
                 r.RepairDate,
                 r.RepairStatus,
