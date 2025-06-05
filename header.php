@@ -25,6 +25,10 @@ require_once __DIR__ . '/api/error_handler.php';
     <link rel="icon" href="imgs/webimg.ico?t=<?php echo time(); ?>" type="image/x-icon">
     <title><?= getPageTitle() ?></title>
     <style>
+        html {
+            zoom: 0.9;
+        }
+
         html,
         body {
             height: 100%;
