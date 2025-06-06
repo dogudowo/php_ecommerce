@@ -452,7 +452,7 @@ function renderOrderItem($order, $detail)
             </div>
             <div class="text-center fw-bold fs-5 text-danger">總計 $<?= number_format($detail['total_amount']) ?></div>
             <div class="d-flex align-items-center">
-                <?php 
+                <?php
                 if ($order['Status'] === 'Completed') {
                     // 檢查是否有可維修的產品
                     $warranties = getOrderWarranties((int) $order['OrderID']);
@@ -461,23 +461,23 @@ function renderOrderItem($order, $detail)
                         // 檢查是否有進行中的維修
                         $hasActiveRepair = isset($warranty['RepairStatus']) &&
                             in_array($warranty['RepairStatus'], ['pending', 'repairing', 'pending_payment'], true);
-                        
+
                         // 檢查商品類型是否為鋁合金或拉鍊
                         $isRepairableType = in_array($warranty['ProductType'], ['aluminum', 'zipper']);
-                        
+
                         if (!$hasActiveRepair && $isRepairableType) {
                             $hasRepairableItems = true;
                             break;
                         }
                     }
-                    
+
                     if ($hasRepairableItems):
-                ?>
-                    <button class="btn btn-primary btn-sm me-2" data-bs-toggle="modal"
-                        data-bs-target="#repairModal<?= $order['OrderID'] ?>">
-                        <i class="bi bi-tools"></i> 申請維修
-                    </button>
-                <?php 
+                        ?>
+                        <button class="btn btn-primary btn-sm me-2" data-bs-toggle="modal"
+                            data-bs-target="#repairModal<?= $order['OrderID'] ?>">
+                            <i class="bi bi-tools"></i> 申請維修
+                        </button>
+                        <?php
                     endif;
                 }
                 ?>

@@ -3,7 +3,7 @@ require_once __DIR__ . '/../api/error_handler.php';
 require_once __DIR__ . '/../api/backendRepairAPI.php';   //  ← 只引入，一切函式已在此
 
 // 取得目前登入者權限
-$currentUserRole = isset($_SESSION['user_role']) ? (int)$_SESSION['user_role'] : 0;
+$currentUserRole = isset($_SESSION['user_role']) ? (int) $_SESSION['user_role'] : 0;
 
 // 防止直接訪問
 if (!defined('INCLUDED_FROM_ADMIN') && !(isset($_SESSION['logged_in']) && $_SESSION['logged_in'])) {
@@ -19,7 +19,7 @@ $dateTo = $_GET['date_to'] ?? '';
 
 $repairOrders = fetchRepairOrders($status, $memberId, $dateFrom, $dateTo);
 // 依送出先後順序排列，較早送出的排在上面
-usort($repairOrders, function($a, $b) {
+usort($repairOrders, function ($a, $b) {
     $dateA = strtotime($a['RepairDate']);
     $dateB = strtotime($b['RepairDate']);
     if ($dateA === $dateB) {
@@ -50,7 +50,8 @@ $statusList = getRepairStatusList();
                             <option value="">全部狀態</option>
                             <option value="pending" <?= $status === 'pending' ? 'selected' : '' ?>>待處理</option>
                             <option value="repairing" <?= $status === 'repairing' ? 'selected' : '' ?>>維修中</option>
-                            <option value="pending_payment" <?= $status === 'pending_payment' ? 'selected' : '' ?>>待付款</option>
+                            <option value="pending_payment" <?= $status === 'pending_payment' ? 'selected' : '' ?>>待付款
+                            </option>
                             <option value="completed" <?= $status === 'completed' ? 'selected' : '' ?>>已完成</option>
                             <option value="abnormal" <?= $status === 'abnormal' ? 'selected' : '' ?>>異常</option>
                         </select>
@@ -62,11 +63,13 @@ $statusList = getRepairStatusList();
                     </div>
                     <div class="col-md-3">
                         <label for="filterDateFrom" class="form-label">維修日期（起）</label>
-                        <input type="date" class="form-control" id="filterDateFrom" name="date_from" value="<?= isset($_GET['date_from']) ? htmlspecialchars($_GET['date_from']) : '' ?>">
+                        <input type="date" class="form-control" id="filterDateFrom" name="date_from"
+                            value="<?= isset($_GET['date_from']) ? htmlspecialchars($_GET['date_from']) : '' ?>">
                     </div>
                     <div class="col-md-3">
                         <label for="filterDateTo" class="form-label">維修日期（迄）</label>
-                        <input type="date" class="form-control" id="filterDateTo" name="date_to" value="<?= isset($_GET['date_to']) ? htmlspecialchars($_GET['date_to']) : '' ?>">
+                        <input type="date" class="form-control" id="filterDateTo" name="date_to"
+                            value="<?= isset($_GET['date_to']) ? htmlspecialchars($_GET['date_to']) : '' ?>">
                     </div>
                 </div>
                 <div class="row mt-3">
@@ -125,14 +128,13 @@ $statusList = getRepairStatusList();
                                             </button>
                                             <!-- 變更狀態 -->
                                             <?php if ($r['RepairStatus'] !== 'completed' || $currentUserRole === 2): ?>
-                                            <button class="btn btn-sm btn-outline-primary update-repair-status"
-                                                data-id="<?= $r['RepairID'] ?>"
-                                                data-status="<?= htmlspecialchars($r['RepairStatus']) ?>"
-                                                data-warranty-date="<?= htmlspecialchars($r['WarrantyDate'] ?? '') ?>"
-                                                data-bs-toggle="modal"
-                                                data-bs-target="#updateRepairStatusModal">
-                                                <i class="bi bi-pencil"></i>
-                                            </button>
+                                                <button class="btn btn-sm btn-outline-primary update-repair-status"
+                                                    data-id="<?= $r['RepairID'] ?>"
+                                                    data-status="<?= htmlspecialchars($r['RepairStatus']) ?>"
+                                                    data-warranty-date="<?= htmlspecialchars($r['WarrantyDate'] ?? '') ?>"
+                                                    data-bs-toggle="modal" data-bs-target="#updateRepairStatusModal">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
                                             <?php endif; ?>
                                         </div>
                                     </td>
@@ -168,7 +170,7 @@ $statusList = getRepairStatusList();
                     <div class="mb-3">
                         <label class="form-label">維修金額：</label>
                         <div id="modalRepairPrice" class="form-control"></div>
-                    </div>                    
+                    </div>
                 </div>
                 <div class="modal-footer"><button class="btn btn-secondary" data-bs-dismiss="modal">關閉</button></div>
             </div>
@@ -224,7 +226,7 @@ $statusList = getRepairStatusList();
                 const today = new Date();
                 const warranty = new Date(warrantyDate);
                 // 將時間設為當天結束，避免時區誤差
-                warranty.setHours(23,59,59,999);
+                warranty.setHours(23, 59, 59, 999);
                 if (warranty >= today) {
                     warrantyStatus = '保固內';
                 } else {
@@ -270,7 +272,7 @@ $statusList = getRepairStatusList();
             if (warrantyDate) {
                 const today = new Date();
                 const warranty = new Date(warrantyDate);
-                warranty.setHours(23,59,59,999);
+                warranty.setHours(23, 59, 59, 999);
                 if (warranty >= today) {
                     warrantyStatus = '保固內';
                 } else {

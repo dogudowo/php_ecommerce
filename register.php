@@ -40,15 +40,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <main class="container-sm col-12 col-md-6 col-lg-4 mx-auto my-5">
     <?php if (!empty($error_message)): ?>
-            <div class="alert alert-danger" role="alert">
-                <?php echo htmlspecialchars($error_message); ?>
-            </div>
+        <div class="alert alert-danger" role="alert">
+            <?php echo htmlspecialchars($error_message); ?>
+        </div>
     <?php endif; ?>
 
     <?php if (!empty($success_message)): ?>
-            <div class="alert alert-success" role="alert">
-                <?php echo htmlspecialchars($success_message); ?>
-            </div>
+        <div class="alert alert-success" role="alert">
+            <?php echo htmlspecialchars($success_message); ?>
+        </div>
     <?php endif; ?>
 
     <form method="post" action="register.php">
