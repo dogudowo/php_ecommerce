@@ -334,22 +334,10 @@ $statusList = getRepairStatusList();
             let priceValue = '';
             if (priceInput) {
                 priceValue = priceInput.value;
-                console.log('原始價格輸入值：', priceValue);
-                if (priceValue) {
-                    priceValue = priceValue.trim();
-                    console.log('處理後的價格值：', priceValue);
-                }
             }
-            
+        
             // 將價格加入 FormData
             formData.append('repair_price', priceValue);
-
-            // 顯示要傳送的資料
-            console.log('準備更新維修紀錄：', {
-                repair_id: id,
-                new_status: status,
-                repair_price: priceValue || '未輸入價格'
-            });
 
             const res = await fetch('api/backendRepairAPI.php', {
                 method: 'POST',
