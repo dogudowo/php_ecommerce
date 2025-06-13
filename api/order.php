@@ -912,7 +912,7 @@ function createRepairRequest(array $warrantyIds, ?PDO $pdo = null, string $repai
 
         $createRepair = $pdo->prepare("
             INSERT INTO Repairs (RepairID, WarrantyID, RepairDate, RepairStatus, RepairCommit, Price) 
-            VALUES (:repairId, :warrantyId, NOW(), :status, :repairCommit, :price)
+            VALUES (:repairId, :warrantyId, NOW(), :status, :repairCommit, NULL)
         ");
 
         foreach ($warrantyIds as $warrantyId) {
@@ -932,8 +932,7 @@ function createRepairRequest(array $warrantyIds, ?PDO $pdo = null, string $repai
                 'repairId' => $repairId,
                 'warrantyId' => $warrantyId,
                 'status' => 'pending',
-                'repairCommit' => $repairCommit,
-                'price' => 0 // 不論保固狀態，預設都為 0
+                'repairCommit' => $repairCommit
             ]);
             $repairId++;
         }

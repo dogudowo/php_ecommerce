@@ -92,18 +92,15 @@ function updateRepairStatus(int $repairId, string $newStatus, ?int $price = null
 {
     $pdo = getDBConnection();
     $sql = 'UPDATE Repairs SET RepairStatus = :status';
-    $params = ['status' => $newStatus, 'id' => $repairId];
+    $params = ['status' => $newStatus, 'repairId' => $repairId];
 
-    // 如果是待付款狀態且有提供價格，則更新價格
-    if ($newStatus === 'pending_payment' && $price !== null) {
+    // 如果有提供價格，則更新價格
+    if ($price !== null) {
         $sql .= ', Price = :price';
         $params['price'] = $price;
-    } else {
-        // 如果不是待付款狀態，將價格設為 0
-        $sql .= ', Price = 0';
     }
 
-    $sql .= ' WHERE RepairID = :id';
+    $sql .= ' WHERE RepairID = :repairId';
 
     try {
         $stmt = $pdo->prepare($sql);
@@ -151,7 +148,23 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'])) {
 
     $repairId = isset($_POST['repair_id']) ? (int) $_POST['repair_id'] : null;
     $newStatus = $_POST['new_status'] ?? null;
-    $price = isset($_POST['repair_price']) && $_POST['repair_price'] !== '' ? (int) $_POST['repair_price'] : null;
+    $price = null;
+    if (isset($_POST['repair_price']) && $_POST['repair_price'] !== '') {
+        $price = (int) $_POST['repair_price'];
+        // 如果轉換後為0，但原始輸入不是0，則可能是轉換錯誤
+        if ($price === 0 && $_POST['repair_price'] !== '0') {
+            $price = null;
+        }
+    }
+
+    // 記錄接收到的資料
+    error_log(sprintf(
+        '[updateRepairStatus] 接收到的資料：repair_id=%s, new_status=%s, repair_price=%s, 轉換後價格=%s',
+        $repairId,
+        $newStatus,
+        $_POST['repair_price'] ?? '未提供',
+        $price === null ? 'null' : $price
+    ));
 
     if (!$repairId || !$newStatus) {
         echo json_encode(['success' => false, 'message' => '缺少參數']);
@@ -160,13 +173,19 @@ if (basename(__FILE__) === basename($_SERVER['SCRIPT_FILENAME'])) {
 
     if (updateRepairStatus($repairId, $newStatus, $price)) {
         $statusList = getRepairStatusList();
-        echo json_encode([
+        $response = [
             'success' => true,
             'statusText' => $statusList[$newStatus] ?? $newStatus,
             'statusClass' => getRepairStatusClass($newStatus),
-        ]);
+        ];
+        // 記錄更新成功的回應
+        error_log('[updateRepairStatus] 更新成功：' . json_encode($response));
+        echo json_encode($response);
     } else {
-        echo json_encode(['success' => false, 'message' => '資料庫更新失敗']);
+        $error = ['success' => false, 'message' => '資料庫更新失敗'];
+        // 記錄更新失敗
+        error_log('[updateRepairStatus] 更新失敗：' . json_encode($error));
+        echo json_encode($error);
     }
     exit;
 }

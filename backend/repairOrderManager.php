@@ -196,8 +196,8 @@ $statusList = getRepairStatusList();
                         </select>
                     </div>
                     <div class="mb-3" id="priceInputGroup" style="display: none;">
-                        <label for="modalRepairPrice" class="form-label">維修金額</label>
-                        <input type="number" class="form-control" id="modalRepairPrice" name="repair_price"
+                        <label for="repairPriceInput" class="form-label">維修金額</label>
+                        <input type="number" class="form-control" id="repairPriceInput" name="repair_price"
                             placeholder="請填入維修金額" min="0" step="1">
                         <div class="mt-2">
                             <label class="form-label">保固狀態：</label>
@@ -283,7 +283,7 @@ $statusList = getRepairStatusList();
 
             // 初始化價格輸入框的狀態
             const priceInputGroup = document.getElementById('priceInputGroup');
-            const priceInput = document.getElementById('modalRepairPrice');
+            const priceInput = document.getElementById('repairPriceInput');
             if (newStatusSelect.value === 'pending_payment') {
                 priceInputGroup.style.display = 'block';
                 priceInput.required = true;
@@ -307,7 +307,7 @@ $statusList = getRepairStatusList();
     // 監聽狀態選擇的變化
     document.getElementById('modalNewStatus').addEventListener('change', function () {
         const priceInputGroup = document.getElementById('priceInputGroup');
-        const priceInput = document.getElementById('modalRepairPrice');
+        const priceInput = document.getElementById('repairPriceInput');
 
         if (this.value === 'pending_payment') {
             priceInputGroup.style.display = 'block';
@@ -323,16 +323,40 @@ $statusList = getRepairStatusList();
         e.preventDefault();
         const id = document.getElementById('modalRepairId').value;
         const status = document.getElementById('modalNewStatus').value;
-        const price = status === 'pending_payment' ?
-            document.getElementById('modalRepairPrice').value : '0';
+        const priceInput = document.getElementById('repairPriceInput');
 
         try {
+            const formData = new FormData();
+            formData.append('repair_id', id);
+            formData.append('new_status', status);
+            
+            // 修改價格資料的處理邏輯
+            let priceValue = '';
+            if (priceInput) {
+                priceValue = priceInput.value;
+                console.log('原始價格輸入值：', priceValue);
+                if (priceValue) {
+                    priceValue = priceValue.trim();
+                    console.log('處理後的價格值：', priceValue);
+                }
+            }
+            
+            // 將價格加入 FormData
+            formData.append('repair_price', priceValue);
+
+            // 顯示要傳送的資料
+            console.log('準備更新維修紀錄：', {
+                repair_id: id,
+                new_status: status,
+                repair_price: priceValue || '未輸入價格'
+            });
+
             const res = await fetch('api/backendRepairAPI.php', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `repair_id=${encodeURIComponent(id)}&new_status=${encodeURIComponent(status)}&repair_price=${encodeURIComponent(price)}`
+                body: formData
             });
             const json = await res.json();
+
             if (!json.success) throw new Error(json.message || '更新失敗');
 
             const row = document.querySelector(`button.update-repair-status[data-id="${id}"]`).closest('tr');
@@ -343,6 +367,7 @@ $statusList = getRepairStatusList();
             row.querySelector('button.update-repair-status').dataset.status = status;
             bootstrap.Modal.getInstance(document.getElementById('updateRepairStatusModal')).hide();
         } catch (err) {
+            console.error('更新失敗：', err);
             alert(err.message || '發生錯誤，請稍後再試');
         }
     });
