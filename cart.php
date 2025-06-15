@@ -431,7 +431,6 @@ include __DIR__ . "/header.php";
                         </div>
                         <div class="modal-footer">
                             <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">稍後處理</button>
-                            <button type="button" class="btn btn-primary" id="retry-checkout-btn">重新檢查庫存</button>
                         </div>
                     </div>
                 </div>
@@ -462,11 +461,6 @@ include __DIR__ . "/header.php";
                         const optionId = this.getAttribute('data-option-id');
                         window.location.href = `productDetail.php?product_id=${productId}&edit=${optionId}`;
                     });
-                });
-
-                document.getElementById('retry-checkout-btn').addEventListener('click', function () {
-                    modal.hide();
-                    document.getElementById('checkout-btn').click();
                 });
 
                 // modal隱藏後移除
